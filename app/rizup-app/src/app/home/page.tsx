@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { demoPosts } from "@/lib/demo-data";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import PostCard from "@/components/PostCard";
@@ -18,39 +19,69 @@ interface PostWithProfile {
   profiles: { name: string; avatar_url: string | null };
 }
 
+const LOAD_TIMEOUT = 5000;
+
 export default function HomePage() {
   const [posts, setPosts] = useState<PostWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [streak, setStreak] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
+  const [isDemo, setIsDemo] = useState(false);
 
   useEffect(() => {
+    let timedOut = false;
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      setPosts(demoPosts as PostWithProfile[]);
+      setStreak(3);
+      setIsDemo(true);
+      setLoading(false);
+    }, LOAD_TIMEOUT);
+
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserId(user.id);
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("streak")
-          .eq("id", user.id)
-          .single();
-        if (profile) setStreak(profile.streak);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setUserId(user.id);
+          const { data: profile, error: profileErr } = await supabase
+            .from("profiles")
+            .select("streak")
+            .eq("id", user.id)
+            .single();
+          if (!profileErr && profile) setStreak(profile.streak);
+        }
+
+        const { data, error } = await supabase
+          .from("posts")
+          .select("*, profiles(name, avatar_url)")
+          .order("created_at", { ascending: false })
+          .limit(20);
+
+        if (timedOut) return;
+        clearTimeout(timeout);
+
+        if (error || !data || data.length === 0) {
+          setPosts(demoPosts as PostWithProfile[]);
+          setIsDemo(true);
+        } else {
+          setPosts(data as PostWithProfile[]);
+        }
+      } catch {
+        if (!timedOut) {
+          clearTimeout(timeout);
+          setPosts(demoPosts as PostWithProfile[]);
+          setIsDemo(true);
+        }
       }
-
-      const { data } = await supabase
-        .from("posts")
-        .select("*, profiles(name, avatar_url)")
-        .order("created_at", { ascending: false })
-        .limit(20);
-
-      if (data) setPosts(data as PostWithProfile[]);
       setLoading(false);
     };
     init();
+
+    return () => clearTimeout(timeout);
   }, []);
 
   const handleReact = async (postId: string, type: string) => {
-    if (!userId) return;
+    if (!userId || isDemo) return;
     const { error } = await supabase.from("reactions").upsert(
       { post_id: postId, user_id: userId, type },
       { onConflict: "post_id,user_id,type" }
@@ -65,6 +96,15 @@ export default function HomePage() {
       <Header />
 
       <div className="max-w-md mx-auto px-4 py-4">
+        {/* Demo Banner */}
+        {isDemo && (
+          <div className="bg-orange-light rounded-2xl p-3 mb-4 text-center">
+            <p className="text-xs font-bold text-orange">
+              デモモードで表示しています — Supabase を接続すると実データに切り替わります
+            </p>
+          </div>
+        )}
+
         {/* Streak */}
         <div className="flex items-center justify-between bg-white rounded-2xl p-4 border border-gray-100 mb-4 shadow-sm">
           <div className="flex items-center gap-3">
@@ -98,18 +138,6 @@ export default function HomePage() {
           <div className="text-center py-12">
             <Image src="/sho.png" alt="Sho" width={48} height={48} className="rounded-full mx-auto mb-3 animate-sho-float" />
             <p className="text-sm text-text-light">読み込み中...</p>
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="text-center py-12">
-            <Image src="/sho.png" alt="Sho" width={64} height={64} className="rounded-full mx-auto mb-3 animate-sho-float" />
-            <p className="text-lg font-bold mb-1">まだ投稿がないよ</p>
-            <p className="text-sm text-text-mid mb-4">最初の一歩を踏み出してみよう</p>
-            <Link
-              href="/journal"
-              className="inline-block bg-mint text-white font-bold px-6 py-3 rounded-full shadow-lg shadow-mint/30"
-            >
-              最初の投稿をする ✏️
-            </Link>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
