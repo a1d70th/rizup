@@ -1,0 +1,13 @@
+{
+  "name": "Rizup",
+  "short_name": "Rizup",
+  "description": "毎日成長が見える、前向きな人だけが集まるSNS",
+  "start_url": "/home",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#6ecbb0",
+  "icons": [
+    { "src": "/sho.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/sho.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
