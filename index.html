@@ -974,10 +974,8 @@
       完璧じゃなくていい。準備ができていなくていい。<br>
       「変わりたい」と思った今が、スタートです。
     </p>
-    <!-- Step 1: メールアドレス登録（Netlify Forms） -->
-    <form id="ctaForm" name="rizup-join" method="POST" data-netlify="true" netlify-honeypot="bot-field" onsubmit="handleJoin(event)">
-      <input type="hidden" name="form-name" value="rizup-join" />
-      <p style="display:none"><input name="bot-field" /></p>
+    <!-- Step 1: メールアドレス登録 -->
+    <form id="ctaForm" name="rizup-join" method="POST" onsubmit="handleJoin(event)">
       <div class="cta-form">
         <input class="cta-input" type="email" name="email" placeholder="メールアドレスを入力" required />
         <button class="cta-submit" type="submit">無料で参加する</button>
@@ -1019,7 +1017,7 @@
     document.body.classList.remove('has-banner');
   }
 
-  // CTA: メール登録 → Netlify Forms 送信 → Discord へ遷移
+  // CTA: メール登録 → Discord へ遷移
   function handleJoin(e) {
     e.preventDefault();
     const form = e.target;

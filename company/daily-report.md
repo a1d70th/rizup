@@ -20,7 +20,7 @@
 - [x] Discord サーバー開設・招待リンク設定
 - [x] Discord 運営マニュアル作成
 - [x] GitHub リポジトリ構築（a1d70th/rizup）
-- [x] Netlify 連携（自動デプロイ）
+- [x] Vercel 連携（自動デプロイ：https://rizup.vercel.app）
 - [x] 会社フォルダ構成の構築（5事業部）
 - [x] COMPANY.md・各事業部 README 整備
 - [x] マルチエージェントシステム設計（CLAUDE.md）

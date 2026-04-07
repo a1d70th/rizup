@@ -24,7 +24,7 @@
 Phase 0：基盤づくり（2026年 Q1-Q2）← 今ここ
   ├ LP 公開（index.html）          ✅ 完了
   ├ GitHub リポジトリ構築          ✅ 完了
-  ├ Netlify デプロイ設定           🟡 進行中
+  ├ Vercel デプロイ設定             ✅ 完了
   ├ Discord コミュニティ β版開始   🟡 進行中
   ├ 会社フォルダ構造の構築         ✅ 完了
   └ COMPANY.md・各事業部README整備 ✅ 完了

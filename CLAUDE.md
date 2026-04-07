@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Structure
 
-- `/index.html` — Rizup コミュニティのランディングページ（単一HTMLファイル、Netlify で自動デプロイ）
+- `/index.html` — Rizup コミュニティのランディングページ（単一HTMLファイル、Vercel で自動デプロイ：https://rizup.vercel.app）
 - `/discord-manual.md` — Discord 運営マニュアル
 - `/COMPANY.md` — 会社概要・ミッション・AI社員の役割一覧
 - `/community/` — コミュニティ事業部
@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Development & Deployment
 
 - **LP**: 単一 `index.html`（HTML/CSS/JS、ビルド不要）。フォントは Google Fonts `M PLUS Rounded 1c`。カラーはミントグリーン(`#6ecbb0`) + ライトオレンジ(`#f4976c`) + 白ベース。
-- **デプロイ**: `git push origin main` → Netlify が自動デプロイ
+- **デプロイ**: `git push origin main` → Vercel が自動デプロイ（https://rizup.vercel.app）
 - **GitHub**: `https://github.com/a1d70th/rizup`
 - **Discord**: 招待リンクは `https://discord.gg/ssA69BTe4`。LP 内の全参加ボタンはこのリンクに接続。
 
@@ -100,7 +100,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - Supabase（認証・DB）の設計・実装
   - Claude API の組み込み
   - GitHub の Issue 管理・PR 作成（MCP経由）
-  - Netlify デプロイ管理
+  - Vercel デプロイ管理
 
 【担当ファイル】
   /index.html                ← ランディングページ
@@ -113,7 +113,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Sora の行動原則：**
 1. コード変更は必ず `git add → commit → push` まで完了させる
-2. LP の変更は Netlify 自動デプロイを前提に作業する
+2. LP の変更は Vercel 自動デプロイを前提に作業する
 3. Kai のリサーチ結果（CVR改善案など）を技術的に実装する
 4. 大きな変更は先に仕様を書いてから実装する
 5. バグ修正は Issue を立ててからクローズする

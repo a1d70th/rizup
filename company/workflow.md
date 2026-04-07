@@ -128,7 +128,7 @@ Week 1 │ Kai    │ LP のアクセスデータ・CVR を分析
        │ 社長   │ 改善案を1つ選択
        │        │
 Week 2 │ Sora   │ LP のコード変更を実施
-       │        │ → git commit → push → Netlify 自動デプロイ
+       │        │ → git commit → push → Vercel 自動デプロイ
        │        │
        │ Rei    │ LP のコピー（キャッチコピー・説明文）を改善
        │        │ → Sora に反映を依頼
