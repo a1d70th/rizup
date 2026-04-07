@@ -9,7 +9,10 @@ CREATE TABLE IF NOT EXISTS profiles (
   dream      TEXT DEFAULT '',
   avatar_url TEXT,
   streak     INTEGER DEFAULT 0,
-  plan       TEXT DEFAULT 'free' CHECK (plan IN ('free','pro','premium')),
+  plan       TEXT DEFAULT 'free' CHECK (plan IN ('free','pro','premium','vip')),
+  zodiac     TEXT,
+  birthday   TEXT,
+  rizup_type TEXT CHECK (rizup_type IN ('Seed','Grow','Bloom','Flame','Flow')),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

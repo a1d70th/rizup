@@ -1,11 +1,12 @@
-// Demo data shown when Supabase tables don't exist yet
-
 export const demoProfile = {
   name: "ゲスト",
   dream: "Rizup で前向きな毎日を始める",
   avatar_url: "🌿",
   streak: 3,
   plan: "free" as const,
+  zodiac: "おひつじ座",
+  rizup_type: "Bloom",
+  birthday: "1998-04-07",
 };
 
 export const demoPosts = [
@@ -42,3 +43,5 @@ export const demoPosts = [
 ];
 
 export const demoBadges = ["first_post", "streak_7"];
+
+export const demoShoInsight = "今日は火曜日。あなたのデータだと、火曜は新しいことを始めやすい日。小さくてもいいから、昨日やらなかったことを1つだけやってみよう。Bloomタイプのあなたは、人と関わると調子が上がるから、誰かに「おはよう」って言ってみて。";

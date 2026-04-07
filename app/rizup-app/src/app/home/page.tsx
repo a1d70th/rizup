@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { demoPosts } from "@/lib/demo-data";
+import { demoPosts, demoShoInsight } from "@/lib/demo-data";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import PostCard from "@/components/PostCard";
@@ -9,13 +9,8 @@ import Image from "next/image";
 import Link from "next/link";
 
 interface PostWithProfile {
-  id: string;
-  user_id: string;
-  type: string;
-  content: string;
-  mood: number;
-  ai_feedback: string | null;
-  created_at: string;
+  id: string; user_id: string; type: string; content: string;
+  mood: number; ai_feedback: string | null; created_at: string;
   profiles: { name: string; avatar_url: string | null };
 }
 
@@ -26,7 +21,8 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [streak, setStreak] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
-  const [isDemo, setIsDemo] = useState(false);
+  const [shoInsight] = useState(demoShoInsight);
+  const [hasCommentedToday, setHasCommentedToday] = useState(true);
 
   useEffect(() => {
     let timedOut = false;
@@ -34,7 +30,6 @@ export default function HomePage() {
       timedOut = true;
       setPosts(demoPosts as PostWithProfile[]);
       setStreak(3);
-      setIsDemo(true);
       setLoading(false);
     }, LOAD_TIMEOUT);
 
@@ -43,65 +38,69 @@ export default function HomePage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           setUserId(user.id);
-          const { data: profile, error: profileErr } = await supabase
-            .from("profiles")
-            .select("streak")
-            .eq("id", user.id)
-            .single();
-          if (!profileErr && profile) setStreak(profile.streak);
+          const { data: profile } = await supabase.from("profiles").select("streak").eq("id", user.id).single();
+          if (profile) setStreak(profile.streak || 0);
+          // Check if user commented today
+          const today = new Date().toISOString().split("T")[0];
+          const { count } = await supabase.from("comments").select("id", { count: "exact", head: true })
+            .eq("user_id", user.id).gte("created_at", today);
+          setHasCommentedToday((count || 0) > 0);
         }
-
-        const { data, error } = await supabase
-          .from("posts")
-          .select("*, profiles(name, avatar_url)")
-          .order("created_at", { ascending: false })
-          .limit(20);
-
+        const { data, error } = await supabase.from("posts").select("*, profiles(name, avatar_url)")
+          .order("created_at", { ascending: false }).limit(20);
         if (timedOut) return;
         clearTimeout(timeout);
-
         if (error || !data || data.length === 0) {
           setPosts(demoPosts as PostWithProfile[]);
-          setIsDemo(true);
         } else {
           setPosts(data as PostWithProfile[]);
         }
       } catch {
-        if (!timedOut) {
-          clearTimeout(timeout);
-          setPosts(demoPosts as PostWithProfile[]);
-          setIsDemo(true);
-        }
+        if (!timedOut) { clearTimeout(timeout); setPosts(demoPosts as PostWithProfile[]); }
       }
       setLoading(false);
     };
     init();
-
     return () => clearTimeout(timeout);
   }, []);
 
   const handleReact = async (postId: string, type: string) => {
-    if (!userId || isDemo) return;
+    if (!userId) return;
     const { error } = await supabase.from("reactions").upsert(
-      { post_id: postId, user_id: userId, type },
-      { onConflict: "post_id,user_id,type" }
-    );
+      { post_id: postId, user_id: userId, type }, { onConflict: "post_id,user_id,type" });
     if (error && error.code === "23505") {
       await supabase.from("reactions").delete().match({ post_id: postId, user_id: userId, type });
     }
   };
 
+  const handleComment = async (postId: string, text: string) => {
+    if (!userId) return;
+    await supabase.from("comments").insert({ post_id: postId, user_id: userId, content: text });
+    setHasCommentedToday(true);
+  };
+
   return (
     <div className="min-h-screen bg-bg pb-20 pt-16">
       <Header />
-
       <div className="max-w-md mx-auto px-4 py-4">
-        {/* Demo Banner */}
-        {isDemo && (
-          <div className="bg-orange-light rounded-2xl p-3 mb-4 text-center">
-            <p className="text-xs font-bold text-orange">
-              デモモードで表示しています — Supabase を接続すると実データに切り替わります
-            </p>
+
+        {/* Sho Insight — 一番上 */}
+        <div className="bg-gradient-to-br from-mint-light to-orange-light rounded-2xl p-4 mb-4 border border-mint/20">
+          <div className="flex items-center gap-2 mb-2">
+            <Image src="/sho.png" alt="Sho" width={32} height={32} className="rounded-full" />
+            <div>
+              <span className="text-xs font-bold text-mint">今日の Sho Insight</span>
+              <span className="text-[10px] text-text-light ml-2">毎朝 6:00 更新</span>
+            </div>
+          </div>
+          <p className="text-sm text-text leading-relaxed">{shoInsight}</p>
+        </div>
+
+        {/* Forced comment banner */}
+        {!hasCommentedToday && (
+          <div className="bg-orange-light rounded-2xl p-3 mb-4 flex items-center gap-3">
+            <span className="text-xl">💬</span>
+            <p className="text-xs font-bold text-orange flex-1">今日はまだ誰かの投稿にコメントしていません。前向きな一言を送ろう！</p>
           </div>
         )}
 
@@ -114,23 +113,10 @@ export default function HomePage() {
               <p className="text-lg font-extrabold text-orange">🔥 {streak}日</p>
             </div>
           </div>
-          <Link
-            href="/journal"
-            className="bg-mint text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-md shadow-mint/30 hover:bg-mint-dark transition"
-          >
-            ✏️ 投稿する
+          <Link href="/journal"
+            className="bg-mint text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-md shadow-mint/30 hover:bg-mint-dark transition">
+            📝 ジャーナル
           </Link>
-        </div>
-
-        {/* Sho Morning Message */}
-        <div className="bg-mint-light rounded-2xl p-4 mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Image src="/sho.png" alt="Sho" width={28} height={28} className="rounded-full" />
-            <span className="text-xs font-bold text-mint">Sho の朝メッセージ</span>
-          </div>
-          <p className="text-sm text-text leading-relaxed">
-            おはよう。今日も完璧じゃなくていいから、1つだけ自分のためになることをしよう。それだけで十分。
-          </p>
         </div>
 
         {/* Timeline */}
@@ -142,16 +128,11 @@ export default function HomePage() {
         ) : (
           <div className="flex flex-col gap-3">
             {posts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                onReact={handleReact}
-              />
+              <PostCard key={post.id} post={post} onReact={handleReact} onComment={handleComment} />
             ))}
           </div>
         )}
       </div>
-
       <BottomNav />
     </div>
   );

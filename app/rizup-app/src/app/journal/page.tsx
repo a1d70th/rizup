@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 
@@ -19,10 +18,11 @@ export default function JournalPage() {
   const [mood, setMood] = useState(3);
   const [content, setContent] = useState("");
   const [gratitudes, setGratitudes] = useState(["", "", ""]);
+  const [sleepHours, setSleepHours] = useState("");
+  const [bedtime, setBedtime] = useState("");
   const [loading, setLoading] = useState(false);
   const [aiFeedback, setAiFeedback] = useState<string | null>(null);
   const [posted, setPosted] = useState(false);
-  const router = useRouter();
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -32,37 +32,38 @@ export default function JournalPage() {
   const handlePost = async () => {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { setLoading(false); return; }
 
-    const postContent = mode === "evening" && gratitudes.filter(g => g.trim()).length > 0
-      ? `${content}\n\n【感謝】\n${gratitudes.filter(g => g.trim()).map((g, i) => `${i + 1}. ${g}`).join("\n")}`
-      : content;
+    let postContent = content;
+    if (mode === "evening") {
+      const gs = gratitudes.filter(g => g.trim());
+      if (gs.length > 0) {
+        postContent += `\n\n【感謝】\n${gs.map((g, i) => {
+          const labels = ["ありがたかったこと", "感謝したい人", "自分を褒めたいこと"];
+          return `${labels[i]}：${g}`;
+        }).join("\n")}`;
+      }
+      if (bedtime) postContent += `\n\n🛏️ 今夜の就寝予定：${bedtime}`;
+    }
+    if (mode === "morning" && sleepHours) {
+      postContent += `\n\n😴 昨夜の睡眠：${sleepHours}時間`;
+    }
 
-    const { data, error } = await supabase.from("posts").insert({
-      user_id: user.id,
-      type: mode,
-      content: postContent,
-      mood,
+    const { data } = await supabase.from("posts").insert({
+      user_id: user.id, type: mode, content: postContent, mood,
     }).select().single();
 
-    if (!error && data) {
-      // Simulate AI feedback (in production, call Claude API)
+    if (data) {
       const feedbacks = [
-        `${content.slice(0, 20)}...って書いてくれたね。今日も一歩踏み出せたこと、すごいと思うよ。明日もあなたのペースでいこう。`,
-        `気分が${mood >= 3 ? "良さそう" : "大変そう"}だね。でもここに書いてくれたこと自体が前進だよ。自分を褒めてあげて。`,
-        `今日の記録、ちゃんと残せたね。小さなことでも続けることが一番大事。Sho はいつも応援してるよ。`,
+        `今日も記録してくれたね。${mood >= 3 ? "いい調子だ" : "大変だったね"}。でもここに書いてくれたことが、もう一歩前に進んだ証拠だよ。`,
+        `${content.slice(0, 15)}...って書いてくれたね。あなたの正直な気持ち、ちゃんと受け取ったよ。明日もあなたのペースで。`,
+        `連続で投稿してくれてるのが嬉しい。小さな積み重ねが、大きな変化になる。一緒に続けていこう。`,
       ];
       const feedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];
-
       await supabase.from("posts").update({ ai_feedback: feedback }).eq("id", data.id);
-
-      // Update streak
-      try {
-        await supabase.rpc("increment_streak", { uid: user.id });
-      } catch {
+      try { await supabase.rpc("increment_streak", { uid: user.id }); } catch {
         await supabase.from("profiles").update({ streak: 1 }).eq("id", user.id);
       }
-
       setAiFeedback(feedback);
       setPosted(true);
     }
@@ -78,15 +79,13 @@ export default function JournalPage() {
           <div className="bg-mint-light rounded-2xl p-4 max-w-xs mb-6 text-left">
             <div className="flex items-center gap-1.5 mb-2">
               <Image src="/sho.png" alt="Sho" width={20} height={20} className="rounded-full" />
-              <span className="text-xs font-bold text-mint">Sho より</span>
+              <span className="text-xs font-bold text-mint">Rizup より</span>
             </div>
             <p className="text-sm text-text leading-relaxed">{aiFeedback}</p>
           </div>
         )}
-        <button
-          onClick={() => router.push("/home")}
-          className="bg-mint text-white font-bold px-8 py-3 rounded-full shadow-lg shadow-mint/30"
-        >
+        <button onClick={() => { window.location.href = "https://rizup-app.vercel.app/home"; }}
+          className="bg-mint text-white font-bold px-8 py-3 rounded-full shadow-lg shadow-mint/30">
           タイムラインを見る
         </button>
       </div>
@@ -98,104 +97,84 @@ export default function JournalPage() {
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
         {/* Mode Toggle */}
-        <div className="flex bg-white rounded-2xl p-1 border border-gray-100 mb-6">
-          <button
-            onClick={() => setMode("morning")}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition ${
-              mode === "morning" ? "bg-orange-light text-orange" : "text-text-light"
-            }`}
-          >
+        <div className="flex bg-white rounded-2xl p-1 border border-gray-100 mb-5">
+          <button onClick={() => setMode("morning")}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition ${mode === "morning" ? "bg-orange-light text-orange" : "text-text-light"}`}>
             ☀️ 朝ジャーナル
           </button>
-          <button
-            onClick={() => setMode("evening")}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition ${
-              mode === "evening" ? "bg-mint-light text-mint" : "text-text-light"
-            }`}
-          >
+          <button onClick={() => setMode("evening")}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition ${mode === "evening" ? "bg-mint-light text-mint" : "text-text-light"}`}>
             🌙 夜ジャーナル
           </button>
         </div>
 
         {/* Sho Greeting */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-5">
           <Image src="/sho.png" alt="Sho" width={40} height={40} className="rounded-full" />
           <div>
-            <p className="font-extrabold">
-              {mode === "morning" ? "おはよう！☀️" : "おつかれさま！🌙"}
-            </p>
-            <p className="text-xs text-text-mid">
-              {mode === "morning" ? "今日の気分と目標を教えてね" : "今日の振り返りを書いてみよう"}
-            </p>
+            <p className="font-extrabold">{mode === "morning" ? "おはよう！☀️" : "おつかれさま！🌙"}</p>
+            <p className="text-xs text-text-mid">{mode === "morning" ? "今日の目標と気分を教えてね" : "今日の振り返りを書いてみよう"}</p>
           </div>
         </div>
 
-        {/* Mood Selection */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
+        {/* Mood */}
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-3">
           <p className="text-sm font-bold mb-3">今の気分は？</p>
           <div className="flex justify-between">
             {moodOptions.map((m) => (
-              <button
-                key={m.value}
-                onClick={() => setMood(m.value)}
-                className={`flex flex-col items-center gap-1 transition ${
-                  mood === m.value ? "scale-110" : "opacity-50"
-                }`}
-              >
-                <span className={`text-3xl p-2 rounded-full ${
-                  mood === m.value ? "bg-mint-light" : ""
-                }`}>{m.emoji}</span>
+              <button key={m.value} onClick={() => setMood(m.value)}
+                className={`flex flex-col items-center gap-1 transition ${mood === m.value ? "scale-110" : "opacity-50"}`}>
+                <span className={`text-3xl p-2 rounded-full ${mood === m.value ? "bg-mint-light" : ""}`}>{m.emoji}</span>
                 <span className="text-[10px] text-text-light">{m.label}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Content Input */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
-          <p className="text-sm font-bold mb-2">
-            {mode === "morning" ? "今日やりたいこと・一言" : "今日の振り返り"}
-          </p>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
+        {/* Sleep — morning: hours, evening: bedtime */}
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-3">
+          {mode === "morning" ? (
+            <>
+              <p className="text-sm font-bold mb-2">😴 昨夜の睡眠時間</p>
+              <input type="number" min="0" max="24" step="0.5" value={sleepHours} onChange={(e) => setSleepHours(e.target.value)}
+                placeholder="例：7" className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint" />
+            </>
+          ) : (
+            <>
+              <p className="text-sm font-bold mb-2">🛏️ 今夜は何時に寝る？</p>
+              <input type="time" value={bedtime} onChange={(e) => setBedtime(e.target.value)}
+                className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint" />
+            </>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-3">
+          <p className="text-sm font-bold mb-2">{mode === "morning" ? "今日の目標・一言" : "今日の振り返り"}</p>
+          <textarea value={content} onChange={(e) => setContent(e.target.value)}
             placeholder={mode === "morning"
               ? "例：10分だけ読書する。昨日よりちょっとだけ頑張れたらいいな。"
-              : "例：今日は朝から気分が重かったけど、散歩したらちょっと楽になった。"
-            }
-            className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm resize-none h-28 outline-none focus:border-mint transition"
-            maxLength={500}
-          />
+              : "例：今日は朝から気分が重かったけど、散歩したらちょっと楽になった。"}
+            className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm resize-none h-24 outline-none focus:border-mint" maxLength={500} />
           <p className="text-right text-xs text-text-light mt-1">{content.length}/500</p>
         </div>
 
-        {/* Gratitude (Evening only) */}
+        {/* Gratitude (Evening) */}
         {mode === "evening" && (
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-4">
-            <p className="text-sm font-bold mb-3">今日の感謝 3つ</p>
-            {gratitudes.map((g, i) => (
-              <input
-                key={i}
-                type="text"
-                value={g}
-                onChange={(e) => {
-                  const newG = [...gratitudes];
-                  newG[i] = e.target.value;
-                  setGratitudes(newG);
-                }}
-                placeholder={`感謝 ${i + 1}`}
-                className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint transition mb-2"
-              />
+          <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-3">
+            <p className="text-sm font-bold mb-3">🙏 今日の感謝</p>
+            {["今日ありがたかったこと", "誰かに感謝したいこと", "自分を褒めたいこと"].map((ph, i) => (
+              <input key={i} type="text" value={gratitudes[i]} onChange={(e) => {
+                const g = [...gratitudes]; g[i] = e.target.value; setGratitudes(g);
+              }} placeholder={ph}
+                className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint mb-2" />
             ))}
           </div>
         )}
 
         {/* Submit */}
-        <button
-          onClick={handlePost}
-          disabled={loading || !content.trim()}
-          className="w-full bg-mint text-white font-bold py-4 rounded-full shadow-lg shadow-mint/30 hover:bg-mint-dark transition disabled:opacity-30 text-base"
-        >
+        <button onClick={handlePost} disabled={loading || !content.trim()}
+          className="w-full bg-mint text-white font-bold py-4 rounded-full shadow-lg shadow-mint/30 disabled:opacity-30 text-base">
           {loading ? "投稿中..." : mode === "morning" ? "☀️ 朝ジャーナルを投稿" : "🌙 夜ジャーナルを投稿"}
         </button>
       </div>
