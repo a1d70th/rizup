@@ -54,7 +54,7 @@ export default function LoginPage() {
         console.log("[Rizup Login] Success! Redirecting to /home");
         // Use window.location for a full page navigation to ensure
         // middleware picks up the new auth cookie
-        window.location.href = "/home";
+        window.location.href = "https://rizup-app.vercel.app/home";
         // Don't setLoading(false) — page is navigating away
       } else {
         console.log("[Rizup Login] No session returned");
