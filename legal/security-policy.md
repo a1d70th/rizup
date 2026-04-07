@@ -86,7 +86,8 @@
 セキュリティ上の脆弱性を発見された場合は、以下までご連絡ください。
 責任ある開示を歓迎します。
 
-メール：security@rizup.jp
+メール：a1d.70th@gmail.com
+サービスURL：https://rizup.vercel.app
 
 ## 9. ポリシーの更新
 

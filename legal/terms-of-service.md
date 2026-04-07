@@ -99,4 +99,5 @@
 
 株式会社 Rizup
 代表：児玉翔平
-メール：support@rizup.jp
+メール：a1d.70th@gmail.com
+サービスURL：https://rizup.vercel.app

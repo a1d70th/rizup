@@ -15,7 +15,7 @@
 （メール対応を優先しております）
 
 ## メールアドレス
-support@rizup.jp
+a1d.70th@gmail.com
 
 ## 販売URL
 https://rizup.vercel.app
