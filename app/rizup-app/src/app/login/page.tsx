@@ -3,25 +3,33 @@ import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-      setError("メールアドレスまたはパスワードが間違っています");
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        const messages: Record<string, string> = {
+          "Invalid login credentials": "メールアドレスまたはパスワードが間違っています",
+          "Email not confirmed": "メール認証が完了していません。受信トレイを確認してください",
+          "Too many requests": "ログイン試行回数が多すぎます。しばらく待ってからお試しください",
+        };
+        setError(messages[error.message] || `ログインに失敗しました：${error.message}`);
+        setLoading(false);
+        return;
+      }
+      // ログイン成功 — window.location で確実にリダイレクト
+      window.location.href = "/home";
+    } catch {
+      setError("通信エラーが発生しました。インターネット接続を確認してください。");
       setLoading(false);
-    } else {
-      router.push("/home");
     }
   };
 
