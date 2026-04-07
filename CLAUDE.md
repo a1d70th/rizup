@@ -1,3 +1,42 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project Overview
+
+株式会社 Rizup — AI駆動型スタートアップ。「活躍できていない人を引き上げ、誰もが前向きになれる社会をつくる」がミッション。月30万円のマネタイズが当面の目標。
+
+## Repository Structure
+
+- `/index.html` — Rizup コミュニティのランディングページ（単一HTMLファイル、Netlify で自動デプロイ）
+- `/discord-manual.md` — Discord 運営マニュアル
+- `/COMPANY.md` — 会社概要・ミッション・AI社員の役割一覧
+- `/community/` — コミュニティ事業部
+- `/media/` — メディア事業部（note・アフィリエイト・SNS）
+- `/consulting/` — 広告コンサル事業部・営業（提案文・クライアント管理）
+- `/app/` — アプリ開発事業部
+- `/company/` — 会社全体管理（ROADMAP・KPI・日報・ワークフロー・朝礼コマンド）
+
+## Development & Deployment
+
+- **LP**: 単一 `index.html`（HTML/CSS/JS、ビルド不要）。フォントは Google Fonts `M PLUS Rounded 1c`。カラーはミントグリーン(`#6ecbb0`) + ライトオレンジ(`#f4976c`) + 白ベース。
+- **デプロイ**: `git push origin main` → Netlify が自動デプロイ
+- **GitHub**: `https://github.com/a1d70th/rizup`
+- **Discord**: 招待リンクは `https://discord.gg/ssA69BTe4`。LP 内の全参加ボタンはこのリンクに接続。
+
+## MCP Servers
+
+3つの MCP サーバーが接続済み（`.claude.json` で設定）:
+- **notion-mcp** — Notion ワークスペースの読み書き
+- **github-mcp** — GitHub Issue・PR 操作
+- **google-calendar** — Google Calendar の読み書き（`@cocal/google-calendar-mcp`）
+
+## Multi-Agent System
+
+本リポジトリは5名のAI社員によるマルチエージェント体制で運営される。社長（Shohei）が `@社員名 として動いてください` の形式で指示を出す。詳細は以下に定義。
+
+---
+
 # 株式会社 Rizup — マルチエージェント運営マニュアル
 
 > **最終目標：月30万円のマネタイズ達成**

@@ -749,11 +749,9 @@
 
 <!-- TOP BANNER -->
 <div class="top-banner" id="topBanner">
-  <span>🎉 現在β版につき</span>
+  <span>現在ベータ版</span>
   <span class="tb-badge">完全無料</span>
-  <span>残り</span>
-  <span class="tb-badge">10名限定</span>
-  <span>今すぐ参加できます</span>
+  <span class="tb-badge">限定10名</span>
   <button class="tb-close" onclick="closeBanner()" aria-label="閉じる">✕</button>
 </div>
 
@@ -763,8 +761,9 @@
   <ul class="nav-links">
     <li><a href="#about">Rizupとは</a></li>
     <li><a href="#features">できること</a></li>
-    <li><a href="#voice">みんなの声</a></li>
-    <li><a href="https://discord.gg/ssA69BTe4" target="_blank" rel="noopener" class="nav-btn">無料で参加する</a></li>
+    <li><a href="#steps">参加方法</a></li>
+    <!-- 有料化時はここをStripe決済URLに変更 -->
+    <li><a href="#join" class="nav-btn">無料で参加する</a></li>
   </ul>
 </nav>
 
@@ -783,7 +782,8 @@
       Rizup は、そんなあなたをそっと引き上げてくれる仲間がいるコミュニティです。
     </p>
     <div class="hero-btns">
-      <a href="https://discord.gg/ssA69BTe4" target="_blank" rel="noopener" class="btn-main">無料で参加してみる</a>
+      <!-- 有料化時はここをStripe決済URLに変更 -->
+      <a href="#join" class="btn-main">無料で参加してみる</a>
       <a href="#about" class="btn-sub">もっと知る</a>
     </div>
     <p class="hero-note">登録無料 · クレジットカード不要 · いつでも退会できます</p>
@@ -933,50 +933,6 @@
   </div>
 </section>
 
-<!-- VOICE -->
-<section class="voice" id="voice">
-  <div class="voice-inner">
-    <span class="sec-label">Voice</span>
-    <h2 class="sec-title">参加者の声</h2>
-    <p class="sec-desc">Rizup に参加したメンバーのリアルな声です。</p>
-    <div class="voice-grid">
-      <div class="v-card fade-up">
-        <div class="v-stars">★★★★★</div>
-        <p>最初は「見てるだけでいいや」と思っていたんですが、誰かが「いるだけで嬉しい」と言ってくれて。気づいたら毎日投稿するようになっていました。</p>
-        <div class="v-author">
-          <div class="v-ava va-mint">🌸</div>
-          <div>
-            <div class="v-name">はなさん・24歳</div>
-            <div class="v-role">フリーランス志望</div>
-          </div>
-        </div>
-      </div>
-      <div class="v-card fade-up">
-        <div class="v-stars">★★★★★</div>
-        <p>転職活動がうまくいかず落ち込んでいた時期に参加しました。「一緒に考えよう」という雰囲気が本当にありがたくて、今では内定も取れました。</p>
-        <div class="v-author">
-          <div class="v-ava va-orange">🌿</div>
-          <div>
-            <div class="v-name">たかしさん・28歳</div>
-            <div class="v-role">IT転職成功</div>
-          </div>
-        </div>
-      </div>
-      <div class="v-card fade-up">
-        <div class="v-stars">★★★★★</div>
-        <p>「自分だけ遅れている」ってずっと思っていたけど、みんな同じ悩みを持っていた。比べなくていいんだ、と初めて思えた場所です。</p>
-        <div class="v-author">
-          <div class="v-ava va-both">☀️</div>
-          <div>
-            <div class="v-name">みおさん・22歳</div>
-            <div class="v-role">副業スタート</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- STEPS -->
 <section class="steps" id="steps">
   <div class="steps-inner">
@@ -1018,10 +974,17 @@
       完璧じゃなくていい。準備ができていなくていい。<br>
       「変わりたい」と思った今が、スタートです。
     </p>
-    <a href="https://discord.gg/ssA69BTe4" target="_blank" rel="noopener" class="btn-main" style="display:inline-flex;align-items:center;gap:0.5rem;font-size:1.05rem;">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-      Discord で参加する（無料）
-    </a>
+    <!-- Step 1: メールアドレス登録（Netlify Forms） -->
+    <form id="ctaForm" name="rizup-join" method="POST" data-netlify="true" netlify-honeypot="bot-field" onsubmit="handleJoin(event)">
+      <input type="hidden" name="form-name" value="rizup-join" />
+      <p style="display:none"><input name="bot-field" /></p>
+      <div class="cta-form">
+        <input class="cta-input" type="email" name="email" placeholder="メールアドレスを入力" required />
+        <button class="cta-submit" type="submit">無料で参加する</button>
+      </div>
+    </form>
+    <!-- Step 2: 送信後に Discord へ遷移（handleJoin で制御） -->
+    <!-- 有料化時はここをStripe決済URLに変更 -->
     <p class="cta-note">10名限定 · β版につき完全無料 · いつでも退会できます</p>
   </div>
 </section>
@@ -1056,18 +1019,41 @@
     document.body.classList.remove('has-banner');
   }
 
-  // CTA submit (kept for safety)
+  // CTA: メール登録 → Netlify Forms 送信 → Discord へ遷移
   function handleJoin(e) {
     e.preventDefault();
-    const btn = e.target.querySelector('.cta-submit');
-    const orig = btn.textContent;
-    btn.textContent = '登録しました！';
-    btn.style.background = '#5ab89d';
-    setTimeout(() => {
-      btn.textContent = orig;
+    const form = e.target;
+    const btn = form.querySelector('.cta-submit');
+    const data = new FormData(form);
+
+    btn.textContent = '送信中...';
+    btn.disabled = true;
+
+    fetch('/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams(data).toString()
+    })
+    .then(() => {
+      btn.textContent = 'Discord へ移動します...';
+      btn.style.background = '#5ab89d';
+      setTimeout(() => {
+        // 有料化時はここをStripe決済URLに変更
+        window.open('https://discord.gg/ssA69BTe4', '_blank');
+        btn.textContent = '無料で参加する';
+        btn.style.background = '';
+        btn.disabled = false;
+        form.reset();
+      }, 1200);
+    })
+    .catch(() => {
+      // フォーム送信失敗時も Discord には飛ばす
+      window.open('https://discord.gg/ssA69BTe4', '_blank');
+      btn.textContent = '無料で参加する';
       btn.style.background = '';
-      e.target.reset();
-    }, 3000);
+      btn.disabled = false;
+      form.reset();
+    });
   }
 </script>
 </body>
