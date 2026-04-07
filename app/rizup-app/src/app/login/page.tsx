@@ -1,39 +1,76 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import Link from "next/link";
+
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const errorTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const showError = (msg: string) => {
+    // Clear any existing timer so the error stays visible
+    if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    setError(msg);
+    console.error("[Rizup Login Error]", msg);
+    // Auto-clear after 8 seconds
+    errorTimerRef.current = setTimeout(() => setError(""), 8000);
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
+    // Prevent form submission / page reload
     e.preventDefault();
+    e.stopPropagation();
+
+    if (loading) return;
     setLoading(true);
     setError("");
+
+    console.log("[Rizup Login] Attempting login for:", email);
+
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (authError) {
+        console.log("[Rizup Login] Auth error:", authError.message, authError.status);
         const messages: Record<string, string> = {
           "Invalid login credentials": "メールアドレスまたはパスワードが間違っています",
           "Email not confirmed": "メール認証が完了していません。受信トレイを確認してください",
           "Too many requests": "ログイン試行回数が多すぎます。しばらく待ってからお試しください",
+          "Failed to fetch": "サーバーに接続できません。Supabase の設定を確認してください",
         };
-        setError(messages[error.message] || `ログインに失敗しました：${error.message}`);
+        showError(messages[authError.message] || `ログインに失敗しました：${authError.message}`);
         setLoading(false);
         return;
       }
-      // ログイン成功 — window.location で確実にリダイレクト
-      window.location.href = "/home";
-    } catch {
-      setError("通信エラーが発生しました。インターネット接続を確認してください。");
+
+      if (data?.session) {
+        console.log("[Rizup Login] Success! Redirecting to /home");
+        // Use window.location for a full page navigation to ensure
+        // middleware picks up the new auth cookie
+        window.location.href = "/home";
+        // Don't setLoading(false) — page is navigating away
+      } else {
+        console.log("[Rizup Login] No session returned");
+        showError("ログインに失敗しました。もう一度お試しください。");
+        setLoading(false);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "不明なエラー";
+      console.error("[Rizup Login] Catch block:", message);
+      showError(`通信エラーが発生しました：${message}`);
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
+    console.log("[Rizup Login] Google OAuth start");
     await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/home` },
@@ -46,32 +83,41 @@ export default function LoginPage() {
       <h1 className="text-2xl font-extrabold mb-1">おかえりなさい</h1>
       <p className="text-text-mid text-sm mb-8">Rizup にログイン</p>
 
-      <form onSubmit={handleLogin} className="w-full max-w-xs flex flex-col gap-3">
+      {/* Use type="button" on submit to double-ensure no native form submit */}
+      <div className="w-full max-w-xs flex flex-col gap-3">
         <input
           type="email"
           placeholder="メールアドレス"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
           className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 text-sm outline-none focus:border-mint transition"
+          onKeyDown={(e) => { if (e.key === "Enter") handleLogin(e); }}
         />
         <input
           type="password"
           placeholder="パスワード"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          required
           className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 text-sm outline-none focus:border-mint transition"
+          onKeyDown={(e) => { if (e.key === "Enter") handleLogin(e); }}
         />
-        {error && <p className="text-red-400 text-xs text-center">{error}</p>}
+
+        {/* Error message — stays visible for 8 seconds */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-3 animate-fade-in">
+            <p className="text-red-500 text-xs text-center font-medium">{error}</p>
+          </div>
+        )}
+
         <button
-          type="submit"
-          disabled={loading}
+          type="button"
+          onClick={handleLogin}
+          disabled={loading || !email || !password}
           className="bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30 hover:bg-mint-dark transition disabled:opacity-50"
         >
           {loading ? "ログイン中..." : "ログイン"}
         </button>
-      </form>
+      </div>
 
       <div className="flex items-center gap-3 my-6 w-full max-w-xs">
         <div className="flex-1 h-px bg-gray-200" />
@@ -80,6 +126,7 @@ export default function LoginPage() {
       </div>
 
       <button
+        type="button"
         onClick={handleGoogleLogin}
         className="w-full max-w-xs border-2 border-gray-200 rounded-full py-3 text-sm font-bold text-text-mid hover:border-mint transition flex items-center justify-center gap-2"
       >
