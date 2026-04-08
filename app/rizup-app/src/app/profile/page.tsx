@@ -201,6 +201,16 @@ export default function ProfilePage() {
         </div>
 
         {/* Posts */}
+        {/* Actions */}
+        <div className="flex gap-2 mb-4">
+          <a href="/settings" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">⚙️ 設定</a>
+          <a href="mailto:a1d.70th@gmail.com?subject=Rizup お問い合わせ" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">📩 お問い合わせ</a>
+          <button onClick={async () => { await supabase.auth.signOut(); window.location.href = "https://rizup-app.vercel.app/"; }}
+            className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-red-400 hover:bg-red-50 transition">
+            ログアウト
+          </button>
+        </div>
+
         <h3 className="text-sm font-bold mb-3">📝 投稿履歴</h3>
         {posts.length === 0 ? (
           <div className="text-center py-8">

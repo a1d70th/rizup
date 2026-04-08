@@ -19,6 +19,8 @@ export default function OnboardingPage() {
   const [resultType, setResultType] = useState<RizupType | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [agreedTerms, setAgreedTerms] = useState(false);
+  const [agreedAge, setAgreedAge] = useState(false);
 
   const handleQuizAnswer = (type: string) => {
     const newAnswers = [...quizAnswers, type];
@@ -106,7 +108,7 @@ export default function OnboardingPage() {
           <input type="text" placeholder="ニックネーム" value={name} onChange={(e) => setName(e.target.value)}
             className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 text-sm outline-none focus:border-mint transition mb-4" />
           <p className="text-text-mid text-sm text-center mb-3">アイコンを選ぼう</p>
-          <div className="flex justify-center gap-2 mb-6">
+          <div className="flex justify-center gap-2 mb-4">
             {avatarOptions.map((emoji) => (
               <button key={emoji} onClick={() => setAvatar(emoji)}
                 className={`w-11 h-11 rounded-full text-xl flex items-center justify-center transition border-2 ${
@@ -115,7 +117,23 @@ export default function OnboardingPage() {
               </button>
             ))}
           </div>
-          <button onClick={() => name.trim() && setStep(2)} disabled={!name.trim()}
+          {/* Terms & Age confirmation */}
+          <div className="bg-gray-50 rounded-2xl p-4 mb-4">
+            <label className="flex items-start gap-2 mb-3 cursor-pointer">
+              <input type="checkbox" checked={agreedTerms} onChange={(e) => setAgreedTerms(e.target.checked)}
+                className="mt-0.5 accent-mint w-4 h-4" />
+              <span className="text-xs text-text-mid leading-relaxed">
+                <a href="/legal/terms-of-service.html" target="_blank" className="text-mint font-bold">利用規約</a> と
+                <a href="/legal/privacy-policy.html" target="_blank" className="text-mint font-bold"> プライバシーポリシー</a> に同意します
+              </span>
+            </label>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input type="checkbox" checked={agreedAge} onChange={(e) => setAgreedAge(e.target.checked)}
+                className="mt-0.5 accent-mint w-4 h-4" />
+              <span className="text-xs text-text-mid">13歳以上です</span>
+            </label>
+          </div>
+          <button onClick={() => name.trim() && setStep(2)} disabled={!name.trim() || !agreedTerms || !agreedAge}
             className="w-full bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30 disabled:opacity-30">次へ</button>
         </div>
       )}

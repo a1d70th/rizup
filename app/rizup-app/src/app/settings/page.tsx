@@ -17,6 +17,7 @@ export default function SettingsPage() {
     { icon: "📜", label: "利用規約", href: "/legal/terms-of-service.html" },
     { icon: "🔒", label: "プライバシーポリシー", href: "/legal/privacy-policy.html" },
     { icon: "📋", label: "特定商取引法", href: "/legal/tokushoho.html" },
+    { icon: "📩", label: "お問い合わせ", href: "mailto:a1d.70th@gmail.com?subject=Rizup お問い合わせ" },
   ];
 
   return (

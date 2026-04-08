@@ -9,6 +9,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const errorTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const showError = (msg: string) => {
@@ -69,6 +71,17 @@ export default function LoginPage() {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!email) { showError("メールアドレスを入力してください"); return; }
+    setResetLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: "https://rizup-app.vercel.app/login",
+    });
+    setResetLoading(false);
+    if (error) { showError("リセットメールの送信に失敗しました"); }
+    else { setResetSent(true); }
+  };
+
   const handleGoogleLogin = async () => {
     console.log("[Rizup Login] Google OAuth start");
     await supabase.auth.signInWithOAuth({
@@ -121,6 +134,15 @@ export default function LoginPage() {
         >
           {loading ? "ログイン中..." : "ログイン"}
         </button>
+
+        {resetSent ? (
+          <p className="text-mint text-xs text-center mt-2">リセットメールを送信しました。メールを確認してください。</p>
+        ) : (
+          <button type="button" onClick={handleResetPassword} disabled={resetLoading}
+            className="text-xs text-text-light text-center mt-2 hover:text-mint transition w-full">
+            {resetLoading ? "送信中..." : "パスワードを忘れた方"}
+          </button>
+        )}
       </div>
 
       <div className="flex items-center gap-3 my-6 w-full max-w-xs">
