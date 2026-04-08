@@ -246,7 +246,7 @@ export default function OnboardingPage() {
           </div>
           <div className="bg-mint-light rounded-2xl p-3 mb-4">
             <p className="text-xs font-bold text-mint text-center">🎉 7日間無料トライアル（全機能使い放題）</p>
-            <p className="text-[10px] text-text-mid text-center mt-1">8日目から自動的にProプラン（¥980/月）へ</p>
+            <p className="text-[10px] text-text-mid text-center mt-1">8日目から自動的にProプラン（¥780/月）へ</p>
           </div>
           <button onClick={handleShare}
             className="w-full border-2 border-gray-200 rounded-full py-3 text-sm font-bold text-text-mid hover:border-mint transition mb-3">

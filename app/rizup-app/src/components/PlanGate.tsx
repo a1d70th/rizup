@@ -4,9 +4,9 @@ import { isTrialActive as checkTrial } from "@/lib/plan";
 
 const planRank: Record<string, number> = { free: 0, pro: 1, premium: 2, vip: 3 };
 const planInfo: Record<string, { name: string; price: string; color: string; features: string[] }> = {
-  pro: { name: "Pro", price: "¥980/月", color: "text-mint", features: ["投稿・ジャーナリング", "AIフィードバック", "感情グラフ・睡眠記録", "バッジ・ストリーク"] },
-  premium: { name: "Premium", price: "¥1,980/月", color: "text-orange", features: ["Pro の全機能", "PDF成長レポート", "詳細分析"] },
-  vip: { name: "VIP", price: "¥2,980/月", color: "text-purple-500", features: ["Premium の全機能", "限定コンテンツ", "Sho への直接相談"] },
+  pro: { name: "Pro", price: "¥780/月", color: "text-mint", features: ["投稿・ジャーナリング", "AIフィードバック", "感情グラフ・睡眠記録", "バッジ・ストリーク"] },
+  premium: { name: "Premium", price: "¥1,480/月", color: "text-orange", features: ["Pro の全機能", "PDF成長レポート", "詳細分析"] },
+  vip: { name: "VIP", price: "¥2,480/月", color: "text-purple-500", features: ["Premium の全機能", "限定コンテンツ", "Sho への直接相談"] },
 };
 
 interface PlanGateProps {

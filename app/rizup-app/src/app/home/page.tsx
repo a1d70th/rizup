@@ -131,7 +131,7 @@ export default function HomePage() {
               <span className="text-xl">⏰</span>
               <p className="text-sm font-bold text-orange flex-1">無料トライアルが終了しました</p>
             </div>
-            <p className="text-xs text-text-mid mb-3">トライアル期間が終了しました。Proプラン（¥980/月）で投稿・AIフィードバック・感情グラフを引き続きご利用ください。</p>
+            <p className="text-xs text-text-mid mb-3">トライアル期間が終了しました。Proプラン（¥780/月）で投稿・AIフィードバック・感情グラフを引き続きご利用ください。</p>
             <a href="/settings" className="block text-center bg-mint text-white text-sm font-bold py-2.5 rounded-full shadow-md shadow-mint/30">プランを確認する</a>
           </div>
         )}

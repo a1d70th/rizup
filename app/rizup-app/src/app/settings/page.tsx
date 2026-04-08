@@ -31,13 +31,13 @@ export default function SettingsPage() {
           <h3 className="text-sm font-bold mb-3">プラン一覧</h3>
           <div className="bg-mint-light rounded-xl p-3 mb-3">
             <p className="text-xs font-bold text-mint">🎉 7日間無料トライアル（全機能使い放題）</p>
-            <p className="text-[10px] text-text-mid mt-1">8日目から自動的にProプラン（¥980/月）へ</p>
+            <p className="text-[10px] text-text-mid mt-1">8日目から自動的にProプラン（¥780/月）へ</p>
           </div>
           <div className="flex flex-col gap-2">
             {[
-              { name: "Pro", price: "¥980/月", desc: "投稿・ジャーナリング・AIフィードバック・感情グラフ", color: "text-mint" },
-              { name: "Premium", price: "¥1,980/月", desc: "Pro全機能＋PDF成長レポート・詳細分析", color: "text-orange" },
-              { name: "VIP", price: "¥2,980/月", desc: "Premium全機能＋限定コンテンツ・直接相談", color: "text-purple-500" },
+              { name: "Pro", price: "¥780/月", desc: "投稿・ジャーナリング・AIフィードバック・感情グラフ", color: "text-mint" },
+              { name: "Premium", price: "¥1,480/月", desc: "Pro全機能＋PDF成長レポート・詳細分析", color: "text-orange" },
+              { name: "VIP", price: "¥2,480/月", desc: "Premium全機能＋限定コンテンツ・直接相談", color: "text-purple-500" },
             ].map((p) => (
               <div key={p.name} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                 <div>
