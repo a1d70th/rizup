@@ -146,6 +146,9 @@ export default function PostCard({ post, userId }: PostCardProps) {
 
       {showComments && (
         <div className="border-t border-gray-50 pt-2">
+          {comments.length === 0 && (
+            <p className="text-xs text-text-light text-center py-2">最初のコメントを送ろう！</p>
+          )}
           {comments.map((c) => (
             <div key={c.id} className="flex items-start gap-2 mb-2">
               <div className="w-6 h-6 rounded-full bg-orange-light flex items-center justify-center text-xs mt-0.5">🌸</div>

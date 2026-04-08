@@ -114,11 +114,17 @@ export default function ProfilePage() {
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
           <h3 className="text-sm font-bold mb-3">📊 気分の推移</h3>
           <div className="flex items-end gap-1 h-20">
-            {Array.from({ length: 14 }).map((_, i) => (
-              <div key={i} className="flex-1 rounded-t-md bg-mint" style={{ height: `${30 + Math.random() * 60}%`, opacity: 0.4 + i * 0.04 }} />
-            ))}
+            {[2,3,2,4,3,3,4,3,4,5,4,4,5,5].map((mood, i) => {
+              const colors: Record<number,string> = {1:"#ef4444",2:"#f97316",3:"#eab308",4:"#6ecbb0",5:"#5ab89d"};
+              return <div key={i} className="flex-1 rounded-t-md" style={{ height:`${mood*20}%`, background:colors[mood] }} />;
+            })}
           </div>
           <div className="flex justify-between text-[10px] text-text-light mt-1"><span>14日前</span><span>今日</span></div>
+          <div className="flex gap-2 mt-2 flex-wrap">
+            {[{c:"#ef4444",l:"つらい"},{c:"#f97316",l:"ふつう"},{c:"#eab308",l:"まあまあ"},{c:"#6ecbb0",l:"いい感じ"},{c:"#5ab89d",l:"最高"}].map(x=>(
+              <div key={x.l} className="flex items-center gap-1"><div className="w-2 h-2 rounded-full" style={{background:x.c}} /><span className="text-[9px] text-text-light">{x.l}</span></div>
+            ))}
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
