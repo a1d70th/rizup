@@ -306,8 +306,8 @@ export default function ProfilePage() {
 
       {/* Edit Modal */}
       {showEdit && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={() => setShowEdit(false)}>
-          <div className="bg-white rounded-t-3xl w-full max-w-md p-6 animate-fade-in overflow-y-auto" style={{ maxHeight: "90vh", paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))" }} onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 flex items-end justify-center" style={{ zIndex: 9999 }} onClick={() => setShowEdit(false)}>
+          <div className="bg-white rounded-t-3xl w-full max-w-md p-6 animate-fade-in overflow-y-auto" style={{ maxHeight: "calc(100vh - env(safe-area-inset-bottom, 0px))", paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))" }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-extrabold">プロフィール編集</h2>
               <button onClick={() => setShowEdit(false)} className="text-text-light text-xl">✕</button>
@@ -362,7 +362,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      <BottomNav />
+      {!showEdit && <BottomNav />}
     </div>
   );
 }
