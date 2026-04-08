@@ -128,8 +128,13 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
 
   const handleDelete = async () => {
     if (!confirm("この投稿を削除しますか？")) return;
-    await supabase.from("posts").delete().eq("id", post.id);
+    const { error } = await supabase.from("posts").delete().eq("id", post.id);
     setShowMenu(false);
+    if (error) {
+      alert("削除に失敗しました。もう一度お試しください。");
+      console.error("[PostCard] Delete error:", error);
+      return;
+    }
     onDelete?.(post.id);
   };
 

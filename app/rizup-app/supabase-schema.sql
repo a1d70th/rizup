@@ -92,6 +92,7 @@ CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (
 CREATE POLICY "Posts are viewable by everyone" ON posts FOR SELECT USING (true);
 CREATE POLICY "Users can insert own posts" ON posts FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own posts" ON posts FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own posts" ON posts FOR DELETE USING (auth.uid() = user_id);
 
 CREATE POLICY "Reactions are viewable by everyone" ON reactions FOR SELECT USING (true);
 CREATE POLICY "Users can insert own reactions" ON reactions FOR INSERT WITH CHECK (auth.uid() = user_id);
