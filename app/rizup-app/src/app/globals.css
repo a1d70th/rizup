@@ -9,22 +9,62 @@ body {
   background: #fafafa;
   color: #3a3a3a;
   -webkit-text-size-adjust: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* iOS Safari: prevent zoom on input focus */
+/* ── iOS/Android: prevent zoom on input focus ── */
 input[type="text"], input[type="email"], input[type="password"],
 input[type="number"], input[type="date"], input[type="time"],
 input[type="url"], textarea, select {
   font-size: 16px !important;
 }
 
-/* iOS Safari: safe area padding for bottom nav */
+/* ── Android: eliminate 300ms tap delay ── */
+a, button, input, select, textarea, [role="button"] {
+  touch-action: manipulation;
+}
+
+/* ── Tap feedback for buttons ── */
+button:active, a:active, [role="button"]:active {
+  opacity: 0.7;
+  transition: opacity 0.1s;
+}
+
+/* ── Minimum tap target ── */
+button, a, [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+/* Exceptions: inline links and tiny icons */
+.inline-link, p a, span a { min-height: auto; min-width: auto; }
+
+/* ── Accessibility: focus outline ── */
+button:focus-visible, a:focus-visible, input:focus-visible,
+textarea:focus-visible, select:focus-visible, [role="button"]:focus-visible {
+  outline: 2px solid #6ecbb0;
+  outline-offset: 2px;
+}
+
+/* ── iOS Safari: safe area padding for bottom nav ── */
 .pb-20 { padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }
 
-/* Hide scrollbar for filter bars */
+/* ── Smooth scroll everywhere ── */
+html { scroll-behavior: smooth; }
+* { -webkit-overflow-scrolling: touch; }
+
+/* ── Hide scrollbar for filter bars ── */
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 
+/* ── Prevent text selection on buttons ── */
+button, [role="button"] { -webkit-user-select: none; user-select: none; }
+
+/* ── Image loading placeholder ── */
+img { background-color: #f0f0f0; }
+
+/* ── Animations ── */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }

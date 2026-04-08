@@ -167,7 +167,7 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
         {/* Menu for owner or admin */}
         {(isOwner || isAdmin) && (
           <div className="relative">
-            <button onClick={() => setShowMenu(!showMenu)} className="text-text-light hover:text-text p-1 text-lg leading-none">
+            <button onClick={() => setShowMenu(!showMenu)} aria-label="メニュー" className="text-text-light hover:text-text p-2 text-lg leading-none">
               ···
             </button>
             {showMenu && (
@@ -225,8 +225,8 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
         {reactionTypes.map((r) => {
           const reacted = myReactions.has(r.type);
           return (
-            <button key={r.type} onClick={() => handleReact(r.type)}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+            <button key={r.type} onClick={() => handleReact(r.type)} aria-label={`${r.label} ${counts[r.type]}件`}
+              className={`flex items-center gap-1 px-3 py-2 rounded-full text-xs font-medium border transition-all ${
                 reacted ? "bg-mint-light border-mint text-mint" : "bg-gray-50 border-gray-100 text-text-mid hover:border-mint-mid"
               } ${animating === r.type ? "animate-pop" : ""}`}>
               <span>{r.emoji}</span>
@@ -239,8 +239,8 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
 
       {/* Report & Comment row */}
       <div className="flex items-center gap-3 mb-2">
-        <button onClick={() => setShowComments(!showComments)}
-          className="text-xs text-text-light hover:text-mint transition">
+        <button onClick={() => setShowComments(!showComments)} aria-label="コメントを表示"
+          className="text-xs text-text-light hover:text-mint transition py-1">
           💬 コメント {comments.length > 0 ? `(${comments.length})` : "する"}
         </button>
         {userId && !isOwner && (
@@ -286,8 +286,8 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
               placeholder="前向きなコメントを書こう..."
               className="flex-1 border border-gray-100 rounded-full px-3 py-1.5 text-xs outline-none focus:border-mint"
               onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); handleComment(); } }} />
-            <button onClick={() => { (document.activeElement as HTMLElement)?.blur(); handleComment(); }} disabled={!commentText.trim()}
-              className="bg-mint text-white rounded-full px-3 py-1.5 text-xs font-bold disabled:opacity-30">送信</button>
+            <button onClick={() => { (document.activeElement as HTMLElement)?.blur(); handleComment(); }} disabled={!commentText.trim()} aria-label="コメントを送信"
+              className="bg-mint text-white rounded-full px-4 py-2 text-xs font-bold disabled:opacity-30">送信</button>
           </div>
         </div>
       )}

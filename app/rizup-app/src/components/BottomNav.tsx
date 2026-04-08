@@ -33,14 +33,14 @@ export default function BottomNav() {
   const items = [...baseItems, ...extraItems];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50 pb-safe">
-      <div className="flex justify-around py-2 max-w-md mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50" style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }} aria-label="メインナビゲーション">
+      <div className="flex justify-around py-1 max-w-md mx-auto">
         {items.map((item) => {
           const active = pathname?.startsWith(item.href);
           return (
-            <Link key={item.href} href={item.href}
-              className={`flex flex-col items-center gap-0.5 text-xs font-medium transition-colors ${active ? "text-mint" : "text-text-light"}`}>
-              <span className="text-xl">{item.icon}</span>
+            <Link key={item.href} href={item.href} aria-label={item.label} aria-current={active ? "page" : undefined}
+              className={`flex flex-col items-center justify-center gap-0.5 py-2 px-3 text-xs font-medium transition-colors ${active ? "text-mint" : "text-text-light"}`}>
+              <span className="text-xl" aria-hidden="true">{item.icon}</span>
               <span>{item.label}</span>
             </Link>
           );

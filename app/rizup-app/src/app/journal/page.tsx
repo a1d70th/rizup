@@ -250,7 +250,7 @@ export default function JournalPage() {
 
         {/* Moderation error */}
         {moderationError && (
-          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-3 flex items-start gap-3">
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-3 flex items-start gap-3" role="alert">
             <Image src="/sho.png" alt="Sho" width={32} height={32} className="rounded-full shrink-0" />
             <p className="text-xs text-red-600 leading-relaxed">{moderationError}</p>
           </div>
@@ -268,7 +268,7 @@ export default function JournalPage() {
           </div>
         )}
 
-        <button onClick={handlePost} disabled={loading || !content.trim()}
+        <button onClick={handlePost} disabled={loading || !content.trim()} aria-label="ジャーナルを投稿"
           className="w-full bg-mint text-white font-bold py-4 rounded-full shadow-lg shadow-mint/30 disabled:opacity-30 text-base">
           {loading ? "投稿中..." : mode === "morning" ? "☀️ 朝ジャーナルを投稿" : "🌙 夜ジャーナルを投稿"}
         </button>

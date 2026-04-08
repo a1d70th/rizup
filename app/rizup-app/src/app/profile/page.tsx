@@ -147,8 +147,8 @@ export default function ProfilePage() {
                 {profile.avatar_url || "🌿"}
               </div>
             )}
-            <button onClick={() => fileRef.current?.click()}
-              className="absolute -bottom-1 -right-1 w-7 h-7 bg-mint text-white rounded-full flex items-center justify-center text-xs shadow-md">
+            <button onClick={() => fileRef.current?.click()} aria-label="アバター画像を変更"
+              className="absolute -bottom-1 -right-1 w-8 h-8 bg-mint text-white rounded-full flex items-center justify-center text-xs shadow-md">
               {uploading ? "..." : "📷"}
             </button>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
