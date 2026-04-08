@@ -43,7 +43,7 @@ export default function ProfilePage() {
         if (!user) return;
         setUserId(user.id);
 
-        const { data: prof, error: profErr } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+        const { data: prof } = await supabase.from("profiles").select("*").eq("id", user.id).single();
         if (prof) setProfile(prof);
 
         const { data: userPosts, count } = await supabase.from("posts")
