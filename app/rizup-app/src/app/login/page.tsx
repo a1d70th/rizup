@@ -86,11 +86,17 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     console.log("[Rizup Login] Google OAuth start");
+    const ua = navigator.userAgent || "";
+    if (/Line|FBAN|FBAV|Instagram/i.test(ua)) {
+      showError("アプリ内ブラウザではGoogleログインが使えません。右上の「…」メニューから「ブラウザで開く」を選んでください。");
+      return;
+    }
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: "https://rizup-app.vercel.app/auth/callback",
+          queryParams: { prompt: "select_account" },
         },
       });
       if (error) {

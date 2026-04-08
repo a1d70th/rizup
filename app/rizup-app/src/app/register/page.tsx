@@ -23,28 +23,56 @@ export default function RegisterPage() {
       return;
     }
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: { emailRedirectTo: "https://rizup-app.vercel.app/auth/callback" },
     });
 
     if (error) {
-      setError(error.message);
+      console.error("[Rizup Register] Error:", error.message, error.status);
+      const messages: Record<string, string> = {
+        "User already registered": "このメールアドレスは既に登録されています",
+        "Password should be at least 6 characters": "パスワードは6文字以上にしてください",
+        "Unable to validate email address: invalid format": "メールアドレスの形式が正しくありません",
+        "Signups not allowed for this instance": "現在新規登録を停止しています",
+      };
+      setError(messages[error.message] || `登録に失敗しました：${error.message}`);
+      setLoading(false);
+    } else if (data?.session) {
+      // Email confirmation disabled — session returned immediately
+      console.log("[Rizup Register] Session created, redirecting to onboarding");
+      window.location.href = "https://rizup-app.vercel.app/onboarding";
+    } else if (data?.user && !data.session) {
+      // Email confirmation enabled — show confirmation screen
+      console.log("[Rizup Register] Email confirmation required");
+      setSuccess(true);
       setLoading(false);
     } else {
-      setSuccess(true);
+      setError("登録に失敗しました。もう一度お試しください。");
       setLoading(false);
     }
   };
 
   const handleGoogleSignup = async () => {
+    // Detect in-app browser (LINE, Instagram, etc.) — Google blocks OAuth in WebViews
+    const ua = navigator.userAgent || "";
+    if (/Line|FBAN|FBAV|Instagram/i.test(ua)) {
+      setError("アプリ内ブラウザではGoogleログインが使えません。右上の「…」メニューから「ブラウザで開く」を選んでください。");
+      return;
+    }
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: "https://rizup-app.vercel.app/auth/callback" },
+        options: {
+          redirectTo: "https://rizup-app.vercel.app/auth/callback",
+          queryParams: { prompt: "select_account" },
+        },
       });
-      if (error) setError("Google 登録に失敗しました。もう一度お試しください。");
+      if (error) {
+        console.error("[Rizup Register] Google OAuth error:", error.message);
+        setError("Google 登録に失敗しました。もう一度お試しください。");
+      }
     } catch {
       setError("Google 登録に失敗しました。");
     }
