@@ -32,13 +32,36 @@ export default function OnboardingPage() {
   };
 
   const handleComplete = async () => {
+    if (!name.trim()) return;
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
-    await supabase.from("profiles").update({
-      name, dream, avatar_url: avatar, zodiac, birthday, rizup_type: resultType,
-    }).eq("id", user.id);
-    window.location.href = "https://rizup-app.vercel.app/home";
+
+    const updateData = {
+      name: name.trim(),
+      dream: dream.trim(),
+      avatar_url: avatar,
+      zodiac: zodiac || null,
+      birthday: birthday || null,
+      rizup_type: resultType || null,
+    };
+
+    const { error } = await supabase.from("profiles").update(updateData).eq("id", user.id);
+
+    if (error) {
+      console.error("[Onboarding] Save error:", error);
+      // Try upsert as fallback
+      await supabase.from("profiles").upsert({ id: user.id, email: user.email, ...updateData });
+    }
+
+    // Verify save was successful
+    const { data: saved } = await supabase.from("profiles").select("name").eq("id", user.id).single();
+    if (saved?.name) {
+      window.location.href = "https://rizup-app.vercel.app/home";
+    } else {
+      console.error("[Onboarding] Verification failed");
+      setLoading(false);
+    }
   };
 
   const handleShare = () => {

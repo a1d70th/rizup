@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { rizupTypes } from "@/lib/rizup-types";
 import type { RizupType } from "@/lib/rizup-types";
@@ -14,6 +14,12 @@ interface ProfileData {
   rizup_type?: string; birthday?: string;
 }
 
+const moodColors: Record<number, string> = { 1: "#ef4444", 2: "#f97316", 3: "#eab308", 4: "#6ecbb0", 5: "#5ab89d" };
+const moodLabels = [
+  { c: "#ef4444", l: "つらい" }, { c: "#f97316", l: "ふつう" },
+  { c: "#eab308", l: "まあまあ" }, { c: "#6ecbb0", l: "いい感じ" }, { c: "#5ab89d", l: "最高" },
+];
+
 export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -21,24 +27,21 @@ export default function ProfilePage() {
   const [badges, setBadges] = useState<string[]>([]);
   const [totalPosts, setTotalPosts] = useState(0);
   const [totalReactions, setTotalReactions] = useState(0);
+  const [moodHistory, setMoodHistory] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const init = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { window.location.href = "https://rizup-app.vercel.app/login"; return; }
+        if (!user) return;
         setUserId(user.id);
 
         const { data: prof, error: profErr } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-
-        // Profile doesn't exist or name is empty → redirect to onboarding
-        if (profErr || !prof || !prof.name) {
-          window.location.href = "https://rizup-app.vercel.app/onboarding";
-          return;
-        }
-
+        if (profErr || !prof || !prof.name) { window.location.href = "https://rizup-app.vercel.app/onboarding"; return; }
         setProfile(prof);
 
         const { data: userPosts, count } = await supabase.from("posts")
@@ -47,23 +50,43 @@ export default function ProfilePage() {
         if (userPosts) setPosts(userPosts);
         if (count) setTotalPosts(count);
 
+        // Mood history from real posts (last 14)
+        const { data: moodPosts } = await supabase.from("posts").select("mood")
+          .eq("user_id", user.id).order("created_at", { ascending: true }).limit(14);
+        if (moodPosts) setMoodHistory(moodPosts.map(p => p.mood));
+
         const { data: userBadges } = await supabase.from("badges").select("type").eq("user_id", user.id);
         if (userBadges) setBadges(userBadges.map(b => b.type));
 
-        // Count reactions received on user's posts
         if (userPosts && userPosts.length > 0) {
           const { count: rxCount } = await supabase.from("reactions")
             .select("id", { count: "exact", head: true })
             .in("post_id", userPosts.map(p => p.id));
           setTotalReactions(rxCount || 0);
         }
-      } catch (err) {
-        console.error("[Rizup Profile]", err);
-      }
+      } catch (err) { console.error("[Rizup Profile]", err); }
       setLoading(false);
     };
     init();
   }, []);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${userId}/avatar.${ext}`;
+
+    const { error: uploadErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    if (uploadErr) { console.error("[Avatar Upload]", uploadErr); setUploading(false); return; }
+
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+    const publicUrl = urlData.publicUrl;
+
+    await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", userId);
+    setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : prev);
+    setUploading(false);
+  };
 
   const badgeMap: Record<string, { emoji: string; label: string }> = {
     first_post: { emoji: "🌱", label: "初投稿" }, streak_7: { emoji: "🔥", label: "7日連続" },
@@ -76,18 +99,30 @@ export default function ProfilePage() {
       <Image src="/sho.png" alt="Sho" width={48} height={48} className="animate-sho-float rounded-full" />
     </div>
   );
-
   if (!profile) return null;
 
   const typeInfo = profile.rizup_type && profile.rizup_type in rizupTypes ? rizupTypes[profile.rizup_type as RizupType] : null;
+  const isUrl = profile.avatar_url?.startsWith("http");
 
   return (
     <div className="min-h-screen bg-bg pb-20 pt-16">
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
+        {/* Profile Header */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center mb-4">
-          <div className="w-20 h-20 rounded-full bg-mint-light mx-auto mb-3 flex items-center justify-center text-3xl border-[3px] border-mint">
-            {profile.avatar_url || "🌿"}
+          <div className="relative w-20 h-20 mx-auto mb-3">
+            {isUrl ? (
+              <img src={profile.avatar_url!} alt="Avatar" className="w-20 h-20 rounded-full object-cover border-[3px] border-mint" />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-mint-light flex items-center justify-center text-3xl border-[3px] border-mint">
+                {profile.avatar_url || "🌿"}
+              </div>
+            )}
+            <button onClick={() => fileRef.current?.click()}
+              className="absolute -bottom-1 -right-1 w-7 h-7 bg-mint text-white rounded-full flex items-center justify-center text-xs shadow-md">
+              {uploading ? "..." : "📷"}
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
           </div>
           <h1 className="text-xl font-extrabold">{profile.name}</h1>
           {profile.dream && <p className="text-sm text-text-mid mt-1">🎯 {profile.dream}</p>}
@@ -104,6 +139,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* Badges */}
         {badges.length > 0 && (
           <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
             <h3 className="text-sm font-bold mb-3">🏅 獲得バッジ</h3>
@@ -115,33 +151,34 @@ export default function ProfilePage() {
           </div>
         )}
 
+        {/* Mood Graph — real data */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
           <h3 className="text-sm font-bold mb-3">📊 気分の推移</h3>
-          <div className="flex items-end gap-1 h-20">
-            {[2,3,2,4,3,3,4,3,4,5,4,4,5,5].map((mood, i) => {
-              const colors: Record<number,string> = {1:"#ef4444",2:"#f97316",3:"#eab308",4:"#6ecbb0",5:"#5ab89d"};
-              return <div key={i} className="flex-1 rounded-t-md" style={{ height:`${mood*20}%`, background:colors[mood] }} />;
-            })}
-          </div>
-          <div className="flex justify-between text-[10px] text-text-light mt-1"><span>14日前</span><span>今日</span></div>
-          <div className="flex gap-2 mt-2 flex-wrap">
-            {[{c:"#ef4444",l:"つらい"},{c:"#f97316",l:"ふつう"},{c:"#eab308",l:"まあまあ"},{c:"#6ecbb0",l:"いい感じ"},{c:"#5ab89d",l:"最高"}].map(x=>(
-              <div key={x.l} className="flex items-center gap-1"><div className="w-2 h-2 rounded-full" style={{background:x.c}} /><span className="text-[9px] text-text-light">{x.l}</span></div>
-            ))}
-          </div>
+          {moodHistory.length === 0 ? (
+            <p className="text-xs text-text-light text-center py-4">ジャーナルを投稿すると、ここにグラフが表示されます</p>
+          ) : (
+            <>
+              <div className="flex items-end gap-1 h-20">
+                {moodHistory.map((mood, i) => (
+                  <div key={i} className="flex-1 rounded-t-md" style={{ height: `${mood * 20}%`, background: moodColors[mood] || "#6ecbb0" }} />
+                ))}
+              </div>
+              <div className="flex justify-between text-[10px] text-text-light mt-1">
+                <span>{moodHistory.length}件前</span><span>最新</span>
+              </div>
+              <div className="flex gap-2 mt-2 flex-wrap">
+                {moodLabels.map(x => (
+                  <div key={x.l} className="flex items-center gap-1">
+                    <div className="w-2 h-2 rounded-full" style={{ background: x.c }} />
+                    <span className="text-[9px] text-text-light">{x.l}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
-          <h3 className="text-sm font-bold mb-3">💬 言葉のポジティブ度</h3>
-          <div className="flex items-center gap-3">
-            <div className="flex-1 bg-gray-100 rounded-full h-3">
-              <div className="bg-mint h-3 rounded-full" style={{ width: "72%" }} />
-            </div>
-            <span className="text-sm font-extrabold text-mint">72%</span>
-          </div>
-          <p className="text-[10px] text-text-light mt-2">先月比 +8%</p>
-        </div>
-
+        {/* Posts */}
         <h3 className="text-sm font-bold mb-3">📝 投稿履歴</h3>
         {posts.length === 0 ? (
           <div className="text-center py-8">
