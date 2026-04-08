@@ -18,6 +18,7 @@ export default function OnboardingPage() {
   const [quizIndex, setQuizIndex] = useState(0);
   const [resultType, setResultType] = useState<RizupType | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleQuizAnswer = (type: string) => {
     const newAnswers = [...quizAnswers, type];
@@ -34,32 +35,49 @@ export default function OnboardingPage() {
   const handleComplete = async () => {
     if (!name.trim()) return;
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setLoading(false); return; }
+    setError("");
 
-    const updateData = {
-      name: name.trim(),
-      dream: dream.trim(),
-      avatar_url: avatar,
-      zodiac: zodiac || null,
-      birthday: birthday || null,
-      rizup_type: resultType || null,
-    };
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setError("ログインが切れました。再ログインしてください。"); setLoading(false); return; }
 
-    const { error } = await supabase.from("profiles").update(updateData).eq("id", user.id);
+      const profileData = {
+        id: user.id,
+        email: user.email,
+        name: name.trim(),
+        dream: dream.trim(),
+        avatar_url: avatar,
+        zodiac: zodiac || null,
+        birthday: birthday || null,
+        rizup_type: resultType || null,
+      };
 
-    if (error) {
-      console.error("[Onboarding] Save error:", error);
-      // Try upsert as fallback
-      await supabase.from("profiles").upsert({ id: user.id, email: user.email, ...updateData });
-    }
+      // Always use upsert to handle both insert and update cases
+      const { error: upsertErr } = await supabase.from("profiles").upsert(profileData, { onConflict: "id" });
 
-    // Verify save was successful
-    const { data: saved } = await supabase.from("profiles").select("name").eq("id", user.id).single();
-    if (saved?.name) {
+      if (upsertErr) {
+        console.error("[Onboarding] Upsert error:", upsertErr);
+        setError("保存に失敗しました。もう一度お試しください。");
+        setLoading(false);
+        return;
+      }
+
+      // Verify
+      const { data: saved } = await supabase.from("profiles").select("name").eq("id", user.id).single();
+      console.log("[Onboarding] Saved profile:", saved);
+
+      if (!saved?.name) {
+        setError("保存の確認に失敗しました。もう一度お試しください。");
+        setLoading(false);
+        return;
+      }
+
+      // Force navigate — do NOT setLoading(false), page is leaving
+      console.log("[Onboarding] Success, navigating to /home");
       window.location.href = "https://rizup-app.vercel.app/home";
-    } else {
-      console.error("[Onboarding] Verification failed");
+    } catch (err) {
+      console.error("[Onboarding] Unexpected error:", err);
+      setError("エラーが発生しました。もう一度お試しください。");
       setLoading(false);
     }
   };
@@ -174,6 +192,11 @@ export default function OnboardingPage() {
             className="w-full border-2 border-gray-200 rounded-full py-3 text-sm font-bold text-text-mid hover:border-mint transition mb-3">
             𝕏 で結果をシェアする
           </button>
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-3 mb-3">
+              <p className="text-red-500 text-xs text-center font-medium">{error}</p>
+            </div>
+          )}
           <button onClick={handleComplete} disabled={loading}
             className="w-full bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30 disabled:opacity-50">
             {loading ? "設定中..." : "Rizup を始める 🌿"}

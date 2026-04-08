@@ -27,8 +27,8 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Unauthenticated → /login
-  if (protectedPaths.some((p) => pathname.startsWith(p)) && !user) {
+  // Unauthenticated → /login (protected pages AND onboarding)
+  if (!user && (protectedPaths.some((p) => pathname.startsWith(p)) || pathname === "/onboarding")) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
