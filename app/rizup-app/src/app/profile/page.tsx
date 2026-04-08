@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { rizupTypes } from "@/lib/rizup-types";
+import { rizupTypes, zodiacSigns } from "@/lib/rizup-types";
 import type { RizupType } from "@/lib/rizup-types";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
@@ -11,7 +11,7 @@ import Image from "next/image";
 interface ProfileData {
   name: string; dream: string; avatar_url: string | null;
   streak: number; plan: string; zodiac?: string;
-  rizup_type?: string; birthday?: string;
+  rizup_type?: string; birthday?: string; is_admin?: boolean;
 }
 
 const moodColors: Record<number, string> = { 1: "#ef4444", 2: "#f97316", 3: "#eab308", 4: "#6ecbb0", 5: "#5ab89d" };
@@ -32,6 +32,8 @@ export default function ProfilePage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [showEdit, setShowEdit] = useState(false);
+  const [editForm, setEditForm] = useState({ name: "", dream: "", zodiac: "", birthday: "", rizup_type: "" });
 
   useEffect(() => {
     const init = async () => {
@@ -88,6 +90,24 @@ export default function ProfilePage() {
     setUploading(false);
   };
 
+  const handleEditSave = async () => {
+    if (!userId || !editForm.name.trim()) return;
+    const updates: Record<string, string> = {};
+    if (editForm.name.trim()) updates.name = editForm.name.trim();
+    if (editForm.dream !== undefined) updates.dream = editForm.dream;
+    if (editForm.zodiac) updates.zodiac = editForm.zodiac;
+    if (editForm.birthday) updates.birthday = editForm.birthday;
+    if (editForm.rizup_type) updates.rizup_type = editForm.rizup_type;
+    await supabase.from("profiles").update(updates).eq("id", userId);
+    setProfile(prev => prev ? { ...prev, ...updates } : prev);
+    setShowEdit(false);
+  };
+
+  const handlePostDelete = (postId: string) => {
+    setPosts(prev => prev.filter(p => p.id !== postId));
+    setTotalPosts(prev => prev - 1);
+  };
+
   const badgeMap: Record<string, { emoji: string; label: string }> = {
     first_post: { emoji: "🌱", label: "初投稿" }, streak_7: { emoji: "🔥", label: "7日連続" },
     streak_14: { emoji: "🔥", label: "14日連続" }, streak_30: { emoji: "👑", label: "30日連続" },
@@ -132,6 +152,14 @@ export default function ProfilePage() {
             </span>
           )}
           {profile.zodiac && <span className="inline-block mt-1 ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-light text-orange">{profile.zodiac}</span>}
+          <div className="mt-3">
+            <button onClick={() => {
+              setEditForm({ name: profile.name, dream: profile.dream || "", zodiac: profile.zodiac || "", birthday: profile.birthday || "", rizup_type: profile.rizup_type || "" });
+              setShowEdit(true);
+            }} className="text-xs text-mint font-bold border border-mint rounded-full px-4 py-1.5 hover:bg-mint-light transition">
+              ✏️ プロフィールを編集
+            </button>
+          </div>
           <div className="flex justify-center gap-6 mt-4">
             <div className="text-center"><div className="text-xl font-extrabold text-mint">{totalPosts}</div><div className="text-[10px] text-text-light">投稿</div></div>
             <div className="text-center"><div className="text-xl font-extrabold text-orange">🔥 {profile.streak}</div><div className="text-[10px] text-text-light">連続日数</div></div>
@@ -218,10 +246,63 @@ export default function ProfilePage() {
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {posts.map((post) => (<PostCard key={post.id} post={post} userId={userId} />))}
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} userId={userId}
+                isAdmin={profile.is_admin} onDelete={handlePostDelete} />
+            ))}
           </div>
         )}
       </div>
+
+      {/* Edit Modal */}
+      {showEdit && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={() => setShowEdit(false)}>
+          <div className="bg-white rounded-t-3xl w-full max-w-md p-6 pb-8 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-extrabold">プロフィール編集</h2>
+              <button onClick={() => setShowEdit(false)} className="text-text-light text-xl">✕</button>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-text-mid block mb-1">名前</label>
+                <input type="text" value={editForm.name} onChange={(e) => setEditForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-text-mid block mb-1">夢・目標</label>
+                <input type="text" value={editForm.dream} onChange={(e) => setEditForm(f => ({ ...f, dream: e.target.value }))}
+                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-text-mid block mb-1">星座</label>
+                <select value={editForm.zodiac} onChange={(e) => setEditForm(f => ({ ...f, zodiac: e.target.value }))}
+                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint bg-white">
+                  <option value="">選択してください</option>
+                  {zodiacSigns.map(z => <option key={z} value={z}>{z}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-text-mid block mb-1">生年月日</label>
+                <input type="date" value={editForm.birthday} onChange={(e) => setEditForm(f => ({ ...f, birthday: e.target.value }))}
+                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint" />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-text-mid block mb-1">Rizup タイプ</label>
+                <select value={editForm.rizup_type} onChange={(e) => setEditForm(f => ({ ...f, rizup_type: e.target.value }))}
+                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint bg-white">
+                  <option value="">選択してください</option>
+                  {(Object.keys(rizupTypes) as RizupType[]).map(t => (
+                    <option key={t} value={t}>{rizupTypes[t].emoji} {rizupTypes[t].label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <button onClick={handleEditSave} disabled={!editForm.name.trim()}
+              className="w-full bg-mint text-white font-bold py-3 rounded-full mt-5 shadow-lg shadow-mint/30 disabled:opacity-30">保存する</button>
+          </div>
+        </div>
+      )}
+
       <BottomNav />
     </div>
   );

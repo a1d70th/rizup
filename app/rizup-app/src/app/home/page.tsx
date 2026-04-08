@@ -22,6 +22,7 @@ export default function HomePage() {
   const [hasCommentedToday, setHasCommentedToday] = useState(true);
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [trialEnded, setTrialEnded] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -29,9 +30,10 @@ export default function HomePage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           setUserId(user.id);
-          const { data: profile } = await supabase.from("profiles").select("streak, zodiac, birthday, rizup_type, trial_ends_at, is_trial_ended, plan").eq("id", user.id).single();
+          const { data: profile } = await supabase.from("profiles").select("streak, zodiac, birthday, rizup_type, trial_ends_at, is_trial_ended, plan, is_admin").eq("id", user.id).single();
           if (profile) {
             setStreak(profile.streak || 0);
+            if (profile.is_admin) setIsAdmin(true);
             // Trial check
             if (profile.plan === "free" || !profile.plan) {
               if (profile.trial_ends_at) {
@@ -180,7 +182,9 @@ export default function HomePage() {
         ) : (
           <div className="flex flex-col gap-3">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} userId={userId} />
+              <PostCard key={post.id} post={post} userId={userId}
+                isAdmin={isAdmin}
+                onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
             ))}
           </div>
         )}

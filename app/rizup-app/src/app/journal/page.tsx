@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import Header from "@/components/Header";
@@ -23,15 +23,66 @@ export default function JournalPage() {
   const [loading, setLoading] = useState(false);
   const [aiFeedback, setAiFeedback] = useState<string | null>(null);
   const [posted, setPosted] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [moderationError, setModerationError] = useState<string | null>(null);
+  const [suspended, setSuspended] = useState(false);
+  const imageRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMode(new Date().getHours() < 15 ? "morning" : "evening");
+    // Check if user is suspended
+    const checkSuspended = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: prof } = await supabase.from("profiles").select("is_suspended").eq("id", user.id).single();
+        if (prof?.is_suspended) setSuspended(true);
+      }
+    };
+    checkSuspended();
   }, []);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
 
   const handlePost = async () => {
     setLoading(true);
+    setModerationError(null);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
+
+    // Content moderation check
+    try {
+      const modRes = await fetch("/api/moderate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      const modData = await modRes.json();
+      if (!modData.safe) {
+        // Increment warning count
+        const { data: prof } = await supabase.from("profiles").select("warning_count").eq("id", user.id).single();
+        const newCount = (prof?.warning_count || 0) + 1;
+        const updates: Record<string, unknown> = { warning_count: newCount };
+        if (newCount >= 3) updates.is_suspended = true;
+        await supabase.from("profiles").update(updates).eq("id", user.id);
+
+        if (newCount >= 3) {
+          setSuspended(true);
+          setModerationError("アカウントが一時停止されました。3回の警告を受けたため、投稿機能が制限されています。お問い合わせください。");
+        } else {
+          setModerationError(`Sho「この投稿は送れないよ。${modData.reason || "コミュニティガイドラインに沿った内容にしてね"}」（警告 ${newCount}/3）`);
+        }
+        setLoading(false);
+        return;
+      }
+    } catch { /* moderation error — allow post */ }
 
     let postContent = content;
     if (mode === "evening") {
@@ -42,7 +93,6 @@ export default function JournalPage() {
       }
       if (bedtime) {
         postContent += `\n\n🛏️ 今夜の就寝予定：${bedtime}`;
-        // Save bedtime to profile for next morning
         await supabase.from("profiles").update({ last_bedtime: bedtime }).eq("id", user.id);
       }
     }
@@ -51,8 +101,20 @@ export default function JournalPage() {
       await supabase.from("profiles").update({ last_sleep_hours: parseFloat(sleepHours) }).eq("id", user.id);
     }
 
+    // Upload image if selected
+    let imageUrl: string | null = null;
+    if (imageFile) {
+      const ext = imageFile.name.split(".").pop();
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error: uploadErr } = await supabase.storage.from("posts").upload(path, imageFile, { upsert: true });
+      if (!uploadErr) {
+        const { data: urlData } = supabase.storage.from("posts").getPublicUrl(path);
+        imageUrl = urlData.publicUrl;
+      }
+    }
+
     const { data, error } = await supabase.from("posts").insert({
-      user_id: user.id, type: mode, content: postContent, mood,
+      user_id: user.id, type: mode, content: postContent, mood, image_url: imageUrl,
     }).select().single();
 
     if (!error && data) {
@@ -64,7 +126,6 @@ export default function JournalPage() {
       const feedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];
       await supabase.from("posts").update({ ai_feedback: feedback }).eq("id", data.id);
 
-      // Increment streak
       const { data: prof } = await supabase.from("profiles").select("streak").eq("id", user.id).single();
       const newStreak = (prof?.streak || 0) + 1;
       await supabase.from("profiles").update({ streak: newStreak }).eq("id", user.id);
@@ -74,6 +135,21 @@ export default function JournalPage() {
     }
     setLoading(false);
   };
+
+  if (suspended) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
+        <Image src="/sho.png" alt="Sho" width={80} height={80} className="rounded-full mb-4" />
+        <h2 className="text-xl font-extrabold mb-2">投稿が制限されています</h2>
+        <p className="text-sm text-text-mid leading-relaxed mb-6 max-w-xs">
+          コミュニティガイドライン違反のため、アカウントが一時停止されました。<br />
+          心当たりがない場合はお問い合わせください。
+        </p>
+        <a href="mailto:a1d.70th@gmail.com?subject=アカウント停止について"
+          className="bg-mint text-white font-bold px-8 py-3 rounded-full shadow-lg shadow-mint/30">お問い合わせ</a>
+      </div>
+    );
+  }
 
   if (posted) {
     return (
@@ -146,11 +222,33 @@ export default function JournalPage() {
         {/* Content */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-3">
           <p className="text-sm font-bold mb-2">{mode === "morning" ? "今日の目標・一言" : "今日の振り返り"}</p>
-          <textarea value={content} onChange={(e) => setContent(e.target.value)}
+          <textarea value={content} onChange={(e) => { setContent(e.target.value); setModerationError(null); }}
             placeholder={mode === "morning" ? "例：10分だけ読書する" : "例：今日は散歩したらちょっと楽になった"}
             className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm resize-none h-24 outline-none focus:border-mint" maxLength={500} />
-          <p className="text-right text-xs text-text-light mt-1">{content.length}/500</p>
+          <div className="flex items-center justify-between mt-1">
+            <button onClick={() => imageRef.current?.click()} type="button"
+              className="flex items-center gap-1 text-xs text-text-light hover:text-mint transition">
+              📷 画像を追加
+            </button>
+            <p className="text-xs text-text-light">{content.length}/500</p>
+          </div>
+          <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+          {imagePreview && (
+            <div className="relative mt-2">
+              <img src={imagePreview} alt="preview" className="w-full max-h-48 object-cover rounded-xl" />
+              <button onClick={() => { setImageFile(null); setImagePreview(null); }}
+                className="absolute top-2 right-2 bg-black/50 text-white w-6 h-6 rounded-full text-xs flex items-center justify-center">✕</button>
+            </div>
+          )}
         </div>
+
+        {/* Moderation error */}
+        {moderationError && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-3 flex items-start gap-3">
+            <Image src="/sho.png" alt="Sho" width={32} height={32} className="rounded-full shrink-0" />
+            <p className="text-xs text-red-600 leading-relaxed">{moderationError}</p>
+          </div>
+        )}
 
         {/* Gratitude */}
         {mode === "evening" && (
