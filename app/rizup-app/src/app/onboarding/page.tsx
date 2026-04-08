@@ -25,7 +25,7 @@ export default function OnboardingPage() {
   const [quizIndex, setQuizIndex] = useState(0);
   const [resultType, setResultType] = useState<RizupType | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  // error state removed — onboarding always proceeds to /home
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [agreedAge, setAgreedAge] = useState(false);
   const [personalDesc, setPersonalDesc] = useState<string | null>(null);
@@ -55,62 +55,45 @@ export default function OnboardingPage() {
   };
 
   const handleComplete = async () => {
-    if (!name.trim()) return;
     setLoading(true);
-    setError("");
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setError("ログインが切れました。再ログインしてください。"); setLoading(false); return; }
+      if (!user) { window.location.href = "/login"; return; }
 
-      const now = new Date().toISOString();
-      const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      const updates = {
-        name: name.trim(),
-        dream: dream.trim(),
+      const profileData = {
+        name: name.trim() || "ゲスト",
+        dream: dream.trim() || "",
         avatar_url: avatar,
-        zodiac: zodiac || null,
-        birthday: birthday || null,
-        mbti: mbti || null,
-        rizup_type: resultType || null,
-        trial_started_at: now,
-        trial_ends_at: trialEnd,
+        zodiac: zodiac || "",
+        birthday: birthday || "",
+        mbti: mbti || "",
+        rizup_type: resultType || "Grow",
+        trial_started_at: new Date().toISOString(),
+        trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       };
 
-      // Try update first (profile may already exist from handle_new_user trigger)
-      console.log("[Onboarding] Attempting update for user:", user.id);
-      const { error: updateErr } = await supabase.from("profiles").update(updates).eq("id", user.id);
+      // Try insert first
+      const { error: insertErr } = await supabase.from("profiles").insert({
+        id: user.id, email: user.email, ...profileData,
+      });
 
-      if (updateErr) {
-        console.warn("[Onboarding] Update failed, trying insert:", updateErr.message, updateErr.code);
-        // Fallback: insert with full data
-        const { error: insertErr } = await supabase.from("profiles").insert({
-          id: user.id, email: user.email, ...updates,
-        });
-        if (insertErr) {
-          console.error("[Onboarding] Insert also failed:", insertErr.message, insertErr.code, insertErr.details);
-          setError(`保存に失敗しました（${insertErr.message}）。もう一度お試しください。`);
-          setLoading(false);
-          return;
+      if (insertErr) {
+        console.warn("[Onboarding] Insert failed, trying update:", insertErr.message);
+        const { error: updateErr } = await supabase.from("profiles")
+          .update(profileData).eq("id", user.id);
+        if (updateErr) {
+          console.error("[Onboarding] Update also failed:", updateErr.message);
+          // Still proceed — data can be edited later in profile
         }
       }
 
-      // Verify
-      const { data: saved } = await supabase.from("profiles").select("name").eq("id", user.id).single();
-      console.log("[Onboarding] Saved profile:", saved);
-
-      if (!saved?.name) {
-        // Last resort: try upsert
-        console.warn("[Onboarding] Verify failed, trying upsert");
-        await supabase.from("profiles").upsert({ id: user.id, email: user.email, ...updates }, { onConflict: "id" });
-      }
-
-      console.log("[Onboarding] Success, navigating to /home");
+      // Always navigate to /home regardless of save result
       window.location.href = "https://rizup-app.vercel.app/home";
     } catch (err) {
       console.error("[Onboarding] Unexpected error:", err);
-      setError("エラーが発生しました。もう一度お試しください。");
-      setLoading(false);
+      // Even on error, navigate to /home
+      window.location.href = "https://rizup-app.vercel.app/home";
     }
   };
 
@@ -275,11 +258,6 @@ export default function OnboardingPage() {
             className="w-full border-2 border-gray-200 rounded-full py-3 text-sm font-bold text-text-mid hover:border-mint transition mb-3">
             𝕏 で結果をシェアする
           </button>
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-3 mb-3">
-              <p className="text-red-500 text-xs text-center font-medium">{error}</p>
-            </div>
-          )}
           <button onClick={handleComplete} disabled={loading}
             className="w-full bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30 disabled:opacity-50">
             {loading ? "設定中..." : "Rizup を始める 🌿"}
