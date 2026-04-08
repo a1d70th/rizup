@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 
 const moodEmojis = ["", "😔", "😐", "🙂", "😊", "🤩"];
@@ -19,31 +20,74 @@ interface PostCardProps {
     created_at: string;
     profiles?: { name: string; avatar_url: string | null };
   };
-  reactions?: Record<string, number>;
-  userReactions?: string[];
-  onReact?: (postId: string, type: string) => void;
-  onComment?: (postId: string, text: string) => void;
-  comments?: { id: string; content: string; profiles?: { name: string } }[];
+  userId?: string | null;
 }
 
-export default function PostCard({ post, reactions = {}, userReactions = [], onReact, onComment, comments = [] }: PostCardProps) {
+export default function PostCard({ post, userId }: PostCardProps) {
+  const [counts, setCounts] = useState<Record<string, number>>({ cheer: 0, relate: 0, amazing: 0 });
+  const [myReactions, setMyReactions] = useState<Set<string>>(new Set());
   const [animating, setAnimating] = useState<string | null>(null);
   const [commentText, setCommentText] = useState("");
   const [showComments, setShowComments] = useState(false);
+  const [comments, setComments] = useState<{ id: string; content: string; profiles?: { name: string } }[]>([]);
+
   const name = post.profiles?.name || "ユーザー";
   const time = new Date(post.created_at).toLocaleString("ja-JP", {
     month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
   });
 
-  const handleReact = (type: string) => {
+  // Load reactions and comments
+  useEffect(() => {
+    const load = async () => {
+      // Count reactions
+      const { data: allReactions } = await supabase
+        .from("reactions").select("type, user_id").eq("post_id", post.id);
+      if (allReactions) {
+        const c: Record<string, number> = { cheer: 0, relate: 0, amazing: 0 };
+        const mine = new Set<string>();
+        allReactions.forEach((r) => {
+          c[r.type] = (c[r.type] || 0) + 1;
+          if (userId && r.user_id === userId) mine.add(r.type);
+        });
+        setCounts(c);
+        setMyReactions(mine);
+      }
+      // Load comments
+      const { data: cmts } = await supabase
+        .from("comments").select("id, content, profiles(name)")
+        .eq("post_id", post.id).order("created_at", { ascending: true });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (cmts) setComments(cmts as any);
+    };
+    load();
+  }, [post.id, userId]);
+
+  const handleReact = async (type: string) => {
+    if (!userId) { window.location.href = "https://rizup-app.vercel.app/login"; return; }
     setAnimating(type);
     setTimeout(() => setAnimating(null), 300);
-    onReact?.(post.id, type);
+
+    if (myReactions.has(type)) {
+      // Cancel
+      await supabase.from("reactions").delete().match({ post_id: post.id, user_id: userId, type });
+      setMyReactions((prev) => { const s = new Set(prev); s.delete(type); return s; });
+      setCounts((prev) => ({ ...prev, [type]: Math.max(0, (prev[type] || 0) - 1) }));
+    } else {
+      // Add
+      await supabase.from("reactions").insert({ post_id: post.id, user_id: userId, type });
+      setMyReactions((prev) => new Set(prev).add(type));
+      setCounts((prev) => ({ ...prev, [type]: (prev[type] || 0) + 1 }));
+    }
   };
 
-  const handleComment = () => {
+  const handleComment = async () => {
+    if (!userId) { window.location.href = "https://rizup-app.vercel.app/login"; return; }
     if (!commentText.trim()) return;
-    onComment?.(post.id, commentText.trim());
+    const { data } = await supabase.from("comments")
+      .insert({ post_id: post.id, user_id: userId, content: commentText.trim() })
+      .select("id, content, profiles(name)").single();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (data) setComments((prev) => [...prev, data as any]);
     setCommentText("");
   };
 
@@ -63,10 +107,7 @@ export default function PostCard({ post, reactions = {}, userReactions = [], onR
         </span>
       </div>
 
-      {/* Mood */}
       <div className="text-sm mb-2">{moodEmojis[post.mood]} 気分 {post.mood}/5</div>
-
-      {/* Content */}
       <p className="text-sm text-text-mid leading-relaxed mb-3">{post.content}</p>
 
       {/* AI Feedback */}
@@ -80,11 +121,10 @@ export default function PostCard({ post, reactions = {}, userReactions = [], onR
         </div>
       )}
 
-      {/* Reactions with counts */}
+      {/* Reactions */}
       <div className="flex gap-2 mb-3">
         {reactionTypes.map((r) => {
-          const count = reactions[r.type] || 0;
-          const reacted = userReactions.includes(r.type);
+          const reacted = myReactions.has(r.type);
           return (
             <button key={r.type} onClick={() => handleReact(r.type)}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
@@ -92,13 +132,13 @@ export default function PostCard({ post, reactions = {}, userReactions = [], onR
               } ${animating === r.type ? "animate-pop" : ""}`}>
               <span>{r.emoji}</span>
               <span>{r.label}</span>
-              <span className="text-text-light">{count}</span>
+              <span className="text-text-light">{counts[r.type]}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Comments toggle */}
+      {/* Comments */}
       <button onClick={() => setShowComments(!showComments)}
         className="text-xs text-text-light mb-2 hover:text-mint transition">
         💬 コメント {comments.length > 0 ? `(${comments.length})` : "する"}
@@ -106,7 +146,6 @@ export default function PostCard({ post, reactions = {}, userReactions = [], onR
 
       {showComments && (
         <div className="border-t border-gray-50 pt-2">
-          {/* Existing comments */}
           {comments.map((c) => (
             <div key={c.id} className="flex items-start gap-2 mb-2">
               <div className="w-6 h-6 rounded-full bg-orange-light flex items-center justify-center text-xs mt-0.5">🌸</div>
@@ -114,19 +153,15 @@ export default function PostCard({ post, reactions = {}, userReactions = [], onR
                 <span className="text-xs font-bold">{c.profiles?.name || "ユーザー"}</span>
                 <p className="text-xs text-text-mid">{c.content}</p>
               </div>
-              <button className="text-xs text-text-light hover:text-orange">♡</button>
             </div>
           ))}
-          {/* Comment input */}
           <div className="flex gap-2 mt-2">
             <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)}
               placeholder="前向きなコメントを書こう..."
               className="flex-1 border border-gray-100 rounded-full px-3 py-1.5 text-xs outline-none focus:border-mint"
               onKeyDown={(e) => { if (e.key === "Enter") handleComment(); }} />
             <button onClick={handleComment} disabled={!commentText.trim()}
-              className="bg-mint text-white rounded-full px-3 py-1.5 text-xs font-bold disabled:opacity-30">
-              送信
-            </button>
+              className="bg-mint text-white rounded-full px-3 py-1.5 text-xs font-bold disabled:opacity-30">送信</button>
           </div>
         </div>
       )}

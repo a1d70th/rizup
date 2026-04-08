@@ -188,8 +188,8 @@
     <li><a href="#solution">Rizupとは</a></li>
     <li><a href="#app">アプリ</a></li>
     <li><a href="#founder">代表について</a></li>
-    <!-- 有料化時はここをStripe決済URLに変更 -->
-    <li><a href="#join" class="nav-btn">無料で参加する</a></li>
+    <li><a href="#pricing">料金</a></li>
+    <li><a href="https://rizup-app.vercel.app" class="nav-btn">アプリで始める</a></li>
   </ul>
 </nav>
 
@@ -210,9 +210,8 @@
         AIと仲間が一緒に支えるコミュニティです。
       </p>
       <div class="hero-btns">
-        <!-- 有料化時はここをStripe決済URLに変更 -->
-        <a href="#join" class="btn-main">無料で参加してみる</a>
-        <a href="#solution" class="btn-sub">Rizup を知る</a>
+        <a href="https://rizup-app.vercel.app" class="btn-main">アプリで始める</a>
+        <a href="#solution" class="btn-sub">機能を見る</a>
       </div>
       <p class="hero-note">登録無料 / クレジットカード不要 / いつでも退会OK</p>
     </div>
@@ -246,27 +245,44 @@
   </div>
 </section>
 
-<!-- ===== SOLUTION ===== -->
+<!-- ===== FEATURES ===== -->
 <section class="solution" id="solution">
   <div class="solution-inner">
-    <span class="sec-label">Rizup の 3つの価値</span>
+    <span class="sec-label">主要機能</span>
     <h2 class="sec-title">毎日の小さな一歩を、<br>大きな変化に変える仕組み。</h2>
     <p class="sec-desc">Rizup は「記録 × AI × 仲間」の3つの力で、あなたの成長を支えます。</p>
     <div class="sol-grid">
       <div class="sol-card fade-up">
         <div class="sol-icon si-1">📝</div>
-        <h3>毎日の成長記録</h3>
-        <p>1日1回、今日の気持ちや出来事を書くだけ。書くことで自分の変化に気づける。続けるほど「成長グラフ」が育っていきます。</p>
+        <h3>朝夜ジャーナリング</h3>
+        <p>朝は目標と気分、夜は振り返りと感謝3つ。睡眠記録も自動で連携。毎日の記録が成長の証拠になる。</p>
       </div>
       <div class="sol-card fade-up">
         <div class="sol-icon si-2">🤖</div>
-        <h3>AIフィードバック</h3>
-        <p>投稿するたびに、AIがあなたの成長ポイントを見つけてフィードバック。「先月と比べてこう変わったよ」と気づかせてくれます。</p>
+        <h3>Sho Insight</h3>
+        <p>星座 × 生年月日 × 気分 × Rizupタイプから、毎日パーソナライズされたメッセージを届けます。</p>
       </div>
       <div class="sol-card fade-up">
         <div class="sol-icon si-3">💪</div>
-        <h3>仲間からの応援</h3>
-        <p>「応援してる」「わかるよ」「すごい！」——仲間からのポジティブなリアクションだけがある空間。批判や比較は存在しません。</p>
+        <h3>ポジティブリアクション</h3>
+        <p>「🌱応援してる」「🤝わかるよ」「✨すごい！」——ネガティブが存在しない、応援だけの空間。</p>
+      </div>
+    </div>
+    <div class="sol-grid" style="margin-top:1.4rem">
+      <div class="sol-card fade-up">
+        <div class="sol-icon si-2">🌸</div>
+        <h3>Rizup 5タイプ診断</h3>
+        <p>Seed / Grow / Bloom / Flame / Flow — 5問のQ&Aであなたの成長タイプを診断。友達とシェアしよう。</p>
+      </div>
+      <div class="sol-card fade-up">
+        <div class="sol-icon si-1">📊</div>
+        <h3>感情分析グラフ</h3>
+        <p>言葉のポジティブ度、気分の推移、曜日パターン。データで「自分の変化」が見える。</p>
+      </div>
+      <div class="sol-card fade-up">
+        <div class="sol-icon si-3">😴</div>
+        <h3>睡眠 × 気分の相関</h3>
+        <p>睡眠時間と気分の関係を自動分析。「7時間以上寝た日は気分+1.2ポイント」が見える化。</p>
       </div>
     </div>
   </div>
@@ -275,42 +291,80 @@
 <!-- ===== APP PREVIEW ===== -->
 <section class="app-preview" id="app">
   <div class="app-inner">
-    <span class="sec-label">Coming Soon</span>
-    <h2 class="sec-title">Rizup アプリ、近日公開。</h2>
+    <span class="sec-label">App</span>
+    <h2 class="sec-title">Rizup アプリで始めよう。</h2>
     <p class="sec-desc">毎日の日記 × AI成長分析 × 仲間からの応援。スマホで、毎日の一歩を記録しよう。</p>
 
-    <!-- アプリモックアップ -->
     <div class="app-mockup fade-up">
       <div class="app-mockup-header">
         <div class="app-mockup-ava">🌿</div>
         <div>
-          <div class="app-mockup-name">ゆうきさん</div>
+          <div class="app-mockup-name">ゆうきさん <span style="font-size:.7rem;color:#f472b6;background:#fce7f3;padding:.1rem .4rem;border-radius:99px;margin-left:.3rem">🌸 Bloom</span></div>
           <div class="app-mockup-time">今日 21:30</div>
         </div>
       </div>
       <div class="app-mockup-body">
-        今日は朝から気分が重かったけど、30分だけ散歩した。帰ってきたらちょっとだけ気持ちが楽になった。小さなことだけど、動けた自分を褒めたい。
+        今日は朝から気分が重かったけど、30分だけ散歩した。帰ってきたらちょっとだけ楽になった。小さなことだけど、動けた自分を褒めたい。
       </div>
-      <div class="app-mockup-mood">🙂 気分：3/5</div>
+      <div class="app-mockup-mood">🙂 気分：3/5 &nbsp; 😴 睡眠：7h</div>
       <div class="app-mockup-ai">
-        <strong>AI フィードバック</strong>
+        <strong>Rizup より</strong>
         気分が重い日に「30分だけ」って決めて動けたの、すごいよ。完璧じゃなくていい、動けたことが大事。明日もあなたのペースでいこう。
       </div>
       <div class="app-mockup-reactions">
-        <span>💪 応援 12</span>
-        <span>🤝 共感 8</span>
+        <span>🌱 応援 12</span>
+        <span>🤝 わかるよ 8</span>
         <span>✨ すごい 5</span>
       </div>
     </div>
 
-    <div class="app-badge">開発中 — ベータ版を準備しています</div>
-
     <div class="app-features">
-      <div class="app-feat">📝 毎日の日記</div>
-      <div class="app-feat">🤖 AI成長分析</div>
-      <div class="app-feat">💪 ポジティブリアクション</div>
-      <div class="app-feat">📊 成長グラフ</div>
+      <div class="app-feat">📝 朝夜ジャーナリング</div>
+      <div class="app-feat">🤖 Sho Insight</div>
+      <div class="app-feat">🌸 5タイプ診断</div>
+      <div class="app-feat">📊 感情分析グラフ</div>
+      <div class="app-feat">😴 睡眠記録</div>
       <div class="app-feat">🔔 毎朝の励まし</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PRICING ===== -->
+<section class="solution" id="pricing" style="background:var(--white)">
+  <div class="solution-inner">
+    <span class="sec-label">Pricing</span>
+    <h2 class="sec-title">あなたに合ったプランを選べます。</h2>
+    <p class="sec-desc" style="margin-bottom:2.5rem">まずは無料で始めて、もっと深く取り組みたくなったらアップグレード。</p>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;max-width:800px;margin:0 auto">
+      <!-- Free -->
+      <div class="sol-card fade-up" style="text-align:left">
+        <div style="font-size:.78rem;font-weight:700;color:var(--text-light);margin-bottom:.3rem">無料プラン</div>
+        <div style="font-size:2rem;font-weight:800">¥0<span style="font-size:.85rem;font-weight:400;color:var(--text-light)">/月</span></div>
+        <p style="font-size:.82rem;color:var(--text-mid);margin:.8rem 0;line-height:1.8">タイムライン閲覧<br>リアクション3種<br>Sho の朝メッセージ</p>
+        <a href="https://rizup-app.vercel.app" class="btn-sub" style="display:block;text-align:center;font-size:.85rem;padding:.7rem">無料で始める</a>
+      </div>
+      <!-- Pro -->
+      <div class="sol-card fade-up" style="text-align:left;border-color:var(--mint);position:relative">
+        <div style="position:absolute;top:-10px;right:16px;background:var(--mint);color:#fff;padding:.2rem .8rem;border-radius:99px;font-size:.7rem;font-weight:700">人気</div>
+        <div style="font-size:.78rem;font-weight:700;color:var(--mint);margin-bottom:.3rem">Pro</div>
+        <div style="font-size:2rem;font-weight:800">¥980<span style="font-size:.85rem;font-weight:400;color:var(--text-light)">/月</span></div>
+        <p style="font-size:.82rem;color:var(--text-mid);margin:.8rem 0;line-height:1.8">投稿・ジャーナリング<br>AIフィードバック<br>感情グラフ・睡眠記録<br>バッジ・ストリーク</p>
+        <a href="https://rizup-app.vercel.app" style="display:block;text-align:center;background:var(--mint);color:#fff;font-weight:700;padding:.7rem;border-radius:99px;text-decoration:none;font-size:.85rem;box-shadow:0 4px 14px rgba(110,203,176,.3)">Pro で始める</a>
+      </div>
+      <!-- Premium -->
+      <div class="sol-card fade-up" style="text-align:left">
+        <div style="font-size:.78rem;font-weight:700;color:var(--orange);margin-bottom:.3rem">Premium</div>
+        <div style="font-size:2rem;font-weight:800">¥1,980<span style="font-size:.85rem;font-weight:400;color:var(--text-light)">/月</span></div>
+        <p style="font-size:.82rem;color:var(--text-mid);margin:.8rem 0;line-height:1.8">Pro 全機能 ＋<br>月次PDF成長レポート<br>Sho Insight 詳細版<br>感情分析の深掘り</p>
+        <a href="https://rizup-app.vercel.app" class="btn-sub" style="display:block;text-align:center;font-size:.85rem;padding:.7rem">Premium で始める</a>
+      </div>
+      <!-- VIP -->
+      <div class="sol-card fade-up" style="text-align:left">
+        <div style="font-size:.78rem;font-weight:700;color:#8b5cf6;margin-bottom:.3rem">VIP</div>
+        <div style="font-size:2rem;font-weight:800">¥2,980<span style="font-size:.85rem;font-weight:400;color:var(--text-light)">/月</span></div>
+        <p style="font-size:.82rem;color:var(--text-mid);margin:.8rem 0;line-height:1.8">Premium 全機能 ＋<br>Sho 直接相談（月1回）<br>限定コンテンツ<br>先行機能アクセス</p>
+        <a href="https://rizup-app.vercel.app" class="btn-sub" style="display:block;text-align:center;font-size:.85rem;padding:.7rem">VIP で始める</a>
+      </div>
     </div>
   </div>
 </section>
@@ -319,19 +373,15 @@
 <section class="cta-section" id="join">
   <div class="cta-inner">
     <img src="images/sho.png" alt="Sho" width="64" height="64" style="border-radius:50%;margin-bottom:.8rem" />
-    <h2>アプリの準備、<br>進めています。</h2>
+    <h2>今すぐ、<br>前に進もう。</h2>
     <p>
-      Rizup アプリは現在開発中です。<br>
-      メールアドレスを登録して、リリース時にいち早くお知らせを受け取ろう。
+      まずは無料でタイムラインを見るだけでも OK。<br>
+      あなたのペースで、Rizup を始めよう。
     </p>
-    <form id="ctaForm" onsubmit="handleJoin(event)">
-      <div class="cta-form">
-        <input class="cta-input" type="email" name="email" placeholder="メールアドレスを入力" required />
-        <!-- 有料化時はここをStripe決済URLに変更 -->
-        <button class="cta-submit" type="submit">無料で登録する</button>
-      </div>
-    </form>
-    <p class="cta-note">登録無料 / スパムなし / いつでも退会OK</p>
+    <a href="https://rizup-app.vercel.app" class="btn-main" style="font-size:1.05rem;padding:1rem 2.5rem;margin-bottom:.8rem">
+      アプリで始める
+    </a>
+    <p class="cta-note">無料プランあり / クレジットカード不要 / いつでも退会OK</p>
   </div>
 </section>
 

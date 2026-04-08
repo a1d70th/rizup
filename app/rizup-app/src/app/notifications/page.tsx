@@ -2,12 +2,13 @@
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import Image from "next/image";
-import { demoShoInsight } from "@/lib/demo-data";
+
+const shoInsightText = "おはよう。今日も完璧じゃなくていいから、1つだけ自分のためになることをしよう。あなたのペースで、前に進んでいこう。";
 
 const notifications = [
   {
     type: "insight", icon: "sho", bg: "bg-gradient-to-br from-mint-light to-orange-light",
-    title: "今日の Sho Insight", content: demoShoInsight, time: "今朝 6:00",
+    title: "今日の Sho Insight", content: shoInsightText, time: "今朝 6:00",
   },
   {
     type: "cheer", icon: "🌱", bg: "bg-white border border-gray-100",

@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { demoProfile, demoPosts, demoBadges } from "@/lib/demo-data";
 import { rizupTypes } from "@/lib/rizup-types";
 import type { RizupType } from "@/lib/rizup-types";
 import Header from "@/components/Header";
@@ -15,42 +14,46 @@ interface ProfileData {
   rizup_type?: string; birthday?: string;
 }
 
-const LOAD_TIMEOUT = 5000;
-
 export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [posts, setPosts] = useState<any[]>([]);
   const [badges, setBadges] = useState<string[]>([]);
   const [totalPosts, setTotalPosts] = useState(0);
-  const [totalReactions] = useState(0);
+  const [totalReactions, setTotalReactions] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    let timedOut = false;
-    const timeout = setTimeout(() => {
-      timedOut = true;
-      setProfile(demoProfile); setPosts(demoPosts); setBadges(demoBadges); setTotalPosts(demoPosts.length); setLoading(false);
-    }, LOAD_TIMEOUT);
-
     const init = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { if (!timedOut) { clearTimeout(timeout); setProfile(demoProfile); setPosts(demoPosts); setBadges(demoBadges); setTotalPosts(demoPosts.length); setLoading(false); } return; }
-        const { data: prof, error: profErr } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-        if (timedOut) return;
-        if (profErr || !prof) { clearTimeout(timeout); setProfile(demoProfile); setPosts(demoPosts); setBadges(demoBadges); setTotalPosts(demoPosts.length); setLoading(false); return; }
-        setProfile(prof);
-        const { data: userPosts, count } = await supabase.from("posts").select("*, profiles(name, avatar_url)", { count: "exact" })
+        if (!user) { setLoading(false); return; }
+        setUserId(user.id);
+
+        const { data: prof } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+        if (prof) setProfile(prof);
+
+        const { data: userPosts, count } = await supabase.from("posts")
+          .select("*, profiles(name, avatar_url)", { count: "exact" })
           .eq("user_id", user.id).order("created_at", { ascending: false }).limit(10);
-        if (userPosts) setPosts(userPosts); if (count) setTotalPosts(count);
+        if (userPosts) setPosts(userPosts);
+        if (count) setTotalPosts(count);
+
         const { data: userBadges } = await supabase.from("badges").select("type").eq("user_id", user.id);
         if (userBadges) setBadges(userBadges.map(b => b.type));
-        clearTimeout(timeout); setLoading(false);
-      } catch { if (!timedOut) { clearTimeout(timeout); setProfile(demoProfile); setPosts(demoPosts); setBadges(demoBadges); setTotalPosts(demoPosts.length); setLoading(false); } }
+
+        // Count reactions received
+        const { count: rxCount } = await supabase.from("reactions")
+          .select("id", { count: "exact", head: true })
+          .in("post_id", (userPosts || []).map(p => p.id));
+        setTotalReactions(rxCount || 0);
+      } catch (err) {
+        console.error("[Rizup Profile]", err);
+      }
+      setLoading(false);
     };
     init();
-    return () => clearTimeout(timeout);
   }, []);
 
   const badgeMap: Record<string, { emoji: string; label: string }> = {
@@ -64,7 +67,13 @@ export default function ProfilePage() {
       <Image src="/sho.png" alt="Sho" width={48} height={48} className="animate-sho-float rounded-full" />
     </div>
   );
-  if (!profile) return null;
+
+  if (!profile) return (
+    <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6 text-center">
+      <Image src="/sho.png" alt="Sho" width={64} height={64} className="rounded-full mb-4" />
+      <p className="text-text-mid text-sm">プロフィールが見つかりませんでした</p>
+    </div>
+  );
 
   const typeInfo = profile.rizup_type && profile.rizup_type in rizupTypes ? rizupTypes[profile.rizup_type as RizupType] : null;
 
@@ -72,7 +81,6 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-bg pb-20 pt-16">
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
-        {/* Profile Header */}
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center mb-4">
           <div className="w-20 h-20 rounded-full bg-mint-light mx-auto mb-3 flex items-center justify-center text-3xl border-[3px] border-mint">
             {profile.avatar_url || "🌿"}
@@ -85,7 +93,6 @@ export default function ProfilePage() {
             </span>
           )}
           {profile.zodiac && <span className="inline-block mt-1 ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-light text-orange">{profile.zodiac}</span>}
-
           <div className="flex justify-center gap-6 mt-4">
             <div className="text-center"><div className="text-xl font-extrabold text-mint">{totalPosts}</div><div className="text-[10px] text-text-light">投稿</div></div>
             <div className="text-center"><div className="text-xl font-extrabold text-orange">🔥 {profile.streak}</div><div className="text-[10px] text-text-light">連続日数</div></div>
@@ -93,7 +100,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Badges */}
         {badges.length > 0 && (
           <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
             <h3 className="text-sm font-bold mb-3">🏅 獲得バッジ</h3>
@@ -105,7 +111,6 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Mood Graph */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
           <h3 className="text-sm font-bold mb-3">📊 気分の推移</h3>
           <div className="flex items-end gap-1 h-20">
@@ -116,36 +121,20 @@ export default function ProfilePage() {
           <div className="flex justify-between text-[10px] text-text-light mt-1"><span>14日前</span><span>今日</span></div>
         </div>
 
-        {/* Sleep × Mood correlation */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
-          <h3 className="text-sm font-bold mb-3">😴 睡眠 × 気分の相関</h3>
-          <div className="flex items-end gap-2 h-16 mb-2">
-            {[6, 5.5, 7, 8, 6.5, 7.5, 7].map((h, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                <div className="w-full rounded-t-md bg-orange-mid" style={{ height: `${h * 10}%` }} />
-                <span className="text-[8px] text-text-light">{["月","火","水","木","金","土","日"][i]}</span>
-              </div>
-            ))}
-          </div>
-          <p className="text-[10px] text-text-light text-center">7時間以上寝た日は気分が平均+1.2ポイント高い傾向</p>
-        </div>
-
-        {/* Word positivity */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
           <h3 className="text-sm font-bold mb-3">💬 言葉のポジティブ度</h3>
           <div className="flex items-center gap-3">
             <div className="flex-1 bg-gray-100 rounded-full h-3">
-              <div className="bg-mint h-3 rounded-full transition-all" style={{ width: "72%" }} />
+              <div className="bg-mint h-3 rounded-full" style={{ width: "72%" }} />
             </div>
             <span className="text-sm font-extrabold text-mint">72%</span>
           </div>
-          <p className="text-[10px] text-text-light mt-2">先月比 +8% — 確実にポジティブになってきてるよ</p>
+          <p className="text-[10px] text-text-light mt-2">先月比 +8%</p>
         </div>
 
-        {/* Posts */}
         <h3 className="text-sm font-bold mb-3">📝 投稿履歴</h3>
         <div className="flex flex-col gap-3">
-          {posts.map((post) => (<PostCard key={post.id} post={post} />))}
+          {posts.map((post) => (<PostCard key={post.id} post={post} userId={userId} />))}
         </div>
       </div>
       <BottomNav />

@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { demoPosts, demoShoInsight } from "@/lib/demo-data";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import PostCard from "@/components/PostCard";
@@ -14,25 +13,15 @@ interface PostWithProfile {
   profiles: { name: string; avatar_url: string | null };
 }
 
-const LOAD_TIMEOUT = 5000;
-
 export default function HomePage() {
   const [posts, setPosts] = useState<PostWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [streak, setStreak] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
-  const [shoInsight] = useState(demoShoInsight);
+  const [shoInsight] = useState("おはよう。今日も完璧じゃなくていいから、1つだけ自分のためになることをしよう。それだけで十分。あなたのペースで、前に進んでいこう。");
   const [hasCommentedToday, setHasCommentedToday] = useState(true);
 
   useEffect(() => {
-    let timedOut = false;
-    const timeout = setTimeout(() => {
-      timedOut = true;
-      setPosts(demoPosts as PostWithProfile[]);
-      setStreak(3);
-      setLoading(false);
-    }, LOAD_TIMEOUT);
-
     const init = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -40,51 +29,27 @@ export default function HomePage() {
           setUserId(user.id);
           const { data: profile } = await supabase.from("profiles").select("streak").eq("id", user.id).single();
           if (profile) setStreak(profile.streak || 0);
-          // Check if user commented today
           const today = new Date().toISOString().split("T")[0];
           const { count } = await supabase.from("comments").select("id", { count: "exact", head: true })
             .eq("user_id", user.id).gte("created_at", today);
           setHasCommentedToday((count || 0) > 0);
         }
-        const { data, error } = await supabase.from("posts").select("*, profiles(name, avatar_url)")
+        const { data } = await supabase.from("posts").select("*, profiles(name, avatar_url)")
           .order("created_at", { ascending: false }).limit(20);
-        if (timedOut) return;
-        clearTimeout(timeout);
-        if (error || !data || data.length === 0) {
-          setPosts(demoPosts as PostWithProfile[]);
-        } else {
-          setPosts(data as PostWithProfile[]);
-        }
-      } catch {
-        if (!timedOut) { clearTimeout(timeout); setPosts(demoPosts as PostWithProfile[]); }
+        if (data) setPosts(data as PostWithProfile[]);
+      } catch (err) {
+        console.error("[Rizup Home]", err);
       }
       setLoading(false);
     };
     init();
-    return () => clearTimeout(timeout);
   }, []);
-
-  const handleReact = async (postId: string, type: string) => {
-    if (!userId) return;
-    const { error } = await supabase.from("reactions").upsert(
-      { post_id: postId, user_id: userId, type }, { onConflict: "post_id,user_id,type" });
-    if (error && error.code === "23505") {
-      await supabase.from("reactions").delete().match({ post_id: postId, user_id: userId, type });
-    }
-  };
-
-  const handleComment = async (postId: string, text: string) => {
-    if (!userId) return;
-    await supabase.from("comments").insert({ post_id: postId, user_id: userId, content: text });
-    setHasCommentedToday(true);
-  };
 
   return (
     <div className="min-h-screen bg-bg pb-20 pt-16">
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
-
-        {/* Sho Insight — 一番上 */}
+        {/* Sho Insight */}
         <div className="bg-gradient-to-br from-mint-light to-orange-light rounded-2xl p-4 mb-4 border border-mint/20">
           <div className="flex items-center gap-2 mb-2">
             <Image src="/sho.png" alt="Sho" width={32} height={32} className="rounded-full" />
@@ -96,7 +61,7 @@ export default function HomePage() {
           <p className="text-sm text-text leading-relaxed">{shoInsight}</p>
         </div>
 
-        {/* Forced comment banner */}
+        {/* Comment banner */}
         {!hasCommentedToday && (
           <div className="bg-orange-light rounded-2xl p-3 mb-4 flex items-center gap-3">
             <span className="text-xl">💬</span>
@@ -125,10 +90,19 @@ export default function HomePage() {
             <Image src="/sho.png" alt="Sho" width={48} height={48} className="rounded-full mx-auto mb-3 animate-sho-float" />
             <p className="text-sm text-text-light">読み込み中...</p>
           </div>
+        ) : posts.length === 0 ? (
+          <div className="text-center py-12">
+            <Image src="/sho.png" alt="Sho" width={64} height={64} className="rounded-full mx-auto mb-3 animate-sho-float" />
+            <p className="text-lg font-bold mb-1">まだ投稿がないよ</p>
+            <p className="text-sm text-text-mid mb-4">最初の一歩を踏み出してみよう</p>
+            <Link href="/journal" className="inline-block bg-mint text-white font-bold px-6 py-3 rounded-full shadow-lg shadow-mint/30">
+              最初の投稿をする 📝
+            </Link>
+          </div>
         ) : (
           <div className="flex flex-col gap-3">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} onReact={handleReact} onComment={handleComment} />
+              <PostCard key={post.id} post={post} userId={userId} />
             ))}
           </div>
         )}
