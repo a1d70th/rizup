@@ -167,11 +167,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
 
 Stripe ダッシュボード → 商品 → 商品を追加：
 
-| プラン | 月額 | Price ID（作成後にメモ） |
+| プラン | 月額 | Price ID |
 |---|---|---|
-| Pro | ¥980 | `price_pro_xxxx` |
-| Premium | ¥1,980 | `price_premium_xxxx` |
-| VIP | ¥2,980 | `price_vip_xxxx` |
+| Pro | ¥980 | `price_1TJrqX2L4WVM0isfmmryC15w` |
+| Premium | ¥1,980 | `price_1TJrr92L4WVM0isfGz0qxfpn` |
+| VIP | ¥2,980 | `price_1TJrrh2L4WVM0isfG62PrANr` |
 
 ### 9-3. 環境変数を設定
 
@@ -181,9 +181,9 @@ Vercel → Environment Variables に追加：
 |---|---|
 | `STRIPE_SECRET_KEY` | `sk_live_xxxx` |
 | `STRIPE_WEBHOOK_SECRET` | `whsec_xxxx` |
-| `NEXT_PUBLIC_STRIPE_PRICE_PRO` | `price_pro_xxxx` |
-| `NEXT_PUBLIC_STRIPE_PRICE_PREMIUM` | `price_premium_xxxx` |
-| `NEXT_PUBLIC_STRIPE_PRICE_VIP` | `price_vip_xxxx` |
+| `STRIPE_PRO_PRICE_ID` | `price_1TJrqX2L4WVM0isfmmryC15w` |
+| `STRIPE_PREMIUM_PRICE_ID` | `price_1TJrr92L4WVM0isfGz0qxfpn` |
+| `STRIPE_VIP_PRICE_ID` | `price_1TJrrh2L4WVM0isfG62PrANr` |
 
 ### 9-4. Webhook を設定
 
