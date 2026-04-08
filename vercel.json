@@ -1,5 +1,18 @@
 {
   "framework": null,
   "buildCommand": "",
-  "outputDirectory": "."
+  "outputDirectory": ".",
+  "redirects": [
+    { "source": "/register", "destination": "https://rizup-app.vercel.app/register", "permanent": false },
+    { "source": "/login", "destination": "https://rizup-app.vercel.app/login", "permanent": false },
+    { "source": "/home", "destination": "https://rizup-app.vercel.app/home", "permanent": false },
+    { "source": "/onboarding", "destination": "https://rizup-app.vercel.app/onboarding", "permanent": false },
+    { "source": "/journal", "destination": "https://rizup-app.vercel.app/journal", "permanent": false },
+    { "source": "/profile", "destination": "https://rizup-app.vercel.app/profile", "permanent": false },
+    { "source": "/settings", "destination": "https://rizup-app.vercel.app/settings", "permanent": false },
+    { "source": "/notifications", "destination": "https://rizup-app.vercel.app/notifications", "permanent": false },
+    { "source": "/recommend", "destination": "https://rizup-app.vercel.app/recommend", "permanent": false },
+    { "source": "/premium", "destination": "https://rizup-app.vercel.app/premium", "permanent": false },
+    { "source": "/vip", "destination": "https://rizup-app.vercel.app/vip", "permanent": false }
+  ]
 }
