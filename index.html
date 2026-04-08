@@ -175,6 +175,9 @@
     .fade-up{opacity:0;transform:translateY(24px);transition:opacity .5s ease,transform .5s ease}
     .fade-up.visible{opacity:1;transform:translateY(0)}
   </style>
+  <!-- コールドスタート対策 -->
+  <link rel="prefetch" href="https://rizup-app.vercel.app/register">
+  <script>window.addEventListener("load",function(){setTimeout(function(){fetch("https://rizup-app.vercel.app/register",{mode:"no-cors"})},500)});</script>
 </head>
 <body class="has-banner">
 
