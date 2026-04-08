@@ -8,7 +8,22 @@ body {
   font-family: "M PLUS Rounded 1c", sans-serif;
   background: #fafafa;
   color: #3a3a3a;
+  -webkit-text-size-adjust: 100%;
 }
+
+/* iOS Safari: prevent zoom on input focus */
+input[type="text"], input[type="email"], input[type="password"],
+input[type="number"], input[type="date"], input[type="time"],
+input[type="url"], textarea, select {
+  font-size: 16px !important;
+}
+
+/* iOS Safari: safe area padding for bottom nav */
+.pb-20 { padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }
+
+/* Hide scrollbar for filter bars */
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(12px); }
