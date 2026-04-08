@@ -168,6 +168,13 @@ export default function HomePage() {
           </div>
         )}
 
+        {/* Quick links */}
+        <div className="flex gap-2 mb-4">
+          <Link href="/vision" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">🎯 ビジョン</Link>
+          <Link href="/habits" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">✅ 習慣</Link>
+          <Link href="/recommend" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">📖 おすすめ</Link>
+        </div>
+
         {/* Streak */}
         <div className="flex items-center justify-between bg-white rounded-2xl p-4 border border-gray-100 mb-4 shadow-sm">
           <div className="flex items-center gap-3">
