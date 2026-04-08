@@ -5,6 +5,7 @@ import Image from "next/image";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import PlanGate from "@/components/PlanGate";
+import { compressImage } from "@/lib/image-compress";
 
 const moodOptions = [
   { value: 1, emoji: "😔", label: "つらい" },
@@ -52,13 +53,14 @@ export default function JournalPage() {
     checkUser();
   }, []);
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImageFile(file);
+    const compressed = await compressImage(file);
+    setImageFile(compressed);
     const reader = new FileReader();
     reader.onload = () => setImagePreview(reader.result as string);
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(compressed);
   };
 
   const handlePost = async () => {
@@ -137,16 +139,13 @@ export default function JournalPage() {
       const feedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];
       await supabase.from("posts").update({ ai_feedback: feedback }).eq("id", data.id);
 
-      // Async positivity scoring (non-blocking)
+      // Async: positivity scoring + streak/badge check (non-blocking)
       fetch("/api/analyze/score", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ postId: data.id, content: postContent }),
       }).catch(() => {});
-
-      const { data: prof } = await supabase.from("profiles").select("streak").eq("id", user.id).single();
-      const newStreak = (prof?.streak || 0) + 1;
-      await supabase.from("profiles").update({ streak: newStreak }).eq("id", user.id);
+      fetch("/api/check-progress", { method: "POST" }).catch(() => {});
 
       setAiFeedback(feedback);
       setPosted(true);

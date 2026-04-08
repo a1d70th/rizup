@@ -6,6 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import PostCard from "@/components/PostCard";
 import Image from "next/image";
 import Link from "next/link";
+import { SkeletonTimeline } from "@/components/Skeleton";
 
 interface PostWithProfile {
   id: string; user_id: string; type: string; content: string;
@@ -23,6 +24,7 @@ export default function HomePage() {
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [trialEnded, setTrialEnded] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [challenge, setChallenge] = useState<{ id: string; content: string; is_completed: boolean } | null>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -87,6 +89,22 @@ export default function HomePage() {
           const { count } = await supabase.from("comments").select("id", { count: "exact", head: true })
             .eq("user_id", user.id).gte("created_at", today);
           setHasCommentedToday((count || 0) > 0);
+
+          // Check streak/badges/growth letter (non-blocking)
+          fetch("/api/check-progress", { method: "POST" }).then(r => r.json()).then(d => {
+            if (d.streak !== undefined) setStreak(d.streak);
+          }).catch(() => {});
+
+          // Load current week challenge
+          const weekStart = new Date();
+          weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1); // Monday
+          const { data: ch } = await supabase.from("challenges")
+            .select("id, content, is_completed")
+            .eq("user_id", user.id)
+            .gte("week_start", weekStart.toISOString().split("T")[0])
+            .limit(1)
+            .single();
+          if (ch) setChallenge(ch);
         }
         const { data } = await supabase.from("posts").select("*, profiles(name, avatar_url)")
           .order("created_at", { ascending: false }).limit(20);
@@ -165,12 +183,30 @@ export default function HomePage() {
           </Link>
         </div>
 
+        {/* Weekly Challenge */}
+        {challenge ? (
+          <div className={`rounded-2xl p-4 border shadow-sm mb-4 ${challenge.is_completed ? "bg-mint-light border-mint/20" : "bg-white border-gray-100"}`}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">{challenge.is_completed ? "✅" : "🎯"}</span>
+              <p className="text-sm font-bold flex-1">今週のチャレンジ</p>
+              {challenge.is_completed && <span className="text-[10px] font-bold text-mint bg-white px-2 py-0.5 rounded-full">達成！</span>}
+            </div>
+            <p className="text-xs text-text-mid">{challenge.content}</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-lg">🎯</span>
+              <p className="text-sm font-bold flex-1">今週のチャレンジ</p>
+            </div>
+            <p className="text-xs text-text-light mb-2">今週の目標を設定しよう！</p>
+            <ChallengeForm userId={userId} onCreated={(ch) => setChallenge(ch)} />
+          </div>
+        )}
+
         {/* Timeline */}
         {loading ? (
-          <div className="text-center py-12">
-            <Image src="/sho.png" alt="Sho" width={48} height={48} className="rounded-full mx-auto mb-3 animate-sho-float" />
-            <p className="text-sm text-text-light">読み込み中...</p>
-          </div>
+          <SkeletonTimeline />
         ) : posts.length === 0 ? (
           <div className="text-center py-12">
             <Image src="/sho.png" alt="Sho" width={64} height={64} className="rounded-full mx-auto mb-3 animate-sho-float" />
@@ -191,6 +227,38 @@ export default function HomePage() {
         )}
       </div>
       <BottomNav />
+    </div>
+  );
+}
+
+function ChallengeForm({ userId, onCreated }: { userId: string | null; onCreated: (ch: { id: string; content: string; is_completed: boolean }) => void }) {
+  const [text, setText] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleCreate = async () => {
+    if (!userId || !text.trim()) return;
+    (document.activeElement as HTMLElement)?.blur();
+    setSaving(true);
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
+    const { data } = await supabase.from("challenges").insert({
+      user_id: userId, content: text.trim(),
+      week_start: weekStart.toISOString().split("T")[0],
+    }).select("id, content, is_completed").single();
+    if (data) onCreated(data);
+    setSaving(false);
+  };
+
+  return (
+    <div className="flex gap-2">
+      <input type="text" value={text} onChange={(e) => setText(e.target.value)}
+        placeholder="例：毎日10分読書する"
+        className="flex-1 border border-gray-100 rounded-full px-3 py-1.5 text-xs outline-none focus:border-mint"
+        onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); handleCreate(); } }} />
+      <button onClick={handleCreate} disabled={saving || !text.trim()}
+        className="bg-mint text-white rounded-full px-3 py-1.5 text-xs font-bold disabled:opacity-30">
+        {saving ? "..." : "設定"}
+      </button>
     </div>
   );
 }

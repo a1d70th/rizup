@@ -117,8 +117,10 @@ export default function ProfilePage() {
 
   const badgeMap: Record<string, { emoji: string; label: string }> = {
     first_post: { emoji: "🌱", label: "初投稿" }, streak_7: { emoji: "🔥", label: "7日連続" },
-    streak_14: { emoji: "🔥", label: "14日連続" }, streak_30: { emoji: "👑", label: "30日連続" },
-    comments_50: { emoji: "💬", label: "コメント50" }, weekly_mvp: { emoji: "⭐", label: "週間MVP" },
+    streak_14: { emoji: "🔥", label: "14日連続" }, streak_30: { emoji: "💎", label: "30日連続" },
+    posts_100: { emoji: "📝", label: "100投稿" }, comments_50: { emoji: "💬", label: "励ましの達人" },
+    reactions_100: { emoji: "❤️", label: "応援王" }, weekly_mvp: { emoji: "⭐", label: "週間MVP" },
+    monthly_mvp: { emoji: "👑", label: "月間MVP" },
   };
 
   if (loading) return (
