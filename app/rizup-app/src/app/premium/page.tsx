@@ -80,24 +80,23 @@ export default function PremiumPage() {
           <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
             <h3 className="text-sm font-bold mb-3">📄 レポートダウンロード</h3>
             <div className="space-y-2">
-              <button className="w-full flex items-center gap-3 p-3 bg-mint-light rounded-xl hover:bg-mint/20 transition">
+              <a href="/api/report/monthly" download className="w-full flex items-center gap-3 p-3 bg-mint-light rounded-xl hover:bg-mint/20 transition">
                 <span className="text-xl">📅</span>
                 <div className="text-left flex-1">
                   <p className="text-sm font-bold text-mint">月次レポート</p>
-                  <p className="text-[10px] text-text-light">感情推移・睡眠・成長サマリー</p>
+                  <p className="text-[10px] text-text-light">過去30日間の感情推移・気分分布・成長サマリー</p>
                 </div>
                 <span className="text-xs text-mint font-bold">PDF</span>
-              </button>
-              <button className="w-full flex items-center gap-3 p-3 bg-orange-light rounded-xl hover:bg-orange/20 transition">
+              </a>
+              <a href="/api/report/weekly" download className="w-full flex items-center gap-3 p-3 bg-orange-light rounded-xl hover:bg-orange/20 transition">
                 <span className="text-xl">📋</span>
                 <div className="text-left flex-1">
                   <p className="text-sm font-bold text-orange">週次レポート</p>
-                  <p className="text-[10px] text-text-light">今週の振り返り・AI分析</p>
+                  <p className="text-[10px] text-text-light">今週の振り返り・日別気分・来週へのメッセージ</p>
                 </div>
                 <span className="text-xs text-orange font-bold">PDF</span>
-              </button>
+              </a>
             </div>
-            <p className="text-[10px] text-text-light mt-2 text-center">※ PDF生成機能は近日実装予定です</p>
           </div>
 
           {/* Deep Mood Analysis */}

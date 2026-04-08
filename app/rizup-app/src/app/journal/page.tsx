@@ -135,6 +135,13 @@ export default function JournalPage() {
       const feedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];
       await supabase.from("posts").update({ ai_feedback: feedback }).eq("id", data.id);
 
+      // Async positivity scoring (non-blocking)
+      fetch("/api/analyze/score", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: data.id, content: postContent }),
+      }).catch(() => {});
+
       const { data: prof } = await supabase.from("profiles").select("streak").eq("id", user.id).single();
       const newStreak = (prof?.streak || 0) + 1;
       await supabase.from("profiles").update({ streak: newStreak }).eq("id", user.id);

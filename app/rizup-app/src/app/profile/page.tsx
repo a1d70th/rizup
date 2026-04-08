@@ -30,6 +30,7 @@ export default function ProfilePage() {
   const [moodHistory, setMoodHistory] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [wordAnalysis, setWordAnalysis] = useState<{ weeklyTrend: { week: string; score: number }[]; topWords: { word: string; count: number }[]; overallScore: number; changeMessage: string | null } | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [showEdit, setShowEdit] = useState(false);
@@ -66,6 +67,10 @@ export default function ProfilePage() {
             .in("post_id", userPosts.map(p => p.id));
           setTotalReactions(rxCount || 0);
         }
+        // Fetch word analysis
+        fetch("/api/analyze/words").then(r => r.json()).then(d => {
+          if (d && !d.error) setWordAnalysis(d);
+        }).catch(() => {});
       } catch (err) { console.error("[Rizup Profile]", err); }
       setLoading(false);
     };
@@ -230,7 +235,48 @@ export default function ProfilePage() {
           )}
         </div>
 
-        {/* Posts */}
+        {/* Word Analysis */}
+        {wordAnalysis && (wordAnalysis.weeklyTrend.length > 0 || wordAnalysis.topWords.length > 0) && (
+          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
+            <h3 className="text-sm font-bold mb-3">📝 言葉のポジティブ度</h3>
+            {/* Overall score */}
+            <div className="flex items-center justify-between bg-mint-light rounded-xl p-3 mb-3">
+              <span className="text-xs font-bold">ポジティブ度</span>
+              <span className="text-xl font-extrabold text-mint">{wordAnalysis.overallScore}%</span>
+            </div>
+            {wordAnalysis.changeMessage && (
+              <p className="text-xs text-text-mid text-center mb-3">{wordAnalysis.changeMessage}</p>
+            )}
+            {/* Weekly trend */}
+            {wordAnalysis.weeklyTrend.length > 1 && (
+              <>
+                <p className="text-xs font-bold mb-2">週別トレンド</p>
+                <div className="flex items-end gap-1 h-16 mb-2">
+                  {wordAnalysis.weeklyTrend.map((w, i) => (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
+                      <div className="w-full rounded-t-md bg-mint" style={{ height: `${Math.max(w.score * 0.6, 4)}px` }} />
+                      <span className="text-[8px] text-text-light">{w.week}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+            {/* Top words */}
+            {wordAnalysis.topWords.length > 0 && (
+              <>
+                <p className="text-xs font-bold mb-2 mt-3">よく使うポジティブワード</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {wordAnalysis.topWords.map((w, i) => (
+                    <span key={i} className="bg-mint-light text-mint px-2.5 py-1 rounded-full text-xs font-bold">
+                      {w.word} ({w.count})
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-2 mb-4">
           <a href="/settings" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">⚙️ 設定</a>
