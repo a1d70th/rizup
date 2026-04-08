@@ -18,7 +18,18 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [streak, setStreak] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
-  const [shoInsight] = useState("おはよう。今日も完璧じゃなくていいから、1つだけ自分のためになることをしよう。それだけで十分。あなたのペースで、前に進んでいこう。");
+  const shoMessages = [
+    "おはよう。今日も完璧じゃなくていいから、1つだけ自分のためになることをしよう。それだけで十分。",
+    "昨日の自分より、ちょっとだけ前に進めたら、それでいい。あなたのペースで。",
+    "今日も「ここに来た」こと自体が、すでにすごいことだよ。",
+    "比べなくていい。あなたはあなたのままで、十分前に進んでる。",
+    "小さな一歩を積み重ねよう。気づいたら、遠くまで来てるから。",
+    "うまくいかない日があっても大丈夫。そういう日があるから、いい日が際立つんだよ。",
+    "今日も一緒にいるよ。あなたの味方だから。",
+  ];
+  // Use day-of-year to pick a consistent message per day
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+  const [shoInsight] = useState(shoMessages[dayOfYear % shoMessages.length]);
   const [hasCommentedToday, setHasCommentedToday] = useState(true);
 
   useEffect(() => {
@@ -93,8 +104,8 @@ export default function HomePage() {
         ) : posts.length === 0 ? (
           <div className="text-center py-12">
             <Image src="/sho.png" alt="Sho" width={64} height={64} className="rounded-full mx-auto mb-3 animate-sho-float" />
-            <p className="text-lg font-bold mb-1">まだ投稿がないよ</p>
-            <p className="text-sm text-text-mid mb-4">最初の一歩を踏み出してみよう</p>
+            <p className="text-lg font-bold mb-1">まだ投稿がありません</p>
+            <p className="text-sm text-text-mid mb-4">最初のジャーナルを書いてみよう！</p>
             <Link href="/journal" className="inline-block bg-mint text-white font-bold px-6 py-3 rounded-full shadow-lg shadow-mint/30">
               最初の投稿をする 📝
             </Link>

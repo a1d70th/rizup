@@ -28,11 +28,18 @@ export default function ProfilePage() {
     const init = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { setLoading(false); return; }
+        if (!user) { window.location.href = "https://rizup-app.vercel.app/login"; return; }
         setUserId(user.id);
 
-        const { data: prof } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-        if (prof) setProfile(prof);
+        const { data: prof, error: profErr } = await supabase.from("profiles").select("*").eq("id", user.id).single();
+
+        // Profile doesn't exist or name is empty → redirect to onboarding
+        if (profErr || !prof || !prof.name) {
+          window.location.href = "https://rizup-app.vercel.app/onboarding";
+          return;
+        }
+
+        setProfile(prof);
 
         const { data: userPosts, count } = await supabase.from("posts")
           .select("*, profiles(name, avatar_url)", { count: "exact" })
@@ -43,11 +50,13 @@ export default function ProfilePage() {
         const { data: userBadges } = await supabase.from("badges").select("type").eq("user_id", user.id);
         if (userBadges) setBadges(userBadges.map(b => b.type));
 
-        // Count reactions received
-        const { count: rxCount } = await supabase.from("reactions")
-          .select("id", { count: "exact", head: true })
-          .in("post_id", (userPosts || []).map(p => p.id));
-        setTotalReactions(rxCount || 0);
+        // Count reactions received on user's posts
+        if (userPosts && userPosts.length > 0) {
+          const { count: rxCount } = await supabase.from("reactions")
+            .select("id", { count: "exact", head: true })
+            .in("post_id", userPosts.map(p => p.id));
+          setTotalReactions(rxCount || 0);
+        }
       } catch (err) {
         console.error("[Rizup Profile]", err);
       }
@@ -68,12 +77,7 @@ export default function ProfilePage() {
     </div>
   );
 
-  if (!profile) return (
-    <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6 text-center">
-      <Image src="/sho.png" alt="Sho" width={64} height={64} className="rounded-full mb-4" />
-      <p className="text-text-mid text-sm">プロフィールが見つかりませんでした</p>
-    </div>
-  );
+  if (!profile) return null;
 
   const typeInfo = profile.rizup_type && profile.rizup_type in rizupTypes ? rizupTypes[profile.rizup_type as RizupType] : null;
 
@@ -139,9 +143,15 @@ export default function ProfilePage() {
         </div>
 
         <h3 className="text-sm font-bold mb-3">📝 投稿履歴</h3>
-        <div className="flex flex-col gap-3">
-          {posts.map((post) => (<PostCard key={post.id} post={post} userId={userId} />))}
-        </div>
+        {posts.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-sm text-text-light">まだ投稿がありません</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {posts.map((post) => (<PostCard key={post.id} post={post} userId={userId} />))}
+          </div>
+        )}
       </div>
       <BottomNav />
     </div>
