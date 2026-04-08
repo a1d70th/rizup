@@ -103,24 +103,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleAppleLogin = async () => {
-    console.log("[Rizup Login] Apple OAuth start");
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "apple",
-        options: {
-          redirectTo: "https://rizup-app.vercel.app/auth/callback",
-        },
-      });
-      if (error) {
-        console.error("[Rizup Login] Apple OAuth error:", error.message);
-        showError("Apple ログインの開始に失敗しました。もう一度お試しください。");
-      }
-    } catch (err) {
-      console.error("[Rizup Login] Apple OAuth catch:", err);
-      showError("Apple ログインに失敗しました。");
-    }
-  };
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
@@ -192,15 +174,6 @@ export default function LoginPage() {
           Google でログイン
         </button>
 
-        {/* Apple */}
-        <button
-          type="button"
-          onClick={handleAppleLogin} aria-label="Appleでログイン"
-          className="w-full border-2 border-gray-200 rounded-full py-3 text-sm font-bold text-text-mid hover:border-gray-400 transition flex items-center justify-center gap-2 bg-white"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
-          Apple でログイン
-        </button>
       </div>
 
       <div className="mt-6 text-sm text-text-mid">
