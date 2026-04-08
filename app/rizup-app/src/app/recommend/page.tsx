@@ -187,7 +187,7 @@ export default function RecommendPage() {
   );
 
   return (
-    <div className="min-h-screen bg-bg pb-20 pt-16">
+    <div className="min-h-screen bg-bg pb-20">
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
         <div className="flex items-center justify-between mb-4">

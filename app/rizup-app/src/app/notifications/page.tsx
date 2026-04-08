@@ -81,7 +81,7 @@ export default function NotificationsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-bg pb-20 pt-16">
+    <div className="min-h-screen bg-bg pb-20">
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
         <h2 className="text-lg font-extrabold mb-4">🔔 通知</h2>

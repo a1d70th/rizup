@@ -124,7 +124,7 @@ export default function ProfilePage() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-bg pb-20 pt-16">
+    <div className="min-h-screen bg-bg pb-20">
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center mb-4 animate-pulse">
@@ -146,7 +146,7 @@ export default function ProfilePage() {
   const isUrl = profile.avatar_url?.startsWith("http");
 
   return (
-    <div className="min-h-screen bg-bg pb-20 pt-16">
+    <div className="min-h-screen bg-bg pb-20">
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
         {/* Profile Header */}
