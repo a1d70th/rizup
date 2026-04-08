@@ -47,7 +47,28 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
 
 3. **Redeploy** をクリック
 
-## 5.5. Supabase 認証 URL 設定（必須）
+## 5.5. メール送信の設定（Resend SMTP）
+
+Supabaseの無料プランはメール送信が **1時間4通まで** です。
+Resend の SMTP を使うことで制限を解除できます。
+
+1. Supabase ダッシュボード → **Project Settings** → **Authentication** → **SMTP Settings**
+2. **Enable Custom SMTP** を ON にする
+3. 以下を入力：
+
+| 設定 | 値 |
+|---|---|
+| **Host** | `smtp.resend.com` |
+| **Port** | `465` |
+| **User** | `resend` |
+| **Password** | Resend の API Key（`re_` で始まる文字列） |
+| **Sender email** | `onboarding@resend.dev`（または自分のドメイン） |
+
+4. 「Save」をクリック
+
+> Resend の API Key は `https://resend.com/api-keys` で取得できます。
+
+## 5.6. Supabase 認証 URL 設定（必須）
 
 1. Supabase ダッシュボード → **Authentication** → **URL Configuration**
 2. 以下を設定：

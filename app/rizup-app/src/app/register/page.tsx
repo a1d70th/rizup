@@ -79,15 +79,43 @@ export default function RegisterPage() {
   };
 
 
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendMsg, setResendMsg] = useState("");
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    const { error } = await supabase.auth.resend({ type: "signup", email });
+    if (error) {
+      setResendMsg("送信に失敗しました。しばらく待ってから再度お試しください。");
+    } else {
+      setResendMsg("確認メールを再送信しました。");
+      setResendCooldown(60);
+      const timer = setInterval(() => {
+        setResendCooldown(prev => {
+          if (prev <= 1) { clearInterval(timer); return 0; }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+  };
+
   if (success) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
         <Image src="/sho.png" alt="Sho" width={96} height={96} className="rounded-full mb-4 animate-sho-float" />
         <h1 className="text-2xl font-extrabold mb-2">メールを確認してね</h1>
-        <p className="text-text-mid text-sm leading-relaxed max-w-xs">
+        <p className="text-text-mid text-sm leading-relaxed max-w-xs mb-4">
           <strong>{email}</strong> に確認メールを送りました。<br />
           メール内のリンクをクリックして、登録を完了してください。
         </p>
+        <p className="text-xs text-text-light mb-4 max-w-xs">
+          メールが届かない場合は迷惑メールフォルダを確認してください。
+        </p>
+        {resendMsg && <p className="text-xs text-mint mb-3">{resendMsg}</p>}
+        <button onClick={handleResend} disabled={resendCooldown > 0}
+          className="text-sm text-mint font-bold border border-mint rounded-full px-6 py-2.5 hover:bg-mint-light transition disabled:opacity-40">
+          {resendCooldown > 0 ? `再送信まで ${resendCooldown}秒` : "確認メールを再送信"}
+        </button>
       </div>
     );
   }
