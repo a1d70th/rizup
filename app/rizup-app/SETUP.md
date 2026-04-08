@@ -47,6 +47,21 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
 
 3. **Redeploy** をクリック
 
+## 5.5. Supabase 認証 URL 設定（必須）
+
+1. Supabase ダッシュボード → **Authentication** → **URL Configuration**
+2. 以下を設定：
+
+| 設定 | 値 |
+|---|---|
+| **Site URL** | `https://rizup-app.vercel.app` |
+| **Redirect URLs** | `https://rizup-app.vercel.app/auth/callback` |
+
+3. 「Save」をクリック
+
+> **重要**: この設定がないと Google / Apple ログイン後のコールバックが失敗します。
+> Redirect URLs には `https://rizup-app.vercel.app/auth/callback` を **必ず** 追加してください。
+
 ## 6. Google 認証を有効化
 
 ### 6-1. Google Cloud Console 設定
