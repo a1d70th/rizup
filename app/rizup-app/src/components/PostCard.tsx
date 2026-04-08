@@ -3,6 +3,18 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 
+function Avatar({ url, size = 40 }: { url?: string | null; size?: number }) {
+  const [err, setErr] = useState(false);
+  const isUrl = url?.startsWith("http") && !err;
+  return isUrl ? (
+    <img src={url!} alt="" width={size} height={size} className="rounded-full object-cover bg-mint-light shrink-0" style={{ width: size, height: size }} onError={() => setErr(true)} />
+  ) : (
+    <div className="rounded-full bg-mint-light flex items-center justify-center shrink-0" style={{ width: size, height: size, fontSize: size * 0.5 }}>
+      {url && !url.startsWith("http") ? url : "🌿"}
+    </div>
+  );
+}
+
 const moodEmojis = ["", "😔", "😐", "🙂", "😊", "🤩"];
 const reactionTypes = [
   { type: "cheer", emoji: "🌱", label: "応援してる" },
@@ -95,9 +107,7 @@ export default function PostCard({ post, userId }: PostCardProps) {
     <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm animate-fade-in">
       {/* Header */}
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-10 h-10 rounded-full bg-mint-light flex items-center justify-center text-lg">
-          {post.profiles?.avatar_url || "🌿"}
-        </div>
+        <Avatar url={post.profiles?.avatar_url} size={40} />
         <div className="flex-1">
           <div className="font-bold text-sm">{name}</div>
           <div className="text-xs text-text-light">{time}</div>

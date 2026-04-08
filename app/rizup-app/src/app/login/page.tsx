@@ -90,6 +90,8 @@ export default function LoginPage() {
           placeholder="メールアドレス"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          autoComplete="off"
+          autoFocus={false}
           className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 text-sm outline-none focus:border-mint transition"
           onKeyDown={(e) => { if (e.key === "Enter") handleLogin(e); }}
         />
@@ -98,6 +100,8 @@ export default function LoginPage() {
           placeholder="パスワード"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          autoComplete="new-password"
+          autoFocus={false}
           className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 text-sm outline-none focus:border-mint transition"
           onKeyDown={(e) => { if (e.key === "Enter") handleLogin(e); }}
         />

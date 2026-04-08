@@ -158,9 +158,9 @@ export default function ProfilePage() {
             <p className="text-xs text-text-light text-center py-4">ジャーナルを投稿すると、ここにグラフが表示されます</p>
           ) : (
             <>
-              <div className="flex items-end gap-1 h-20">
+              <div className="flex items-end gap-1 h-20" style={{ maxWidth: moodHistory.length <= 3 ? `${moodHistory.length * 48}px` : "100%" }}>
                 {moodHistory.map((mood, i) => (
-                  <div key={i} className="flex-1 rounded-t-md" style={{ height: `${mood * 20}%`, background: moodColors[mood] || "#6ecbb0" }} />
+                  <div key={i} className="rounded-t-md" style={{ height: `${mood * 20}%`, background: moodColors[mood] || "#6ecbb0", flex: "1 1 0", maxWidth: 40, minWidth: 12 }} />
                 ))}
               </div>
               <div className="flex justify-between text-[10px] text-text-light mt-1">
@@ -174,6 +174,28 @@ export default function ProfilePage() {
                   </div>
                 ))}
               </div>
+            </>
+          )}
+        </div>
+
+        {/* Sleep × Mood correlation */}
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
+          <h3 className="text-sm font-bold mb-3">😴 睡眠 × 気分の相関</h3>
+          {moodHistory.length < 5 ? (
+            <p className="text-xs text-text-light text-center py-4">データが増えると睡眠と気分の相関が見えてきます（5件以上で表示）</p>
+          ) : (
+            <>
+              <div className="relative h-24 border-l border-b border-gray-200 ml-4 mb-2">
+                {moodHistory.slice(-10).map((mood, i) => {
+                  const x = (i / Math.max(moodHistory.slice(-10).length - 1, 1)) * 90 + 5;
+                  const y = 100 - mood * 20;
+                  return <div key={i} className="absolute w-3 h-3 rounded-full border-2 border-white shadow-sm" style={{ left: `${x}%`, top: `${y}%`, background: moodColors[mood] }} />;
+                })}
+              </div>
+              <div className="flex justify-between text-[10px] text-text-light ml-4">
+                <span>少ない睡眠</span><span>多い睡眠</span>
+              </div>
+              <p className="text-[10px] text-text-light mt-2 text-center">睡眠データを記録するほど、相関の精度が上がります</p>
             </>
           )}
         </div>
