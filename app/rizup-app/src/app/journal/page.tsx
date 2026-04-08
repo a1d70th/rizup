@@ -30,6 +30,7 @@ export default function JournalPage() {
   const [suspended, setSuspended] = useState(false);
   const [userPlan, setUserPlan] = useState<string | null>(null);
   const [isTrialActive, setIsTrialActive] = useState(false);
+  const [checkingPlan, setCheckingPlan] = useState(true);
   const imageRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -37,14 +38,15 @@ export default function JournalPage() {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: prof } = await supabase.from("profiles").select("is_suspended, plan, trial_ends_at, is_trial_ended").eq("id", user.id).single();
+        const { data: prof } = await supabase.from("profiles").select("is_suspended, plan, trial_ends_at").eq("id", user.id).single();
         if (prof?.is_suspended) setSuspended(true);
         setUserPlan(prof?.plan || "free");
-        // Check if trial is still active
-        if (prof?.trial_ends_at && !prof?.is_trial_ended) {
-          const daysLeft = Math.ceil((new Date(prof.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-          if (daysLeft > 0) setIsTrialActive(true);
+        // Trial is active if trial_ends_at exists and is in the future
+        if (prof?.trial_ends_at) {
+          const endsAt = new Date(prof.trial_ends_at).getTime();
+          if (endsAt > Date.now()) setIsTrialActive(true);
         }
+        setCheckingPlan(false);
       }
     };
     checkUser();
@@ -152,8 +154,17 @@ export default function JournalPage() {
     setLoading(false);
   };
 
+  // Show loading while checking plan
+  if (checkingPlan) {
+    return (
+      <div className="min-h-screen bg-bg flex items-center justify-center">
+        <Image src="/sho.png" alt="Sho" width={48} height={48} className="animate-sho-float rounded-full" />
+      </div>
+    );
+  }
+
   // Plan gate: free users can't post (unless trial is active)
-  if (userPlan !== null && userPlan === "free" && !isTrialActive) {
+  if (userPlan === "free" && !isTrialActive) {
     return <PlanGate currentPlan="free" requiredPlan="pro"><></></PlanGate>;
   }
 
