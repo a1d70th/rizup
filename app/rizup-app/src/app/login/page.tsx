@@ -16,8 +16,9 @@ export default function LoginPage() {
   // Check for OAuth error in URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get("error") === "oauth") {
-      showError("ソーシャルログインに失敗しました。もう一度お試しください。");
+    const err = params.get("error");
+    if (err === "oauth" || err === "auth_failed") {
+      showError("認証に失敗しました。もう一度お試しください。");
     }
   }, []);
 
