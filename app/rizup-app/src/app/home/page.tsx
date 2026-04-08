@@ -32,7 +32,7 @@ export default function HomePage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           setUserId(user.id);
-          const { data: profile } = await supabase.from("profiles").select("streak, zodiac, birthday, rizup_type, mbti, trial_ends_at, plan, is_admin").eq("id", user.id).single();
+          const { data: profile } = await supabase.from("profiles").select("name, streak, zodiac, birthday, rizup_type, mbti, trial_ends_at, plan, is_admin").eq("id", user.id).single();
           if (profile) {
             setStreak(profile.streak || 0);
             if (profile.is_admin) setIsAdmin(true);
@@ -71,7 +71,7 @@ export default function HomePage() {
               fetch("/api/sho-insight", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ zodiac: profile.zodiac, birthday: profile.birthday, rizupType: profile.rizup_type, mbti: profile.mbti }),
+                body: JSON.stringify({ zodiac: profile.zodiac, birthday: profile.birthday, rizupType: profile.rizup_type, mbti: profile.mbti, name: profile.name }),
               }).then(r => r.json()).then(d => {
                 if (d.insight) { setShoInsight(d.insight); localStorage.setItem(cacheKey, d.insight); }
                 // Clean old cache (keep 7 days)
