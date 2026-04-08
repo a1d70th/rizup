@@ -9,11 +9,43 @@ const weekdays = ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日
 
 export async function POST(request: NextRequest) {
   try {
-    const { zodiac, rizupType, mbti, name } = await request.json();
+    const { zodiac, rizupType, mbti, name, birthday, generateTypeDesc } = await request.json();
 
     const now = new Date();
     const season = seasons[now.getMonth()];
     const weekday = weekdays[now.getDay()];
+
+    // ── Type description for onboarding result ──
+    if (generateTypeDesc && ANTHROPIC_API_KEY) {
+      try {
+        const birthMonth = birthday ? new Date(birthday).getMonth() + 1 : null;
+        const descPrompt = `あなたはRizupアプリの性格分析AIです。以下の組み合わせから、その人だけの特徴を日本語100〜150文字で生成してください。
+
+星座：${zodiac || "不明"}
+${birthMonth ? `誕生月：${birthMonth}月` : ""}
+Rizupタイプ：${rizupType || "不明"}
+${mbti ? `MBTI：${mbti}` : ""}
+
+条件：
+- 「あなたは〜」で始める
+- 強みと伸びしろを1つずつ含める
+- 前向きで温かいトーン
+- 占いではなく性格分析として書く
+- テキストのみ出力（装飾なし）`;
+
+        const descRes = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
+          body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 300, messages: [{ role: "user", content: descPrompt }] }),
+        });
+        if (descRes.ok) {
+          const descData = await descRes.json();
+          const typeDesc = descData.content?.[0]?.text;
+          if (typeDesc) return NextResponse.json({ typeDesc });
+        }
+      } catch (e) { console.error("[Sho Insight] TypeDesc error:", e); }
+      return NextResponse.json({ typeDesc: null });
+    }
 
     // ── Fetch recent mood & sleep data from DB ──
     let moodAvg: number | null = null;

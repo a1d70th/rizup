@@ -28,6 +28,7 @@ export default function OnboardingPage() {
   const [error, setError] = useState("");
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [agreedAge, setAgreedAge] = useState(false);
+  const [personalDesc, setPersonalDesc] = useState<string | null>(null);
 
   const handleQuizAnswer = (type: string) => {
     const newAnswers = [...quizAnswers, type];
@@ -38,6 +39,18 @@ export default function OnboardingPage() {
       const result = calculateType(newAnswers);
       setResultType(result);
       setStep(6);
+      // Generate personalized description
+      fetch("/api/sho-insight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          zodiac, birthday, rizupType: result,
+          mbti: mbti && mbti !== "unknown" ? mbti : null, name,
+          generateTypeDesc: true,
+        }),
+      }).then(r => r.json()).then(d => {
+        if (d.typeDesc) setPersonalDesc(d.typeDesc);
+      }).catch(() => {});
     }
   };
 
@@ -52,9 +65,7 @@ export default function OnboardingPage() {
 
       const now = new Date().toISOString();
       const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      const profileData = {
-        id: user.id,
-        email: user.email,
+      const updates = {
         name: name.trim(),
         dream: dream.trim(),
         avatar_url: avatar,
@@ -64,17 +75,24 @@ export default function OnboardingPage() {
         rizup_type: resultType || null,
         trial_started_at: now,
         trial_ends_at: trialEnd,
-        is_trial_ended: false,
       };
 
-      // Always use upsert to handle both insert and update cases
-      const { error: upsertErr } = await supabase.from("profiles").upsert(profileData, { onConflict: "id" });
+      // Try update first (profile may already exist from handle_new_user trigger)
+      console.log("[Onboarding] Attempting update for user:", user.id);
+      const { error: updateErr } = await supabase.from("profiles").update(updates).eq("id", user.id);
 
-      if (upsertErr) {
-        console.error("[Onboarding] Upsert error:", upsertErr);
-        setError("保存に失敗しました。もう一度お試しください。");
-        setLoading(false);
-        return;
+      if (updateErr) {
+        console.warn("[Onboarding] Update failed, trying insert:", updateErr.message, updateErr.code);
+        // Fallback: insert with full data
+        const { error: insertErr } = await supabase.from("profiles").insert({
+          id: user.id, email: user.email, ...updates,
+        });
+        if (insertErr) {
+          console.error("[Onboarding] Insert also failed:", insertErr.message, insertErr.code, insertErr.details);
+          setError(`保存に失敗しました（${insertErr.message}）。もう一度お試しください。`);
+          setLoading(false);
+          return;
+        }
       }
 
       // Verify
@@ -82,12 +100,11 @@ export default function OnboardingPage() {
       console.log("[Onboarding] Saved profile:", saved);
 
       if (!saved?.name) {
-        setError("保存の確認に失敗しました。もう一度お試しください。");
-        setLoading(false);
-        return;
+        // Last resort: try upsert
+        console.warn("[Onboarding] Verify failed, trying upsert");
+        await supabase.from("profiles").upsert({ id: user.id, email: user.email, ...updates }, { onConflict: "id" });
       }
 
-      // Force navigate — do NOT setLoading(false), page is leaving
       console.log("[Onboarding] Success, navigating to /home");
       window.location.href = "https://rizup-app.vercel.app/home";
     } catch (err) {
@@ -233,15 +250,21 @@ export default function OnboardingPage() {
         <div className="w-full max-w-xs animate-fade-in text-center">
           <div className="text-5xl mb-3">{rizupTypes[resultType].emoji}</div>
           <h1 className="text-2xl font-extrabold mb-1">あなたは{rizupTypes[resultType].label}タイプ！</h1>
-          <p className="text-text-mid text-sm leading-relaxed mb-6">{rizupTypes[resultType].desc}</p>
-          <div className="bg-mint-light rounded-2xl p-4 mb-6 text-left">
+          <p className="text-text-mid text-sm leading-relaxed mb-4">{rizupTypes[resultType].desc}</p>
+          {personalDesc && (
+            <div className="bg-white border border-mint/20 rounded-2xl p-4 mb-4 text-left">
+              <p className="text-xs font-bold text-mint mb-1">✨ {zodiac}×{rizupTypes[resultType].label}タイプ{mbti && mbti !== "unknown" ? `×${mbti}` : ""}のあなたは...</p>
+              <p className="text-xs text-text leading-relaxed">{personalDesc}</p>
+            </div>
+          )}
+          <div className="bg-mint-light rounded-2xl p-4 mb-4 text-left">
             <div className="flex items-center gap-2 mb-2">
               <Image src="/sho.png" alt="Sho" width={24} height={24} className="rounded-full" />
               <span className="text-xs font-bold text-mint">Sho より</span>
             </div>
             <p className="text-xs text-text leading-relaxed">
               {name}さん、{rizupTypes[resultType].label}タイプだね！
-              これからあなたのタイプに合わせたインサイトを毎日届けるよ。一緒に前に進もう。
+              これからあなたに合わせたインサイトを毎日届けるよ。一緒に前に進もう。
             </p>
           </div>
           <div className="bg-mint-light rounded-2xl p-3 mb-4">
