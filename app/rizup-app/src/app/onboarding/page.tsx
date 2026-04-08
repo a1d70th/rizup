@@ -6,6 +6,12 @@ import type { RizupType } from "@/lib/rizup-types";
 import Image from "next/image";
 
 const avatarOptions = ["🌿", "🌸", "🌙", "☀️", "🌈", "🦋", "🍀", "🌊"];
+const mbtiTypes = [
+  "INTJ", "INTP", "ENTJ", "ENTP",
+  "INFJ", "INFP", "ENFJ", "ENFP",
+  "ISTJ", "ISFJ", "ESTJ", "ESFJ",
+  "ISTP", "ISFP", "ESTP", "ESFP",
+];
 
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
@@ -14,6 +20,7 @@ export default function OnboardingPage() {
   const [avatar, setAvatar] = useState("🌿");
   const [zodiac, setZodiac] = useState("");
   const [birthday, setBirthday] = useState("");
+  const [mbti, setMbti] = useState("");
   const [quizAnswers, setQuizAnswers] = useState<string[]>([]);
   const [quizIndex, setQuizIndex] = useState(0);
   const [resultType, setResultType] = useState<RizupType | null>(null);
@@ -30,7 +37,7 @@ export default function OnboardingPage() {
     } else {
       const result = calculateType(newAnswers);
       setResultType(result);
-      setStep(5);
+      setStep(6);
     }
   };
 
@@ -53,6 +60,7 @@ export default function OnboardingPage() {
         avatar_url: avatar,
         zodiac: zodiac || null,
         birthday: birthday || null,
+        mbti: mbti || null,
         rizup_type: resultType || null,
         trial_started_at: now,
         trial_ends_at: trialEnd,
@@ -133,7 +141,7 @@ export default function OnboardingPage() {
               <span className="text-xs text-text-mid">13歳以上です</span>
             </label>
           </div>
-          <button onClick={() => name.trim() && setStep(2)} disabled={!name.trim() || !agreedTerms || !agreedAge}
+          <button onClick={() => { (document.activeElement as HTMLElement)?.blur(); if (name.trim()) setStep(2); }} disabled={!name.trim() || !agreedTerms || !agreedAge}
             className="w-full bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30 disabled:opacity-30">次へ</button>
         </div>
       )}
@@ -145,7 +153,7 @@ export default function OnboardingPage() {
           <p className="text-text-mid text-sm text-center mb-6">大きくても小さくても大丈夫</p>
           <textarea placeholder="例：フリーランスとして独立したい" value={dream} onChange={(e) => setDream(e.target.value)}
             className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 text-sm outline-none focus:border-mint transition h-24 resize-none mb-4" />
-          <button onClick={() => setStep(3)} className="w-full bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30">次へ</button>
+          <button onClick={() => { (document.activeElement as HTMLElement)?.blur(); setStep(3); }} className="w-full bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30">次へ</button>
           <button onClick={() => setStep(1)} className="w-full text-text-light text-sm mt-3">戻る</button>
         </div>
       )}
@@ -168,14 +176,39 @@ export default function OnboardingPage() {
               </button>
             ))}
           </div>
-          <button onClick={() => setStep(4)} disabled={!zodiac || !birthday}
-            className="w-full bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30 disabled:opacity-30">タイプ診断へ</button>
+          <button onClick={() => { (document.activeElement as HTMLElement)?.blur(); setStep(4); }} disabled={!zodiac || !birthday}
+            className="w-full bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30 disabled:opacity-30">次へ</button>
           <button onClick={() => setStep(2)} className="w-full text-text-light text-sm mt-3">戻る</button>
         </div>
       )}
 
-      {/* Step 4: Type Quiz */}
+      {/* Step 4: MBTI */}
       {step === 4 && (
+        <div className="w-full max-w-xs animate-fade-in">
+          <h1 className="text-xl font-extrabold text-center mb-1">MBTI タイプは？</h1>
+          <p className="text-text-mid text-sm text-center mb-6">Sho Insight のパーソナライズに使います</p>
+          <div className="grid grid-cols-4 gap-2 mb-4">
+            {mbtiTypes.map((t) => (
+              <button key={t} onClick={() => setMbti(t)}
+                className={`py-2.5 rounded-xl text-xs font-bold transition border ${
+                  mbti === t ? "border-mint bg-mint-light text-mint" : "border-gray-200 text-text-mid"}`}>
+                {t}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setMbti("unknown")}
+            className={`w-full py-2.5 rounded-xl text-sm font-bold transition border mb-4 ${
+              mbti === "unknown" ? "border-mint bg-mint-light text-mint" : "border-gray-200 text-text-mid"}`}>
+            わからない
+          </button>
+          <button onClick={() => setStep(5)} disabled={!mbti}
+            className="w-full bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30 disabled:opacity-30">タイプ診断へ</button>
+          <button onClick={() => setStep(3)} className="w-full text-text-light text-sm mt-3">戻る</button>
+        </div>
+      )}
+
+      {/* Step 5: Type Quiz */}
+      {step === 5 && (
         <div className="w-full max-w-xs animate-fade-in">
           <div className="flex justify-center gap-1 mb-4">
             {typeQuestions.map((_, i) => (
@@ -195,8 +228,8 @@ export default function OnboardingPage() {
         </div>
       )}
 
-      {/* Step 5: Result */}
-      {step === 5 && resultType && (
+      {/* Step 6: Result */}
+      {step === 6 && resultType && (
         <div className="w-full max-w-xs animate-fade-in text-center">
           <div className="text-5xl mb-3">{rizupTypes[resultType].emoji}</div>
           <h1 className="text-2xl font-extrabold mb-1">あなたは{rizupTypes[resultType].label}タイプ！</h1>
@@ -210,6 +243,9 @@ export default function OnboardingPage() {
               {name}さん、{rizupTypes[resultType].label}タイプだね！
               これからあなたのタイプに合わせたインサイトを毎日届けるよ。一緒に前に進もう。
             </p>
+          </div>
+          <div className="bg-orange-light rounded-2xl p-3 mb-4">
+            <p className="text-xs font-bold text-orange text-center">🎉 7日間無料で全機能を体験できます</p>
           </div>
           <button onClick={handleShare}
             className="w-full border-2 border-gray-200 rounded-full py-3 text-sm font-bold text-text-mid hover:border-mint transition mb-3">

@@ -4,7 +4,8 @@
       "Bash(grep -E \"\\(netlify|legal|research|marketing|company|community|consulting\\)$\")",
       "Bash(npm run:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(xargs grep:*)"
     ]
   }
 }

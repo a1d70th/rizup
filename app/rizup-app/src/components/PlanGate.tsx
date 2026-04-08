@@ -3,9 +3,9 @@ import Image from "next/image";
 
 const planRank: Record<string, number> = { free: 0, pro: 1, premium: 2, vip: 3 };
 const planInfo: Record<string, { name: string; price: string; color: string; features: string[] }> = {
-  pro: { name: "Pro", price: "¥980/月", color: "text-mint", features: ["投稿・ジャーナリング全機能", "AIフィードバック", "感情グラフ・睡眠記録", "バッジ・ストリーク"] },
-  premium: { name: "Premium", price: "¥1,980/月", color: "text-orange", features: ["Pro の全機能", "月次/週次PDFレポート", "感情分析の深掘り", "言葉の変化レポート"] },
-  vip: { name: "VIP", price: "¥2,980/月", color: "text-purple-500", features: ["Premium の全機能", "Sho への直接相談（月1回）", "限定ノウハウコンテンツ", "先行機能プレビュー"] },
+  pro: { name: "Pro", price: "¥980/月", color: "text-mint", features: ["投稿・ジャーナリング", "AIフィードバック", "感情グラフ・睡眠記録", "バッジ・ストリーク"] },
+  premium: { name: "Premium", price: "¥1,980/月", color: "text-orange", features: ["Pro の全機能", "PDF成長レポート", "詳細分析"] },
+  vip: { name: "VIP", price: "¥2,980/月", color: "text-purple-500", features: ["Premium の全機能", "限定コンテンツ", "Sho への直接相談"] },
 };
 
 interface PlanGateProps {

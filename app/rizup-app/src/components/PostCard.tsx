@@ -285,8 +285,8 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
             <input type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)}
               placeholder="前向きなコメントを書こう..."
               className="flex-1 border border-gray-100 rounded-full px-3 py-1.5 text-xs outline-none focus:border-mint"
-              onKeyDown={(e) => { if (e.key === "Enter") handleComment(); }} />
-            <button onClick={handleComment} disabled={!commentText.trim()}
+              onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); handleComment(); } }} />
+            <button onClick={() => { (document.activeElement as HTMLElement)?.blur(); handleComment(); }} disabled={!commentText.trim()}
               className="bg-mint text-white rounded-full px-3 py-1.5 text-xs font-bold disabled:opacity-30">送信</button>
           </div>
         </div>

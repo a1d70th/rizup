@@ -1,4 +1,4 @@
-export type UserPlan = "free" | "pro" | "premium";
+export type UserPlan = "free" | "pro" | "premium" | "vip";
 
 export interface Profile {
   id: string;
@@ -8,6 +8,7 @@ export interface Profile {
   avatar_url: string | null;
   streak: number;
   plan: UserPlan;
+  mbti: string | null;
   is_admin: boolean;
   warning_count: number;
   is_suspended: boolean;

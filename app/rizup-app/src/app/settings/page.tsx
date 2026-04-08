@@ -31,10 +31,10 @@ export default function SettingsPage() {
           <h3 className="text-sm font-bold mb-3">プラン一覧</h3>
           <div className="flex flex-col gap-2">
             {[
-              { name: "無料", price: "¥0", desc: "閲覧・リアクション", color: "text-text-mid" },
-              { name: "Pro", price: "¥980/月", desc: "投稿・AI・グラフ・バッジ", color: "text-mint" },
-              { name: "Premium", price: "¥1,980/月", desc: "Pro + PDF・詳細分析", color: "text-orange" },
-              { name: "VIP", price: "¥2,980/月", desc: "全機能 + Sho直接相談", color: "text-purple-500" },
+              { name: "無料", price: "¥0", desc: "タイムライン閲覧・リアクションのみ", color: "text-text-mid" },
+              { name: "Pro", price: "¥980/月", desc: "投稿・ジャーナリング・AIフィードバック・感情グラフ", color: "text-mint" },
+              { name: "Premium", price: "¥1,980/月", desc: "Pro全機能＋PDF成長レポート・詳細分析", color: "text-orange" },
+              { name: "VIP", price: "¥2,980/月", desc: "Premium全機能＋限定コンテンツ・直接相談", color: "text-purple-500" },
             ].map((p) => (
               <div key={p.name} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                 <div>

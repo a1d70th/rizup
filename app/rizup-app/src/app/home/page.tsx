@@ -30,7 +30,7 @@ export default function HomePage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           setUserId(user.id);
-          const { data: profile } = await supabase.from("profiles").select("streak, zodiac, birthday, rizup_type, trial_ends_at, is_trial_ended, plan, is_admin").eq("id", user.id).single();
+          const { data: profile } = await supabase.from("profiles").select("streak, zodiac, birthday, rizup_type, mbti, trial_ends_at, is_trial_ended, plan, is_admin").eq("id", user.id).single();
           if (profile) {
             setStreak(profile.streak || 0);
             if (profile.is_admin) setIsAdmin(true);
@@ -44,9 +44,22 @@ export default function HomePage() {
                   setTrialEnded(true);
                 } else {
                   setTrialDaysLeft(daysLeft);
+                  // Send trial-ending notification (1 day before)
+                  if (daysLeft === 1) {
+                    const notifKey = `trial_notif_sent_${user.id}`;
+                    if (!localStorage.getItem(notifKey)) {
+                      await supabase.from("notifications").insert({
+                        user_id: user.id,
+                        type: "trial_ending",
+                        content: "Sho より：トライアルが明日終了するよ。Proプランで投稿やAIフィードバックを続けよう！",
+                      });
+                      localStorage.setItem(notifKey, "1");
+                    }
+                  }
                 }
               }
             }
+
             // Fetch Sho Insight — check localStorage cache first
             const cacheKey = `sho_insight_${new Date().toISOString().split("T")[0]}`;
             const cached = localStorage.getItem(cacheKey);
@@ -56,7 +69,7 @@ export default function HomePage() {
               fetch("/api/sho-insight", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ zodiac: profile.zodiac, birthday: profile.birthday, rizupType: profile.rizup_type }),
+                body: JSON.stringify({ zodiac: profile.zodiac, birthday: profile.birthday, rizupType: profile.rizup_type, mbti: profile.mbti }),
               }).then(r => r.json()).then(d => {
                 if (d.insight) { setShoInsight(d.insight); localStorage.setItem(cacheKey, d.insight); }
                 // Clean old cache (keep 7 days)
@@ -86,44 +99,32 @@ export default function HomePage() {
     init();
   }, []);
 
-  // Trial ended screen
-  if (trialEnded) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
-        <Image src="/sho.png" alt="Sho" width={80} height={80} className="rounded-full mb-4" />
-        <h2 className="text-xl font-extrabold mb-2">トライアルが終了しました</h2>
-        <p className="text-sm text-text-mid leading-relaxed mb-6 max-w-xs">
-          7日間お試しいただきありがとうございます。<br />
-          Pro プランで Rizup を続けませんか？
-        </p>
-        <div className="bg-mint-light rounded-2xl p-4 max-w-xs mb-4 text-left w-full">
-          <p className="text-xs font-bold text-mint mb-2">Pro プラン — ¥980/月</p>
-          <ul className="text-xs text-text-mid space-y-1">
-            <li>✅ 投稿・ジャーナリング全機能</li>
-            <li>✅ AIフィードバック</li>
-            <li>✅ 感情グラフ・睡眠記録</li>
-            <li>✅ バッジ・ストリーク</li>
-          </ul>
-        </div>
-        <a href="https://rizup-app.vercel.app/settings" className="bg-mint text-white font-bold px-8 py-3 rounded-full shadow-lg shadow-mint/30 mb-3">
-          Pro プランで続ける
-        </a>
-        <p className="text-xs text-text-light">いつでもキャンセルできます</p>
-      </div>
-    );
-  }
+  // Trial ended — show inline banner instead of blocking screen (free users can still view timeline + react)
+
 
   return (
     <div className="min-h-screen bg-bg pb-20 pt-16">
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
+        {/* Trial ended banner */}
+        {trialEnded && (
+          <div className="bg-orange-light rounded-2xl p-4 mb-4">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-xl">⏰</span>
+              <p className="text-sm font-bold text-orange flex-1">無料トライアルが終了しました</p>
+            </div>
+            <p className="text-xs text-text-mid mb-3">現在は無料プラン（タイムライン閲覧・リアクションのみ）です。投稿やAIフィードバックを使うにはProプランへ。</p>
+            <a href="/settings" className="block text-center bg-mint text-white text-sm font-bold py-2.5 rounded-full shadow-md shadow-mint/30">プランを確認する</a>
+          </div>
+        )}
+
         {/* Trial banner */}
         {trialDaysLeft !== null && (
           <div className={`rounded-2xl p-3 mb-4 flex items-center gap-3 ${trialDaysLeft <= 1 ? "bg-orange-light" : "bg-mint-light"}`}>
             <span className="text-xl">{trialDaysLeft <= 1 ? "⏰" : "🎉"}</span>
             <p className={`text-xs font-bold flex-1 ${trialDaysLeft <= 1 ? "text-orange" : "text-mint"}`}>
               {trialDaysLeft <= 1
-                ? "明日からProプランが始まります。続けますか？"
+                ? "明日トライアルが終了します。Proプランで続けませんか？"
                 : `無料トライアル残り${trialDaysLeft}日 — 全機能をお試しください`}
             </p>
           </div>

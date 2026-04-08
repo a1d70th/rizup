@@ -29,6 +29,7 @@ export default function JournalPage() {
   const [moderationError, setModerationError] = useState<string | null>(null);
   const [suspended, setSuspended] = useState(false);
   const [userPlan, setUserPlan] = useState<string | null>(null);
+  const [isTrialActive, setIsTrialActive] = useState(false);
   const imageRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -36,9 +37,14 @@ export default function JournalPage() {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: prof } = await supabase.from("profiles").select("is_suspended, plan").eq("id", user.id).single();
+        const { data: prof } = await supabase.from("profiles").select("is_suspended, plan, trial_ends_at, is_trial_ended").eq("id", user.id).single();
         if (prof?.is_suspended) setSuspended(true);
         setUserPlan(prof?.plan || "free");
+        // Check if trial is still active
+        if (prof?.trial_ends_at && !prof?.is_trial_ended) {
+          const daysLeft = Math.ceil((new Date(prof.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+          if (daysLeft > 0) setIsTrialActive(true);
+        }
       }
     };
     checkUser();
@@ -54,6 +60,7 @@ export default function JournalPage() {
   };
 
   const handlePost = async () => {
+    (document.activeElement as HTMLElement)?.blur();
     setLoading(true);
     setModerationError(null);
     const { data: { user } } = await supabase.auth.getUser();
@@ -138,8 +145,8 @@ export default function JournalPage() {
     setLoading(false);
   };
 
-  // Plan gate: free users can't post
-  if (userPlan !== null && userPlan === "free") {
+  // Plan gate: free users can't post (unless trial is active)
+  if (userPlan !== null && userPlan === "free" && !isTrialActive) {
     return <PlanGate currentPlan="free" requiredPlan="pro"><></></PlanGate>;
   }
 

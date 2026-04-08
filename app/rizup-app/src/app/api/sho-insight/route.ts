@@ -7,7 +7,7 @@ const weekdays = ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日
 
 export async function POST(request: Request) {
   try {
-    const { zodiac, birthday, rizupType } = await request.json();
+    const { zodiac, birthday, rizupType, mbti } = await request.json();
 
     const now = new Date();
     const season = seasons[now.getMonth()];
@@ -37,12 +37,13 @@ export async function POST(request: Request) {
 - 星座：${zodiac || "不明"}
 - 生年月日：${birthday || "不明"}
 - Rizupタイプ：${rizupType || "不明"}
+- MBTI：${mbti && mbti !== "unknown" ? mbti : "不明"}
 - 今日の曜日：${weekday}
 - 季節：${season}
 
 ■ ルール
 1. 80〜120字以内
-2. 星座やタイプの特性を自然に織り込む（「○○座のあなたは〜」ではなく、さりげなく）
+2. 星座・Rizupタイプ・MBTIの特性を自然に織り込む（「○○座のあなたは〜」ではなく、さりげなく）
 3. 今日の曜日・季節に合った内容
 4. 具体的なアクション提案を1つ含める
 5. 占いではなく「今日のヒント」として語る

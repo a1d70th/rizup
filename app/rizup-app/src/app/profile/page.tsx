@@ -33,7 +33,7 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [showEdit, setShowEdit] = useState(false);
-  const [editForm, setEditForm] = useState({ name: "", dream: "", zodiac: "", birthday: "", rizup_type: "" });
+  const [editForm, setEditForm] = useState({ name: "", dream: "", zodiac: "", birthday: "", rizup_type: "", mbti: "" });
 
   useEffect(() => {
     const init = async () => {
@@ -91,6 +91,7 @@ export default function ProfilePage() {
   };
 
   const handleEditSave = async () => {
+    (document.activeElement as HTMLElement)?.blur();
     if (!userId || !editForm.name.trim()) return;
     const updates: Record<string, string> = {};
     if (editForm.name.trim()) updates.name = editForm.name.trim();
@@ -98,6 +99,7 @@ export default function ProfilePage() {
     if (editForm.zodiac) updates.zodiac = editForm.zodiac;
     if (editForm.birthday) updates.birthday = editForm.birthday;
     if (editForm.rizup_type) updates.rizup_type = editForm.rizup_type;
+    if (editForm.mbti) updates.mbti = editForm.mbti;
     await supabase.from("profiles").update(updates).eq("id", userId);
     setProfile(prev => prev ? { ...prev, ...updates } : prev);
     setShowEdit(false);
@@ -154,7 +156,7 @@ export default function ProfilePage() {
           {profile.zodiac && <span className="inline-block mt-1 ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-light text-orange">{profile.zodiac}</span>}
           <div className="mt-3">
             <button onClick={() => {
-              setEditForm({ name: profile.name, dream: profile.dream || "", zodiac: profile.zodiac || "", birthday: profile.birthday || "", rizup_type: profile.rizup_type || "" });
+              setEditForm({ name: profile.name, dream: profile.dream || "", zodiac: profile.zodiac || "", birthday: profile.birthday || "", rizup_type: profile.rizup_type || "", mbti: (profile as unknown as Record<string, string>).mbti || "" });
               setShowEdit(true);
             }} className="text-xs text-mint font-bold border border-mint rounded-full px-4 py-1.5 hover:bg-mint-light transition">
               ✏️ プロフィールを編集
@@ -257,7 +259,7 @@ export default function ProfilePage() {
       {/* Edit Modal */}
       {showEdit && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center" onClick={() => setShowEdit(false)}>
-          <div className="bg-white rounded-t-3xl w-full max-w-md p-6 pb-8 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-t-3xl w-full max-w-md p-6 animate-fade-in overflow-y-auto" style={{ maxHeight: "90vh", paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))" }} onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-extrabold">プロフィール編集</h2>
               <button onClick={() => setShowEdit(false)} className="text-text-light text-xl">✕</button>
@@ -294,6 +296,15 @@ export default function ProfilePage() {
                   {(Object.keys(rizupTypes) as RizupType[]).map(t => (
                     <option key={t} value={t}>{rizupTypes[t].emoji} {rizupTypes[t].label}</option>
                   ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-bold text-text-mid block mb-1">MBTI</label>
+                <select value={editForm.mbti} onChange={(e) => setEditForm(f => ({ ...f, mbti: e.target.value }))}
+                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint bg-white">
+                  <option value="">選択してください</option>
+                  {["INTJ","INTP","ENTJ","ENTP","INFJ","INFP","ENFJ","ENFP","ISTJ","ISFJ","ESTJ","ESFJ","ISTP","ISFP","ESTP","ESFP"].map(t => <option key={t} value={t}>{t}</option>)}
+                  <option value="unknown">わからない</option>
                 </select>
               </div>
             </div>

@@ -106,7 +106,7 @@ export default function LoginPage() {
           autoComplete="off"
           autoFocus={false}
           className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 text-sm outline-none focus:border-mint transition"
-          onKeyDown={(e) => { if (e.key === "Enter") handleLogin(e); }}
+          onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); handleLogin(e); } }}
         />
         <input
           type="password"
@@ -116,7 +116,7 @@ export default function LoginPage() {
           autoComplete="new-password"
           autoFocus={false}
           className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 text-sm outline-none focus:border-mint transition"
-          onKeyDown={(e) => { if (e.key === "Enter") handleLogin(e); }}
+          onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); handleLogin(e); } }}
         />
 
         {/* Error message — stays visible for 8 seconds */}
@@ -128,7 +128,7 @@ export default function LoginPage() {
 
         <button
           type="button"
-          onClick={handleLogin}
+          onClick={(e) => { (document.activeElement as HTMLElement)?.blur(); handleLogin(e); }}
           disabled={loading || !email || !password}
           className="bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30 hover:bg-mint-dark transition disabled:opacity-50"
         >
