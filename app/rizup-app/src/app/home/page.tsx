@@ -191,7 +191,10 @@ export default function HomePage() {
               <p className="text-sm font-bold flex-1">今週のチャレンジ</p>
               {challenge.is_completed && <span className="text-[10px] font-bold text-mint bg-white px-2 py-0.5 rounded-full">達成！</span>}
             </div>
-            <p className="text-xs text-text-mid">{challenge.content}</p>
+            <p className="text-xs text-text-mid mb-2">{challenge.content}</p>
+            {!challenge.is_completed && new Date().getDay() >= 5 && (
+              <ChallengeReport challengeId={challenge.id} onCompleted={() => setChallenge(prev => prev ? { ...prev, is_completed: true } : prev)} />
+            )}
           </div>
         ) : (
           <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
@@ -252,13 +255,43 @@ function ChallengeForm({ userId, onCreated }: { userId: string | null; onCreated
   return (
     <div className="flex gap-2">
       <input type="text" value={text} onChange={(e) => setText(e.target.value)}
-        placeholder="例：毎日10分読書する"
+        placeholder="例：毎日10分読書する" aria-label="チャレンジ内容"
         className="flex-1 border border-gray-100 rounded-full px-3 py-1.5 text-xs outline-none focus:border-mint"
         onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); handleCreate(); } }} />
-      <button onClick={handleCreate} disabled={saving || !text.trim()}
+      <button onClick={handleCreate} disabled={saving || !text.trim()} aria-label="チャレンジを設定"
         className="bg-mint text-white rounded-full px-3 py-1.5 text-xs font-bold disabled:opacity-30">
         {saving ? "..." : "設定"}
       </button>
+    </div>
+  );
+}
+
+function ChallengeReport({ challengeId, onCompleted }: { challengeId: string; onCompleted: () => void }) {
+  const [result, setResult] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleReport = async () => {
+    if (!result.trim()) return;
+    (document.activeElement as HTMLElement)?.blur();
+    setSaving(true);
+    await supabase.from("challenges").update({ result: result.trim(), is_completed: true }).eq("id", challengeId);
+    onCompleted();
+    setSaving(false);
+  };
+
+  return (
+    <div>
+      <p className="text-[10px] text-mint font-bold mb-1">金曜日！結果を報告しよう</p>
+      <div className="flex gap-2">
+        <input type="text" value={result} onChange={(e) => setResult(e.target.value)}
+          placeholder="チャレンジの結果を書こう" aria-label="チャレンジの結果"
+          className="flex-1 border border-gray-100 rounded-full px-3 py-1.5 text-xs outline-none focus:border-mint"
+          onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); handleReport(); } }} />
+        <button onClick={handleReport} disabled={saving || !result.trim()} aria-label="結果を報告"
+          className="bg-mint text-white rounded-full px-3 py-1.5 text-xs font-bold disabled:opacity-30">
+          {saving ? "..." : "報告"}
+        </button>
+      </div>
     </div>
   );
 }

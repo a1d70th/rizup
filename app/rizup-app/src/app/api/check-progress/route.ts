@@ -25,7 +25,12 @@ export async function POST(request: NextRequest) {
 
     const userId = user.id;
 
-    // ── 1. Accurate streak calculation ──
+    // ── 1. Accurate streak calculation (JST) ──
+    const toJSTDate = (d: Date | string): string => {
+      const date = typeof d === "string" ? new Date(d) : d;
+      return date.toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo", year: "numeric", month: "2-digit", day: "2-digit" }).replace(/\//g, "-");
+    };
+
     const { data: recentPosts } = await supabase.from("posts")
       .select("created_at")
       .eq("user_id", userId)
@@ -34,20 +39,17 @@ export async function POST(request: NextRequest) {
 
     let streak = 0;
     if (recentPosts && recentPosts.length > 0) {
-      // Get unique dates (JST-ish: use local date string)
-      const postDates = new Set(
-        recentPosts.map(p => new Date(p.created_at).toISOString().split("T")[0])
-      );
-      const today = new Date().toISOString().split("T")[0];
-      const checkDate = new Date();
+      const postDates = new Set(recentPosts.map(p => toJSTDate(p.created_at)));
+      const todayJST = toJSTDate(new Date());
 
-      // Check from today backwards
+      // Walk backwards from today
+      const checkDate = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
       for (let i = 0; i < 100; i++) {
-        const dateStr = checkDate.toISOString().split("T")[0];
+        const dateStr = toJSTDate(checkDate);
         if (postDates.has(dateStr)) {
           streak++;
-        } else if (dateStr === today) {
-          // Today hasn't been posted yet — don't break, check yesterday
+        } else if (dateStr === todayJST) {
+          // Today not posted yet — skip, check yesterday
         } else {
           break;
         }

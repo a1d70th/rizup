@@ -217,11 +217,11 @@ export default function JournalPage() {
           {mode === "morning" ? (
             <><p className="text-sm font-bold mb-2">😴 昨夜の睡眠時間</p>
             <input type="number" min="0" max="24" step="0.5" value={sleepHours} onChange={(e) => setSleepHours(e.target.value)}
-              placeholder="例：7" className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint" /></>
+              placeholder="例：7" className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint box-border" style={{ WebkitAppearance: "none", maxWidth: "100%" }} /></>
           ) : (
             <><p className="text-sm font-bold mb-2">🛏️ 今夜は何時に寝る？</p>
             <input type="time" value={bedtime} onChange={(e) => setBedtime(e.target.value)}
-              className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint" /></>
+              className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint box-border" style={{ WebkitAppearance: "none", maxWidth: "100%" }} /></>
           )}
         </div>
 

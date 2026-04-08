@@ -6,7 +6,7 @@ import type { RizupType } from "@/lib/rizup-types";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import PostCard from "@/components/PostCard";
-import Image from "next/image";
+// Image import removed — profile uses img tags for dynamic avatar URLs
 
 interface ProfileData {
   name: string; dream: string; avatar_url: string | null;
@@ -124,8 +124,20 @@ export default function ProfilePage() {
   };
 
   if (loading) return (
-    <div className="min-h-screen bg-bg flex items-center justify-center">
-      <Image src="/sho.png" alt="Sho" width={48} height={48} className="animate-sho-float rounded-full" />
+    <div className="min-h-screen bg-bg pb-20 pt-16">
+      <Header />
+      <div className="max-w-md mx-auto px-4 py-4">
+        <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center mb-4 animate-pulse">
+          <div className="w-20 h-20 rounded-full bg-gray-200 mx-auto mb-3" />
+          <div className="h-5 bg-gray-200 rounded-full w-32 mx-auto mb-2" />
+          <div className="h-3 bg-gray-100 rounded-full w-48 mx-auto" />
+        </div>
+        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4 animate-pulse">
+          <div className="h-4 bg-gray-200 rounded-full w-24 mb-3" />
+          <div className="h-20 bg-gray-100 rounded-xl" />
+        </div>
+      </div>
+      <BottomNav />
     </div>
   );
   if (!profile) return null;
