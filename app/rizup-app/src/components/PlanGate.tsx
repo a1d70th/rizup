@@ -38,7 +38,7 @@ export default function PlanGate({ currentPlan, requiredPlan, trialEndsAt, child
       <Image src="/sho.png" alt="Sho" width={80} height={80} className="rounded-full mb-4 animate-sho-float" />
       <h2 className="text-xl font-extrabold mb-2">この機能は{info.name}プラン限定です</h2>
       <p className="text-sm text-text-mid mb-6">
-        アップグレードして、すべての機能を使いましょう
+        7日間無料トライアルで全機能を体験できます
       </p>
       <div className="bg-gray-50 rounded-2xl p-5 max-w-xs w-full mb-6 text-left">
         <div className="flex items-center justify-between mb-3">

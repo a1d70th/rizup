@@ -4,9 +4,7 @@ import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
-import PlanGate from "@/components/PlanGate";
 import { compressImage } from "@/lib/image-compress";
-import { isProOrAbove } from "@/lib/plan";
 
 const moodOptions = [
   { value: 1, emoji: "😔", label: "つらい" },
@@ -30,7 +28,6 @@ export default function JournalPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [moderationError, setModerationError] = useState<string | null>(null);
   const [suspended, setSuspended] = useState(false);
-  const [canPost, setCanPost] = useState<boolean | null>(null);
   const imageRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -38,9 +35,8 @@ export default function JournalPage() {
     const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: prof } = await supabase.from("profiles").select("is_suspended, plan, trial_ends_at").eq("id", user.id).single();
+        const { data: prof } = await supabase.from("profiles").select("is_suspended").eq("id", user.id).single();
         if (prof?.is_suspended) setSuspended(true);
-        setCanPost(isProOrAbove({ plan: prof?.plan, trial_ends_at: prof?.trial_ends_at }));
       }
     };
     checkUser();
@@ -145,20 +141,6 @@ export default function JournalPage() {
     }
     setLoading(false);
   };
-
-  // Show loading while checking plan
-  if (canPost === null) {
-    return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <Image src="/sho.png" alt="Sho" width={48} height={48} className="animate-sho-float rounded-full" />
-      </div>
-    );
-  }
-
-  // Plan gate: free users (trial expired) can't post
-  if (!canPost) {
-    return <PlanGate currentPlan="free" requiredPlan="pro"><></></PlanGate>;
-  }
 
   if (suspended) {
     return (
