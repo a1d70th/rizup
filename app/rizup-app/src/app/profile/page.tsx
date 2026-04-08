@@ -44,7 +44,7 @@ export default function ProfilePage() {
         setUserId(user.id);
 
         const { data: prof, error: profErr } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-        if (profErr || !prof || !prof.name) { window.location.href = "https://rizup-app.vercel.app/onboarding"; return; }
+        if (profErr || !prof) { window.location.href = "https://rizup-app.vercel.app/onboarding"; return; }
         setProfile(prof);
 
         const { data: userPosts, count } = await supabase.from("posts")

@@ -8,7 +8,6 @@ const authPaths = ["/login", "/register"];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow auth callback to pass through (handled by its own route)
   if (pathname.startsWith("/auth/callback")) {
     return NextResponse.next();
   }
@@ -32,7 +31,7 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  // Unauthenticated → /login (protected pages AND onboarding)
+  // Unauthenticated → /login
   if (!user && (protectedPaths.some((p) => pathname.startsWith(p)) || pathname === "/onboarding")) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
@@ -42,22 +41,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/home", request.url));
   }
 
-  // Authenticated + protected page → check if onboarding is complete
+  // Authenticated + protected page → check onboarding_completed flag
   if (user && protectedPaths.some((p) => pathname.startsWith(p))) {
     const { data: profile } = await supabase
-      .from("profiles").select("name").eq("id", user.id).single();
+      .from("profiles").select("onboarding_completed").eq("id", user.id).single();
 
-    // No name = onboarding not complete → redirect to /onboarding
-    if (!profile?.name) {
+    if (!profile?.onboarding_completed) {
       return NextResponse.redirect(new URL("/onboarding", request.url));
     }
   }
 
-  // Already onboarded user trying to access /onboarding → redirect to /home
+  // Already onboarded → redirect away from /onboarding
   if (user && pathname === "/onboarding") {
     const { data: profile } = await supabase
-      .from("profiles").select("name").eq("id", user.id).single();
-    if (profile?.name) {
+      .from("profiles").select("onboarding_completed").eq("id", user.id).single();
+    if (profile?.onboarding_completed) {
       return NextResponse.redirect(new URL("/home", request.url));
     }
   }

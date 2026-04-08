@@ -69,6 +69,7 @@ export default function OnboardingPage() {
         birthday: birthday || "",
         mbti: mbti || "",
         rizup_type: resultType || "Grow",
+        onboarding_completed: true,
         trial_started_at: new Date().toISOString(),
         trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       };
@@ -84,11 +85,10 @@ export default function OnboardingPage() {
           .update(profileData).eq("id", user.id);
         if (updateErr) {
           console.error("[Onboarding] Update also failed:", updateErr.message);
-          // Still proceed — data can be edited later in profile
         }
       }
 
-      // Always navigate to /home regardless of save result
+      // Always navigate to /home
       window.location.href = "https://rizup-app.vercel.app/home";
     } catch (err) {
       console.error("[Onboarding] Unexpected error:", err);
