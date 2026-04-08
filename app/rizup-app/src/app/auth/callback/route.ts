@@ -32,8 +32,8 @@ export async function GET(request: Request) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
-          .from("profiles").select("name").eq("id", user.id).single();
-        if (!profile?.name) {
+          .from("profiles").select("onboarding_completed").eq("id", user.id).single();
+        if (!profile?.onboarding_completed) {
           return NextResponse.redirect(new URL("/onboarding", origin));
         }
       }
@@ -48,8 +48,8 @@ export async function GET(request: Request) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         const { data: profile } = await supabase
-          .from("profiles").select("name").eq("id", user.id).single();
-        if (!profile?.name) {
+          .from("profiles").select("onboarding_completed").eq("id", user.id).single();
+        if (!profile?.onboarding_completed) {
           return NextResponse.redirect(new URL("/onboarding", origin));
         }
       }
