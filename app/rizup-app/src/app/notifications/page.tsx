@@ -27,12 +27,20 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [shoInsight] = useState(shoMessages[Math.floor(Math.random() * shoMessages.length)]);
+  const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
 
   useEffect(() => {
     const init = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) { setLoading(false); return; }
+
+        // Check trial
+        const { data: profile } = await supabase.from("profiles").select("trial_ends_at, plan").eq("id", user.id).single();
+        if (profile?.trial_ends_at && (!profile.plan || profile.plan === "free")) {
+          const days = Math.ceil((new Date(profile.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+          if (days > 0) setTrialDaysLeft(days);
+        }
 
         const { data } = await supabase.from("notifications")
           .select("*")
@@ -64,6 +72,21 @@ export default function NotificationsPage() {
           </div>
           <p className="text-sm text-text leading-relaxed">{shoInsight}</p>
         </div>
+
+        {/* Trial notification */}
+        {trialDaysLeft !== null && trialDaysLeft <= 1 && (
+          <div className="bg-orange-light rounded-2xl p-4 shadow-sm animate-fade-in mb-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Image src="/sho.png" alt="Sho" width={28} height={28} className="rounded-full" />
+              <span className="text-xs font-bold text-orange flex-1">Sho からのお知らせ</span>
+              <span className="text-[10px] text-text-light">今日</span>
+            </div>
+            <p className="text-sm text-text leading-relaxed">
+              明日からProプランが始まります。続けますか？<br />
+              設定画面からプラン管理ができるよ。
+            </p>
+          </div>
+        )}
 
         {/* Real notifications */}
         {loading ? (

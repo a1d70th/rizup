@@ -41,6 +41,8 @@ export default function OnboardingPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setError("ログインが切れました。再ログインしてください。"); setLoading(false); return; }
 
+      const now = new Date().toISOString();
+      const trialEnd = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
       const profileData = {
         id: user.id,
         email: user.email,
@@ -50,6 +52,9 @@ export default function OnboardingPage() {
         zodiac: zodiac || null,
         birthday: birthday || null,
         rizup_type: resultType || null,
+        trial_started_at: now,
+        trial_ends_at: trialEnd,
+        is_trial_ended: false,
       };
 
       // Always use upsert to handle both insert and update cases

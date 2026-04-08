@@ -20,6 +20,8 @@ export default function HomePage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [shoInsight, setShoInsight] = useState("おはよう。今日も自分のペースで前に進もう。あなたの味方だよ。");
   const [hasCommentedToday, setHasCommentedToday] = useState(true);
+  const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
+  const [trialEnded, setTrialEnded] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -27,9 +29,22 @@ export default function HomePage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           setUserId(user.id);
-          const { data: profile } = await supabase.from("profiles").select("streak, zodiac, birthday, rizup_type").eq("id", user.id).single();
+          const { data: profile } = await supabase.from("profiles").select("streak, zodiac, birthday, rizup_type, trial_ends_at, is_trial_ended, plan").eq("id", user.id).single();
           if (profile) {
             setStreak(profile.streak || 0);
+            // Trial check
+            if (profile.plan === "free" || !profile.plan) {
+              if (profile.trial_ends_at) {
+                const endsAt = new Date(profile.trial_ends_at);
+                const now = new Date();
+                const daysLeft = Math.ceil((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                if (daysLeft <= 0 || profile.is_trial_ended) {
+                  setTrialEnded(true);
+                } else {
+                  setTrialDaysLeft(daysLeft);
+                }
+              }
+            }
             // Fetch Sho Insight — check localStorage cache first
             const cacheKey = `sho_insight_${new Date().toISOString().split("T")[0]}`;
             const cached = localStorage.getItem(cacheKey);
@@ -69,10 +84,49 @@ export default function HomePage() {
     init();
   }, []);
 
+  // Trial ended screen
+  if (trialEnded) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
+        <Image src="/sho.png" alt="Sho" width={80} height={80} className="rounded-full mb-4" />
+        <h2 className="text-xl font-extrabold mb-2">トライアルが終了しました</h2>
+        <p className="text-sm text-text-mid leading-relaxed mb-6 max-w-xs">
+          7日間お試しいただきありがとうございます。<br />
+          Pro プランで Rizup を続けませんか？
+        </p>
+        <div className="bg-mint-light rounded-2xl p-4 max-w-xs mb-4 text-left w-full">
+          <p className="text-xs font-bold text-mint mb-2">Pro プラン — ¥980/月</p>
+          <ul className="text-xs text-text-mid space-y-1">
+            <li>✅ 投稿・ジャーナリング全機能</li>
+            <li>✅ AIフィードバック</li>
+            <li>✅ 感情グラフ・睡眠記録</li>
+            <li>✅ バッジ・ストリーク</li>
+          </ul>
+        </div>
+        <a href="https://rizup-app.vercel.app/settings" className="bg-mint text-white font-bold px-8 py-3 rounded-full shadow-lg shadow-mint/30 mb-3">
+          Pro プランで続ける
+        </a>
+        <p className="text-xs text-text-light">いつでもキャンセルできます</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-bg pb-20 pt-16">
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
+        {/* Trial banner */}
+        {trialDaysLeft !== null && (
+          <div className={`rounded-2xl p-3 mb-4 flex items-center gap-3 ${trialDaysLeft <= 1 ? "bg-orange-light" : "bg-mint-light"}`}>
+            <span className="text-xl">{trialDaysLeft <= 1 ? "⏰" : "🎉"}</span>
+            <p className={`text-xs font-bold flex-1 ${trialDaysLeft <= 1 ? "text-orange" : "text-mint"}`}>
+              {trialDaysLeft <= 1
+                ? "明日からProプランが始まります。続けますか？"
+                : `無料トライアル残り${trialDaysLeft}日 — 全機能をお試しください`}
+            </p>
+          </div>
+        )}
+
         {/* Sho Insight */}
         <div className="bg-gradient-to-br from-mint-light to-orange-light rounded-2xl p-4 mb-4 border border-mint/20">
           <div className="flex items-center gap-2 mb-2">
