@@ -18,18 +18,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [streak, setStreak] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
-  const shoMessages = [
-    "おはよう。今日も完璧じゃなくていいから、1つだけ自分のためになることをしよう。それだけで十分。",
-    "昨日の自分より、ちょっとだけ前に進めたら、それでいい。あなたのペースで。",
-    "今日も「ここに来た」こと自体が、すでにすごいことだよ。",
-    "比べなくていい。あなたはあなたのままで、十分前に進んでる。",
-    "小さな一歩を積み重ねよう。気づいたら、遠くまで来てるから。",
-    "うまくいかない日があっても大丈夫。そういう日があるから、いい日が際立つんだよ。",
-    "今日も一緒にいるよ。あなたの味方だから。",
-  ];
-  // Use day-of-year to pick a consistent message per day
-  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
-  const [shoInsight] = useState(shoMessages[dayOfYear % shoMessages.length]);
+  const [shoInsight, setShoInsight] = useState("おはよう。今日も自分のペースで前に進もう。あなたの味方だよ。");
   const [hasCommentedToday, setHasCommentedToday] = useState(true);
 
   useEffect(() => {
@@ -38,8 +27,32 @@ export default function HomePage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           setUserId(user.id);
-          const { data: profile } = await supabase.from("profiles").select("streak").eq("id", user.id).single();
-          if (profile) setStreak(profile.streak || 0);
+          const { data: profile } = await supabase.from("profiles").select("streak, zodiac, birthday, rizup_type").eq("id", user.id).single();
+          if (profile) {
+            setStreak(profile.streak || 0);
+            // Fetch Sho Insight — check localStorage cache first
+            const cacheKey = `sho_insight_${new Date().toISOString().split("T")[0]}`;
+            const cached = localStorage.getItem(cacheKey);
+            if (cached) {
+              setShoInsight(cached);
+            } else {
+              fetch("/api/sho-insight", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ zodiac: profile.zodiac, birthday: profile.birthday, rizupType: profile.rizup_type }),
+              }).then(r => r.json()).then(d => {
+                if (d.insight) { setShoInsight(d.insight); localStorage.setItem(cacheKey, d.insight); }
+                // Clean old cache (keep 7 days)
+                for (let i = 0; i < localStorage.length; i++) {
+                  const k = localStorage.key(i);
+                  if (k?.startsWith("sho_insight_") && k !== cacheKey) {
+                    const parts = k.split("_"); const date = parts.slice(2).join("_");
+                    if (new Date(date) < new Date(Date.now() - 7 * 86400000)) localStorage.removeItem(k);
+                  }
+                }
+              }).catch(() => {});
+            }
+          }
           const today = new Date().toISOString().split("T")[0];
           const { count } = await supabase.from("comments").select("id", { count: "exact", head: true })
             .eq("user_id", user.id).gte("created_at", today);
