@@ -8,21 +8,78 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Structure
 
-- `/index.html` — Rizup コミュニティのランディングページ（単一HTMLファイル、Vercel で自動デプロイ：https://rizup.vercel.app）
-- `/discord-manual.md` — Discord 運営マニュアル
-- `/COMPANY.md` — 会社概要・ミッション・AI社員の役割一覧
-- `/community/` — コミュニティ事業部
+- `/index.html` — LP（単一HTML、Vercel 自動デプロイ：https://rizup.vercel.app）
+- `/app/` — Next.js 14 アプリ（メイン プロダクト）
+- `/company/` — 会社管理（KPI・日報・ワークフロー・朝礼コマンド）
+- `/community/` — コミュニティ事業部（Discord設定・Stripe連携・有料LP）
 - `/media/` — メディア事業部（note・アフィリエイト・SNS）
-- `/consulting/` — 広告コンサル事業部・営業（提案文・クライアント管理）
-- `/app/` — アプリ開発事業部
-- `/company/` — 会社全体管理（ROADMAP・KPI・日報・ワークフロー・朝礼コマンド）
+- `/consulting/` — 広告コンサル・営業（提案文・クライアント管理）
+- `/research/` — 市場調査・アプリ企画・マネタイズ検討
+- `/marketing/` — GTM戦略（コンテンツカレンダー・X投稿・YouTube計画）
+- `/legal/` — プライバシーポリシー・利用規約・特商法
+- `/netlify/` — Netlify Functions（フォーム自動返信メール）
 
-## Development & Deployment
+## Development Commands
 
-- **LP**: 単一 `index.html`（HTML/CSS/JS、ビルド不要）。フォントは Google Fonts `M PLUS Rounded 1c`。カラーはミントグリーン(`#6ecbb0`) + ライトオレンジ(`#f4976c`) + 白ベース。
-- **デプロイ**: `git push origin main` → Vercel が自動デプロイ（https://rizup.vercel.app）
+### App（`/app` ディレクトリ）
+```bash
+cd app
+npm run dev      # ローカル開発サーバー (localhost:3000)
+npm run build    # プロダクションビルド
+npm run lint     # ESLint
+npm start        # プロダクションサーバー起動
+```
+
+### LP（ルート `index.html`）
+ビルド不要。`git push origin main` → Vercel 自動デプロイ。
+
+## App Tech Stack & Architecture
+
+### Stack
+- **Framework**: Next.js 14 (App Router) + TypeScript + React 18
+- **Styling**: Tailwind CSS 3.4 — フォント: `M PLUS Rounded 1c`
+- **DB/Auth/Storage**: Supabase (PostgreSQL + RLS + JWT認証 + Realtime)
+- **AI**: Anthropic Claude API (`claude-haiku-4-5-20251001`) — 「Sho Insight」朝メッセージ、投稿AIフィードバック
+- **Deploy**: Vercel（フロント）、Netlify Functions（フォーム処理）
+
+### Design Tokens
+- Primary: ミントグリーン `#6ecbb0`
+- Secondary: ライトオレンジ `#f4976c`
+- ベース: 白
+
+### Key Routes（App Router: `app/src/app/`）
+- `/login`, `/register` — 認証（Email/Google/Apple）
+- `/onboarding` — 初回プロフィール設定（名前・夢・星座・Rizupタイプ）
+- `/home` — タイムライン（Realtime購読）
+- `/journal` — 朝/夜の日記投稿（1日1投稿制限、500字上限）
+- `/profile` — マイプロフィール + 成長グラフ
+- `/recommend`, `/notifications`, `/settings` — protected routes
+
+### Authentication & Middleware
+`src/middleware.ts` が全ルートを制御:
+- 未認証 → `/login` リダイレクト
+- 認証済み → auth系ページから `/home` リダイレクト
+- オンボーディング未完了 → `/onboarding` リダイレクト
+
+### Database（Supabase PostgreSQL）
+主要テーブル: `profiles`, `posts`, `reactions`, `comments`, `badges`, `notifications`, `recommendations`
+- 投稿: `UNIQUE (user_id, posted_date)` で1日1投稿制限
+- リアクション: 'cheer'💪, 'relate'🤝, 'amazing'✨（ポジティブのみ）
+- プラン: free / pro / premium / vip（トライアル追跡あり）
+- Rizupタイプ: Seed / Grow / Bloom / Flame / Flow
+- 全テーブル RLS 有効
+
+### API Routes
+- `src/app/api/sho-insight/route.ts` — Claude API呼び出し（星座・誕生日・Rizupタイプ → パーソナライズされた朝メッセージ）
+
+### Supabase Client
+- `src/lib/supabase.ts` — ブラウザクライアント（`createBrowserClient`）+ SSR対応
+
+## External Services
+
 - **GitHub**: `https://github.com/a1d70th/rizup`
-- **Discord**: 招待リンクは `https://discord.gg/ssA69BTe4`。LP 内の全参加ボタンはこのリンクに接続。
+- **Discord**: 招待リンク `https://discord.gg/ssA69BTe4`（LP内の全参加ボタンがこのリンク）
+- **Vercel**: `git push origin main` → 自動デプロイ
 
 ## MCP Servers
 

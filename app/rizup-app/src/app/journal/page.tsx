@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
+import PlanGate from "@/components/PlanGate";
 
 const moodOptions = [
   { value: 1, emoji: "😔", label: "つらい" },
@@ -27,19 +28,20 @@ export default function JournalPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [moderationError, setModerationError] = useState<string | null>(null);
   const [suspended, setSuspended] = useState(false);
+  const [userPlan, setUserPlan] = useState<string | null>(null);
   const imageRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setMode(new Date().getHours() < 15 ? "morning" : "evening");
-    // Check if user is suspended
-    const checkSuspended = async () => {
+    const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data: prof } = await supabase.from("profiles").select("is_suspended").eq("id", user.id).single();
+        const { data: prof } = await supabase.from("profiles").select("is_suspended, plan").eq("id", user.id).single();
         if (prof?.is_suspended) setSuspended(true);
+        setUserPlan(prof?.plan || "free");
       }
     };
-    checkSuspended();
+    checkUser();
   }, []);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,6 +137,11 @@ export default function JournalPage() {
     }
     setLoading(false);
   };
+
+  // Plan gate: free users can't post
+  if (userPlan !== null && userPlan === "free") {
+    return <PlanGate currentPlan="free" requiredPlan="pro"><></></PlanGate>;
+  }
 
   if (suspended) {
     return (
