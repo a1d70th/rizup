@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import { isTrialActive as checkTrial } from "@/lib/plan";
 
 const planRank: Record<string, number> = { free: 0, pro: 1, premium: 2, vip: 3 };
 const planInfo: Record<string, { name: string; price: string; color: string; features: string[] }> = {
@@ -11,11 +12,21 @@ const planInfo: Record<string, { name: string; price: string; color: string; fea
 interface PlanGateProps {
   currentPlan: string;
   requiredPlan: "pro" | "premium" | "vip";
+  trialEndsAt?: string | null;
   children: React.ReactNode;
 }
 
-export default function PlanGate({ currentPlan, requiredPlan, children }: PlanGateProps) {
-  const current = planRank[currentPlan] ?? 0;
+export default function PlanGate({ currentPlan, requiredPlan, trialEndsAt, children }: PlanGateProps) {
+  let effectivePlan = currentPlan;
+
+  // Trial active → treat as "pro" for gating purposes
+  if (checkTrial({ trial_ends_at: trialEndsAt })) {
+    const trialRank = planRank["pro"] ?? 1;
+    const currentRank = planRank[currentPlan] ?? 0;
+    if (trialRank > currentRank) effectivePlan = "pro";
+  }
+
+  const current = planRank[effectivePlan] ?? 0;
   const required = planRank[requiredPlan] ?? 1;
 
   if (current >= required) return <>{children}</>;

@@ -11,6 +11,7 @@ const moodLabels: Record<number, string> = { 1: "つらい", 2: "ふつう", 3: 
 
 export default function PremiumPage() {
   const [plan, setPlan] = useState<string>("free");
+  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [moodData, setMoodData] = useState<{ mood: number; created_at: string; content: string }[]>([]);
   const [moodDistribution, setMoodDistribution] = useState<Record<number, number>>({});
@@ -21,8 +22,8 @@ export default function PremiumPage() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data: profile } = await supabase.from("profiles").select("plan").eq("id", user.id).single();
-      if (profile) setPlan(profile.plan || "free");
+      const { data: profile } = await supabase.from("profiles").select("plan, trial_ends_at").eq("id", user.id).single();
+      if (profile) { setPlan(profile.plan || "free"); setTrialEndsAt(profile.trial_ends_at); }
 
       // Get all posts for deep analysis
       const { data: posts } = await supabase.from("posts")
@@ -67,7 +68,7 @@ export default function PremiumPage() {
   );
 
   return (
-    <PlanGate currentPlan={plan} requiredPlan="premium">
+    <PlanGate currentPlan={plan} requiredPlan="premium" trialEndsAt={trialEndsAt}>
       <div className="min-h-screen bg-bg pb-20 pt-16">
         <Header />
         <div className="max-w-md mx-auto px-4 py-4">

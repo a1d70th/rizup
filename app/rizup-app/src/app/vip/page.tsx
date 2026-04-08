@@ -12,6 +12,7 @@ interface VipContent {
 
 export default function VipPage() {
   const [plan, setPlan] = useState<string>("free");
+  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [contents, setContents] = useState<VipContent[]>([]);
@@ -26,8 +27,8 @@ export default function VipPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUserId(user.id);
-      const { data: profile } = await supabase.from("profiles").select("plan").eq("id", user.id).single();
-      if (profile) setPlan(profile.plan || "free");
+      const { data: profile } = await supabase.from("profiles").select("plan, trial_ends_at").eq("id", user.id).single();
+      if (profile) { setPlan(profile.plan || "free"); setTrialEndsAt(profile.trial_ends_at); }
 
       // VIP contents
       const { data: vipContents } = await supabase.from("vip_contents")
@@ -79,7 +80,7 @@ export default function VipPage() {
   );
 
   return (
-    <PlanGate currentPlan={plan} requiredPlan="vip">
+    <PlanGate currentPlan={plan} requiredPlan="vip" trialEndsAt={trialEndsAt}>
       <div className="min-h-screen bg-bg pb-20 pt-16">
         <Header />
         <div className="max-w-md mx-auto px-4 py-4">

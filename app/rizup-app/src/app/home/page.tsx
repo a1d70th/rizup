@@ -32,7 +32,7 @@ export default function HomePage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           setUserId(user.id);
-          const { data: profile } = await supabase.from("profiles").select("streak, zodiac, birthday, rizup_type, mbti, trial_ends_at, is_trial_ended, plan, is_admin").eq("id", user.id).single();
+          const { data: profile } = await supabase.from("profiles").select("streak, zodiac, birthday, rizup_type, mbti, trial_ends_at, plan, is_admin").eq("id", user.id).single();
           if (profile) {
             setStreak(profile.streak || 0);
             if (profile.is_admin) setIsAdmin(true);
@@ -42,7 +42,7 @@ export default function HomePage() {
                 const endsAt = new Date(profile.trial_ends_at);
                 const now = new Date();
                 const daysLeft = Math.ceil((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                if (daysLeft <= 0 || profile.is_trial_ended) {
+                if (daysLeft <= 0) {
                   setTrialEnded(true);
                 } else {
                   setTrialDaysLeft(daysLeft);

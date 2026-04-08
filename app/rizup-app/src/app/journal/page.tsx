@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import PlanGate from "@/components/PlanGate";
 import { compressImage } from "@/lib/image-compress";
+import { isProOrAbove } from "@/lib/plan";
 
 const moodOptions = [
   { value: 1, emoji: "😔", label: "つらい" },
@@ -29,9 +30,7 @@ export default function JournalPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [moderationError, setModerationError] = useState<string | null>(null);
   const [suspended, setSuspended] = useState(false);
-  const [userPlan, setUserPlan] = useState<string | null>(null);
-  const [isTrialActive, setIsTrialActive] = useState(false);
-  const [checkingPlan, setCheckingPlan] = useState(true);
+  const [canPost, setCanPost] = useState<boolean | null>(null);
   const imageRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -41,13 +40,7 @@ export default function JournalPage() {
       if (user) {
         const { data: prof } = await supabase.from("profiles").select("is_suspended, plan, trial_ends_at").eq("id", user.id).single();
         if (prof?.is_suspended) setSuspended(true);
-        setUserPlan(prof?.plan || "free");
-        // Trial is active if trial_ends_at exists and is in the future
-        if (prof?.trial_ends_at) {
-          const endsAt = new Date(prof.trial_ends_at).getTime();
-          if (endsAt > Date.now()) setIsTrialActive(true);
-        }
-        setCheckingPlan(false);
+        setCanPost(isProOrAbove({ plan: prof?.plan, trial_ends_at: prof?.trial_ends_at }));
       }
     };
     checkUser();
@@ -154,7 +147,7 @@ export default function JournalPage() {
   };
 
   // Show loading while checking plan
-  if (checkingPlan) {
+  if (canPost === null) {
     return (
       <div className="min-h-screen bg-bg flex items-center justify-center">
         <Image src="/sho.png" alt="Sho" width={48} height={48} className="animate-sho-float rounded-full" />
@@ -162,8 +155,8 @@ export default function JournalPage() {
     );
   }
 
-  // Plan gate: free users can't post (unless trial is active)
-  if (userPlan === "free" && !isTrialActive) {
+  // Plan gate: free users (trial expired) can't post
+  if (!canPost) {
     return <PlanGate currentPlan="free" requiredPlan="pro"><></></PlanGate>;
   }
 

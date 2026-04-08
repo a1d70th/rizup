@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import Image from "next/image";
+import { isProOrAbove } from "@/lib/plan";
 
 const categories = [
   { value: "food", label: "グルメ", emoji: "🍽️", group: "place" },
@@ -73,8 +74,7 @@ export default function RecommendPage() {
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [userPlan, setUserPlan] = useState<string>("free");
-  const [isTrialActive, setIsTrialActive] = useState(false);
+  const [canPostRec, setCanPostRec] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [showForm, setShowForm] = useState(false);
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
@@ -97,13 +97,9 @@ export default function RecommendPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
-        const { data: prof } = await supabase.from("profiles").select("plan, trial_ends_at, is_trial_ended").eq("id", user.id).single();
+        const { data: prof } = await supabase.from("profiles").select("plan, trial_ends_at").eq("id", user.id).single();
         if (prof) {
-          setUserPlan(prof.plan || "free");
-          if (prof.trial_ends_at && !prof.is_trial_ended) {
-            const daysLeft = Math.ceil((new Date(prof.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-            if (daysLeft > 0) setIsTrialActive(true);
-          }
+          setCanPostRec(isProOrAbove({ plan: prof.plan, trial_ends_at: prof.trial_ends_at }));
         }
         // Load liked recommendations from localStorage
         const likedKey = `rec_likes_${user.id}`;
@@ -119,7 +115,7 @@ export default function RecommendPage() {
     init();
   }, []);
 
-  const canPost = userPlan !== "free" || isTrialActive;
+  const canPost = canPostRec;
 
   const handlePost = async () => {
     if (!userId || !formTitle.trim()) return;

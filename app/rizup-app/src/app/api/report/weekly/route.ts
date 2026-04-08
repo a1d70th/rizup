@@ -23,13 +23,13 @@ export async function GET(request: NextRequest) {
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { data: profile } = await supabase.from("profiles")
-      .select("name, plan, rizup_type, zodiac, streak, trial_ends_at, is_trial_ended")
+      .select("name, plan, rizup_type, zodiac, streak, trial_ends_at")
       .eq("id", user.id).single();
     if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
     const isPremium = profile.plan === "premium" || profile.plan === "vip";
-    const isTrial = profile.trial_ends_at && !profile.is_trial_ended &&
-      Math.ceil((new Date(profile.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) > 0;
+    const isTrial = profile.trial_ends_at &&
+      new Date(profile.trial_ends_at).getTime() > Date.now();
     if (!isPremium && !isTrial) {
       return NextResponse.json({ error: "Premium plan required" }, { status: 403 });
     }
