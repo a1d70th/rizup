@@ -8,6 +8,11 @@ const authPaths = ["/login", "/register"];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Allow auth callback to pass through (handled by its own route)
+  if (pathname.startsWith("/auth/callback")) {
+    return NextResponse.next();
+  }
+
   let response = NextResponse.next({ request: { headers: request.headers } });
 
   const supabase = createServerClient(
@@ -65,6 +70,6 @@ export const config = {
     "/home/:path*", "/journal/:path*", "/profile/:path*",
     "/notifications/:path*", "/settings/:path*", "/recommend/:path*",
     "/vip/:path*", "/premium/:path*", "/admin/:path*",
-    "/login", "/register", "/onboarding",
+    "/login", "/register", "/onboarding", "/auth/callback",
   ],
 };
