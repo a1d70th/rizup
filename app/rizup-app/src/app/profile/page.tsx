@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { rizupTypes, zodiacSigns } from "@/lib/rizup-types";
+import { rizupTypes, zodiacSigns, typeQuestions, calculateType } from "@/lib/rizup-types";
 import type { RizupType } from "@/lib/rizup-types";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
@@ -35,6 +35,10 @@ export default function ProfilePage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [showEdit, setShowEdit] = useState(false);
   const [editForm, setEditForm] = useState({ name: "", dream: "", zodiac: "", birthday: "", rizup_type: "", mbti: "" });
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [quizIndex, setQuizIndex] = useState(0);
+  const [quizAnswers, setQuizAnswers] = useState<string[]>([]);
+  const [quizResult, setQuizResult] = useState<RizupType | null>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -109,6 +113,27 @@ export default function ProfilePage() {
     setShowEdit(false);
   };
 
+  const handleQuizAnswer = (type: string) => {
+    const newAnswers = [...quizAnswers, type];
+    setQuizAnswers(newAnswers);
+    if (quizIndex < typeQuestions.length - 1) {
+      setQuizIndex(quizIndex + 1);
+    } else {
+      const result = calculateType(newAnswers);
+      setQuizResult(result);
+    }
+  };
+
+  const handleQuizSave = async () => {
+    if (!quizResult || !userId) return;
+    await supabase.from("profiles").update({ rizup_type: quizResult }).eq("id", userId);
+    setProfile(prev => prev ? { ...prev, rizup_type: quizResult } : prev);
+    setShowQuiz(false);
+    setQuizIndex(0);
+    setQuizAnswers([]);
+    setQuizResult(null);
+  };
+
   const handlePostDelete = (postId: string) => {
     setPosts(prev => prev.filter(p => p.id !== postId));
     setTotalPosts(prev => prev - 1);
@@ -166,10 +191,16 @@ export default function ProfilePage() {
           </div>
           <h1 className="text-xl font-extrabold">{profile.name}</h1>
           {profile.dream && <p className="text-sm text-text-mid mt-1">🎯 {profile.dream}</p>}
-          {typeInfo && (
-            <span className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold" style={{ background: `${typeInfo.color}20`, color: typeInfo.color }}>
-              {typeInfo.emoji} {typeInfo.label}タイプ
-            </span>
+          {typeInfo ? (
+            <button onClick={() => { setShowQuiz(true); setQuizIndex(0); setQuizAnswers([]); setQuizResult(null); }}
+              className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold transition hover:opacity-80" style={{ background: `${typeInfo.color}20`, color: typeInfo.color }}>
+              {typeInfo.emoji} {typeInfo.label}タイプ（再診断）
+            </button>
+          ) : (
+            <button onClick={() => { setShowQuiz(true); setQuizIndex(0); setQuizAnswers([]); setQuizResult(null); }}
+              className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-mint-light text-mint transition hover:opacity-80">
+              Rizupタイプを診断する
+            </button>
           )}
           {profile.zodiac && <span className="inline-block mt-1 ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-light text-orange">{profile.zodiac}</span>}
           <div className="mt-3">
@@ -373,7 +404,54 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {!showEdit && <BottomNav />}
+      {/* Type Quiz Modal */}
+      {showQuiz && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center px-4" style={{ zIndex: 9999 }} onClick={() => setShowQuiz(false)}>
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            {!quizResult ? (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-extrabold">Rizupタイプ診断</h2>
+                  <button onClick={() => setShowQuiz(false)} className="text-text-light text-xl">✕</button>
+                </div>
+                <div className="flex justify-center gap-1 mb-4">
+                  {typeQuestions.map((_, i) => (
+                    <div key={i} className={`h-1.5 flex-1 rounded-full ${i <= quizIndex ? "bg-mint" : "bg-gray-200"}`} />
+                  ))}
+                </div>
+                <h3 className="text-base font-extrabold text-center mb-1">Q{quizIndex + 1}. {typeQuestions[quizIndex].q}</h3>
+                <p className="text-text-light text-xs text-center mb-4">直感で選んでね</p>
+                <div className="flex flex-col gap-2">
+                  {typeQuestions[quizIndex].a.map((a, i) => (
+                    <button key={i} onClick={() => handleQuizAnswer(a.type)}
+                      className="w-full border-2 border-gray-200 rounded-2xl px-4 py-3 text-sm text-left font-medium hover:border-mint hover:bg-mint-light transition">
+                      {a.text}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-center">
+                  <div className="text-5xl mb-3">{rizupTypes[quizResult].emoji}</div>
+                  <h2 className="text-xl font-extrabold mb-1">あなたは{rizupTypes[quizResult].label}タイプ！</h2>
+                  <p className="text-text-mid text-sm leading-relaxed mb-5">{rizupTypes[quizResult].desc}</p>
+                  <button onClick={handleQuizSave}
+                    className="w-full bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30 mb-2">
+                    このタイプに更新する
+                  </button>
+                  <button onClick={() => setShowQuiz(false)}
+                    className="w-full text-text-light text-sm py-2">
+                    キャンセル
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {!showEdit && !showQuiz && <BottomNav />}
     </div>
   );
 }
