@@ -12,7 +12,8 @@
       "Bash(python3:*)",
       "Bash(python:*)",
       "Bash(node:*)",
-      "Bash(grep -l \"comments\\\\|notifications\" /c/Users/81806/Desktop/rizup/app/rizup-app/*.sql)"
+      "Bash(grep -l \"comments\\\\|notifications\" /c/Users/81806/Desktop/rizup/app/rizup-app/*.sql)",
+      "Bash(gh api:*)"
     ]
   }
 }
