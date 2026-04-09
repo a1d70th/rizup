@@ -74,6 +74,7 @@ export default function RecommendPage() {
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [canPostRec, setCanPostRec] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [showForm, setShowForm] = useState(false);
@@ -86,6 +87,7 @@ export default function RecommendPage() {
   const [formUrl, setFormUrl] = useState("");
   const [formMapUrl, setFormMapUrl] = useState("");
   const [posting, setPosting] = useState(false);
+  const [postError, setPostError] = useState("");
 
   // Comments
   const [openComments, setOpenComments] = useState<string | null>(null);
@@ -115,12 +117,13 @@ export default function RecommendPage() {
     init();
   }, []);
 
-  const canPost = canPostRec;
+  const canPost = !!userId;
 
   const handlePost = async () => {
     if (!userId || !formTitle.trim()) return;
     (document.activeElement as HTMLElement)?.blur();
     setPosting(true);
+    setPostError("");
     const { data, error } = await supabase.from("recommendations").insert({
       type: formType,
       title: formTitle.trim(),
@@ -131,7 +134,8 @@ export default function RecommendPage() {
       posted_by: "user",
       likes: 0,
     }).select("*, profiles(name, avatar_url)").single();
-    if (!error && data) {
+    if (error) { setPostError(`投稿できませんでした：${error.message}`); setPosting(false); return; }
+    if (data) {
       setRecs(prev => [data as Recommendation, ...prev]);
       setFormTitle(""); setFormDesc(""); setFormUrl(""); setFormMapUrl("");
       setShowForm(false);
@@ -239,6 +243,7 @@ export default function RecommendPage() {
                 )}
               </div>
             )}
+            {postError && <p className="text-red-500 text-xs mb-2">{postError}</p>}
             <button onClick={handlePost} disabled={posting || !formTitle.trim()}
               className="w-full bg-mint text-white font-bold py-3 rounded-full shadow-lg shadow-mint/30 disabled:opacity-30 mt-1">
               {posting ? "投稿中..." : "投稿する"}

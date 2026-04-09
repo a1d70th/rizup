@@ -24,6 +24,7 @@ export default function VisionPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -65,13 +66,14 @@ export default function VisionPage() {
       }
     }
 
-    const { data } = await supabase.from("vision_boards").insert({
+    const { data, error } = await supabase.from("vision_boards").insert({
       user_id: userId, title: title.trim() || null, image_url: imageUrl, affirmation: affirmation.trim() || null,
     }).select().single();
 
+    if (error) { setSaveError(`保存できませんでした：${error.message}`); setSaving(false); return; }
     if (data) setItems(prev => [data, ...prev]);
     setTitle(""); setAffirmation(""); setImageFile(null); setPreview(null); setShowForm(false);
-    setSaving(false);
+    setSaving(false); setSaveError("");
   };
 
   const handleDelete = async (id: string) => {
@@ -112,6 +114,7 @@ export default function VisionPage() {
             </button>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
             {preview && <img src={preview} alt="プレビュー" className="w-full max-h-40 object-cover rounded-xl mb-2" />}
+            {saveError && <p className="text-red-500 text-xs mb-2">{saveError}</p>}
             <button onClick={handleAdd} disabled={saving || (!title.trim() && !affirmation.trim() && !imageFile)}
               className="w-full bg-mint text-white font-bold py-3 rounded-full shadow-lg shadow-mint/30 disabled:opacity-30">
               {saving ? "保存中..." : "ビジョンを追加"}

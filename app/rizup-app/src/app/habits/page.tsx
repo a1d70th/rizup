@@ -38,12 +38,16 @@ export default function HabitsPage() {
     init();
   }, [today]);
 
+  const [addError, setAddError] = useState("");
+
   const handleAdd = async () => {
     if (!userId || !newName.trim() || habits.length >= 5) return;
     (document.activeElement as HTMLElement)?.blur();
-    const { data } = await supabase.from("habits").insert({
+    setAddError("");
+    const { data, error } = await supabase.from("habits").insert({
       user_id: userId, name: newName.trim(), icon: newIcon,
     }).select().single();
+    if (error) { setAddError(`保存できませんでした：${error.message}`); return; }
     if (data) setHabits(prev => [...prev, data]);
     setNewName(""); setShowAdd(false);
   };
@@ -121,6 +125,7 @@ export default function HabitsPage() {
               <button onClick={handleAdd} disabled={!newName.trim()} aria-label="追加"
                 className="bg-mint text-white font-bold px-4 py-2.5 rounded-xl text-sm disabled:opacity-30">追加</button>
             </div>
+            {addError && <p className="text-red-500 text-xs mt-2">{addError}</p>}
           </div>
         )}
 
