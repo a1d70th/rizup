@@ -25,7 +25,7 @@ export default function OnboardingPage() {
   const [quizIndex, setQuizIndex] = useState(0);
   const [resultType, setResultType] = useState<RizupType | null>(null);
   const [loading, setLoading] = useState(false);
-  // error state removed — onboarding always proceeds to /home
+  const [error, setError] = useState("");
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [agreedAge, setAgreedAge] = useState(false);
   const [personalDesc, setPersonalDesc] = useState<string | null>(null);
@@ -56,12 +56,15 @@ export default function OnboardingPage() {
 
   const handleComplete = async () => {
     setLoading(true);
+    setError("");
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { window.location.href = "/login"; return; }
 
       const profileData = {
+        id: user.id,
+        email: user.email,
         name: name.trim() || "ゲスト",
         dream: dream.trim() || "",
         avatar_url: avatar,
@@ -74,26 +77,42 @@ export default function OnboardingPage() {
         trial_ends_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
       };
 
-      // Try insert first
-      const { error: insertErr } = await supabase.from("profiles").insert({
-        id: user.id, email: user.email, ...profileData,
-      });
+      // Use upsert for reliability (handles both new and existing rows)
+      const { error: upsertErr } = await supabase.from("profiles")
+        .upsert(profileData, { onConflict: "id" });
 
-      if (insertErr) {
-        console.warn("[Onboarding] Insert failed, trying update:", insertErr.message);
-        const { error: updateErr } = await supabase.from("profiles")
-          .update(profileData).eq("id", user.id);
-        if (updateErr) {
-          console.error("[Onboarding] Update also failed:", updateErr.message);
+      if (upsertErr) {
+        console.warn("[Onboarding] Upsert failed, trying insert then update:", upsertErr.message);
+        // Fallback: try insert
+        const { error: insertErr } = await supabase.from("profiles").insert(profileData);
+        if (insertErr) {
+          console.warn("[Onboarding] Insert failed, trying update:", insertErr.message);
+          // Fallback: try update (without id/email)
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { id: _skipId, email: _skipEmail, ...updateData } = profileData;
+          const { error: updateErr } = await supabase.from("profiles")
+            .update(updateData).eq("id", user.id);
+          if (updateErr) {
+            console.error("[Onboarding] All save methods failed:", updateErr.message);
+          }
         }
       }
 
-      // Always navigate to /home
-      window.location.href = "https://rizup-app.vercel.app/home";
+      // Verify save succeeded before redirecting
+      const { data: saved } = await supabase.from("profiles")
+        .select("onboarding_completed").eq("id", user.id).single();
+
+      if (saved?.onboarding_completed) {
+        window.location.href = "https://rizup-app.vercel.app/home";
+      } else {
+        console.error("[Onboarding] Save verification failed — profile not found or onboarding_completed is false");
+        setError("プロフィールの保存に失敗しました。もう一度お試しください。");
+        setLoading(false);
+      }
     } catch (err) {
       console.error("[Onboarding] Unexpected error:", err);
-      // Even on error, navigate to /home
-      window.location.href = "https://rizup-app.vercel.app/home";
+      setError("エラーが発生しました。もう一度お試しください。");
+      setLoading(false);
     }
   };
 
@@ -258,9 +277,14 @@ export default function OnboardingPage() {
             className="w-full border-2 border-gray-200 rounded-full py-3 text-sm font-bold text-text-mid hover:border-mint transition mb-3">
             𝕏 で結果をシェアする
           </button>
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-3 mb-3">
+              <p className="text-red-500 text-sm text-center font-medium">{error}</p>
+            </div>
+          )}
           <button onClick={handleComplete} disabled={loading}
             className="w-full bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30 disabled:opacity-50">
-            {loading ? "設定中..." : "Rizup を始める 🌿"}
+            {loading ? "設定中..." : error ? "もう一度試す" : "Rizup を始める 🌿"}
           </button>
         </div>
       )}
