@@ -24,24 +24,15 @@ export default function RootLayout({
               navigator.serviceWorker.register('/sw.js').catch(() => {});
             });
           }
-          // iOS keyboard fix: dismiss keyboard on non-input tap & reset viewport
+          // iOS: dismiss keyboard when tapping outside input fields
           document.addEventListener('touchend', function(e) {
             var tag = e.target && e.target.tagName;
-            if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
+            if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT' && !e.target.closest('label')) {
               if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
                 document.activeElement.blur();
               }
             }
           });
-          if (window.visualViewport) {
-            var initialHeight = window.visualViewport.height;
-            window.visualViewport.addEventListener('resize', function() {
-              if (window.visualViewport.height >= initialHeight * 0.9) {
-                setTimeout(function() { window.scrollTo(0, 0); }, 50);
-                document.body.style.height = '';
-              }
-            });
-          }
         `}} />
       </body>
     </html>
