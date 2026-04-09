@@ -119,7 +119,19 @@ export default function JournalPage() {
       user_id: user.id, type: mode, content: postContent, mood, image_url: imageUrl,
     }).select().single();
 
-    if (!error && data) {
+    if (error) {
+      console.error("[Journal] Post insert failed:", error.message, error.code);
+      // If duplicate (already posted today), show specific message
+      if (error.code === "23505") {
+        setModerationError("今日はもう投稿済みだよ。明日また書いてね！");
+      } else {
+        setModerationError(`投稿できませんでした：${error.message}`);
+      }
+      setLoading(false);
+      return;
+    }
+
+    if (data) {
       const feedbacks = [
         `今日も記録してくれたね。${mood >= 3 ? "いい調子だ" : "大変だったね"}。でもここに書いてくれたことが、もう一歩前に進んだ証拠だよ。`,
         `あなたの正直な気持ち、ちゃんと受け取ったよ。明日もあなたのペースで。`,

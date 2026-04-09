@@ -103,6 +103,15 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
       await supabase.from("reactions").insert({ post_id: post.id, user_id: userId, type });
       setMyReactions((prev) => new Set(prev).add(type));
       setCounts((prev) => ({ ...prev, [type]: (prev[type] || 0) + 1 }));
+      // Notify post owner
+      if (post.user_id !== userId) {
+        const emojiMap: Record<string, string> = { cheer: "💪", relate: "🤝", amazing: "✨" };
+        supabase.from("notifications").insert({
+          user_id: post.user_id,
+          type: "reaction",
+          content: `あなたの投稿に${emojiMap[type] || ""}リアクションがつきました`,
+        }).then(() => {});
+      }
     }
   };
 
@@ -112,8 +121,19 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
     const { data } = await supabase.from("comments")
       .insert({ post_id: post.id, user_id: userId, content: commentText.trim() })
       .select("id, content, profiles(name)").single();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (data) setComments((prev) => [...prev, data as any]);
+    if (data) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setComments((prev) => [...prev, data as any]);
+      // Send notification to post owner (skip if commenting on own post)
+      if (post.user_id !== userId) {
+        const commenterName = (data as unknown as { profiles: { name: string } }).profiles?.name || "誰か";
+        supabase.from("notifications").insert({
+          user_id: post.user_id,
+          type: "comment",
+          content: `${commenterName}さんがあなたの投稿にコメントしました：「${commentText.trim().slice(0, 30)}${commentText.trim().length > 30 ? "…" : ""}」`,
+        }).then(() => {});
+      }
+    }
     setCommentText("");
   };
 
