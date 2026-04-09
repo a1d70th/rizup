@@ -32,7 +32,7 @@ export default function VisionPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUserId(user.id);
-      const { data } = await supabase.from("vision_boards")
+      const { data } = await supabase.from("visions")
         .select("*").eq("user_id", user.id).order("created_at", { ascending: false });
       if (data) setItems(data);
       setLoading(false);
@@ -66,7 +66,7 @@ export default function VisionPage() {
       }
     }
 
-    const { data, error } = await supabase.from("vision_boards").insert({
+    const { data, error } = await supabase.from("visions").insert({
       user_id: userId, title: title.trim() || null, image_url: imageUrl, affirmation: affirmation.trim() || null,
     }).select().single();
 
@@ -78,7 +78,7 @@ export default function VisionPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("このビジョンを削除しますか？")) return;
-    await supabase.from("vision_boards").delete().eq("id", id);
+    await supabase.from("visions").delete().eq("id", id);
     setItems(prev => prev.filter(i => i.id !== id));
   };
 
