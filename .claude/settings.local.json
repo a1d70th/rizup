@@ -10,7 +10,8 @@
       "Bash(git add:*)",
       "Bash(npx vercel:*)",
       "Bash(python3:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(node:*)"
     ]
   }
 }

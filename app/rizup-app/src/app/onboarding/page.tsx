@@ -25,7 +25,6 @@ export default function OnboardingPage() {
   const [quizIndex, setQuizIndex] = useState(0);
   const [resultType, setResultType] = useState<RizupType | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [agreedTerms, setAgreedTerms] = useState(false);
   const [agreedAge, setAgreedAge] = useState(false);
   const [personalDesc, setPersonalDesc] = useState<string | null>(null);
@@ -56,7 +55,6 @@ export default function OnboardingPage() {
 
   const handleComplete = async () => {
     setLoading(true);
-    setError("");
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -82,37 +80,15 @@ export default function OnboardingPage() {
         .upsert(profileData, { onConflict: "id" });
 
       if (upsertErr) {
-        console.warn("[Onboarding] Upsert failed, trying insert then update:", upsertErr.message);
-        // Fallback: try insert
-        const { error: insertErr } = await supabase.from("profiles").insert(profileData);
-        if (insertErr) {
-          console.warn("[Onboarding] Insert failed, trying update:", insertErr.message);
-          // Fallback: try update (without id/email)
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          const { id: _skipId, email: _skipEmail, ...updateData } = profileData;
-          const { error: updateErr } = await supabase.from("profiles")
-            .update(updateData).eq("id", user.id);
-          if (updateErr) {
-            console.error("[Onboarding] All save methods failed:", updateErr.message);
-          }
-        }
+        console.warn("[Onboarding] Upsert failed:", upsertErr.message);
       }
 
-      // Verify save succeeded before redirecting
-      const { data: saved } = await supabase.from("profiles")
-        .select("onboarding_completed").eq("id", user.id).single();
-
-      if (saved?.onboarding_completed) {
-        window.location.href = "https://rizup-app.vercel.app/home";
-      } else {
-        console.error("[Onboarding] Save verification failed — profile not found or onboarding_completed is false");
-        setError("プロフィールの保存に失敗しました。もう一度お試しください。");
-        setLoading(false);
-      }
+      // Always navigate to /home regardless of save result
+      window.location.href = "https://rizup-app.vercel.app/home";
     } catch (err) {
       console.error("[Onboarding] Unexpected error:", err);
-      setError("エラーが発生しました。もう一度お試しください。");
-      setLoading(false);
+      // Always navigate to /home
+      window.location.href = "https://rizup-app.vercel.app/home";
     }
   };
 
@@ -277,14 +253,9 @@ export default function OnboardingPage() {
             className="w-full border-2 border-gray-200 rounded-full py-3 text-sm font-bold text-text-mid hover:border-mint transition mb-3">
             𝕏 で結果をシェアする
           </button>
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-2xl p-3 mb-3">
-              <p className="text-red-500 text-sm text-center font-medium">{error}</p>
-            </div>
-          )}
           <button onClick={handleComplete} disabled={loading}
             className="w-full bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30 disabled:opacity-50">
-            {loading ? "設定中..." : error ? "もう一度試す" : "Rizup を始める 🌿"}
+            {loading ? "設定中..." : "Rizup を始める 🌿"}
           </button>
         </div>
       )}
