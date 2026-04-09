@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import Image from "next/image";
 
-interface Habit { id: string; name: string; icon: string | null; streak: number; }
+interface Habit { id: string; name: string; icon?: string | null; streak?: number; }
 
 const iconOptions = ["📚", "🏃", "🧘", "📝", "🙏", "💪", "🎵", "🍎", "💤", "🚶"];
 
@@ -48,7 +48,7 @@ export default function HabitsPage() {
     (document.activeElement as HTMLElement)?.blur();
     setAddError("");
     const { data, error } = await supabase.from("habits").insert({
-      user_id: userId, name: newName.trim(), icon: newIcon, streak: 0,
+      user_id: userId, name: newName.trim(),
     }).select().single();
     if (error) {
       console.error("[Habits] Insert error:", error.message, error.code, error.details);
