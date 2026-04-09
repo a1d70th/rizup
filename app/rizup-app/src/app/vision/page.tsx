@@ -10,7 +10,7 @@ interface VisionItem {
   id: string;
   title: string | null;
   image_url: string | null;
-  affirmation: string | null;
+  description: string | null;
   created_at: string;
 }
 
@@ -20,7 +20,7 @@ export default function VisionPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [title, setTitle] = useState("");
-  const [affirmation, setAffirmation] = useState("");
+  const [description, setAffirmation] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -51,7 +51,7 @@ export default function VisionPage() {
   };
 
   const handleAdd = async () => {
-    if (!userId || (!title.trim() && !affirmation.trim() && !imageFile)) return;
+    if (!userId || (!title.trim() && !description.trim() && !imageFile)) return;
     (document.activeElement as HTMLElement)?.blur();
     setSaving(true);
 
@@ -67,7 +67,7 @@ export default function VisionPage() {
     }
 
     const { data, error } = await supabase.from("visions").insert({
-      user_id: userId, title: title.trim() || null, image_url: imageUrl, affirmation: affirmation.trim() || null,
+      user_id: userId, title: title.trim() || null, image_url: imageUrl, description: description.trim() || null,
     }).select().single();
 
     if (error) { setSaveError(`保存できませんでした：${error.message}`); setSaving(false); return; }
@@ -105,7 +105,7 @@ export default function VisionPage() {
             <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
               placeholder="夢・目標のタイトル" aria-label="タイトル"
               className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint mb-2" />
-            <textarea value={affirmation} onChange={(e) => setAffirmation(e.target.value)}
+            <textarea value={description} onChange={(e) => setAffirmation(e.target.value)}
               placeholder="アファメーション（例：私は毎日成長している）" aria-label="アファメーション"
               className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm resize-none h-20 outline-none focus:border-mint mb-2" />
             <button onClick={() => fileRef.current?.click()} type="button"
@@ -115,7 +115,7 @@ export default function VisionPage() {
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImage} />
             {preview && <img src={preview} alt="プレビュー" className="w-full max-h-40 object-cover rounded-xl mb-2" />}
             {saveError && <p className="text-red-500 text-xs mb-2">{saveError}</p>}
-            <button onClick={handleAdd} disabled={saving || (!title.trim() && !affirmation.trim() && !imageFile)}
+            <button onClick={handleAdd} disabled={saving || (!title.trim() && !description.trim() && !imageFile)}
               className="w-full bg-mint text-white font-bold py-3 rounded-full shadow-lg shadow-mint/30 disabled:opacity-30">
               {saving ? "保存中..." : "ビジョンを追加"}
             </button>
@@ -137,7 +137,7 @@ export default function VisionPage() {
                 )}
                 <div className="p-3">
                   {item.title && <p className="text-sm font-bold mb-1">{item.title}</p>}
-                  {item.affirmation && <p className="text-xs text-text-mid leading-relaxed italic">&ldquo;{item.affirmation}&rdquo;</p>}
+                  {item.description && <p className="text-xs text-text-mid leading-relaxed italic">&ldquo;{item.description}&rdquo;</p>}
                   <button onClick={() => handleDelete(item.id)} aria-label="削除"
                     className="text-[10px] text-text-light mt-2 hover:text-red-400 transition">削除</button>
                 </div>

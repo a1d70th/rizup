@@ -29,9 +29,11 @@ export default function HabitsPage() {
       const { data: h } = await supabase.from("habits").select("*").eq("user_id", user.id).order("created_at");
       if (h) setHabits(h);
 
-      const { data: logs } = await supabase.from("habit_logs").select("habit_id")
-        .eq("user_id", user.id).eq("logged_date", today);
-      if (logs) setTodayLogs(new Set(logs.map(l => l.habit_id)));
+      try {
+        const { data: logs } = await supabase.from("habit_logs").select("habit_id")
+          .eq("user_id", user.id).eq("logged_date", today);
+        if (logs) setTodayLogs(new Set(logs.map(l => l.habit_id)));
+      } catch { /* habit_logs table may not exist yet */ }
 
       setLoading(false);
     };
@@ -55,13 +57,15 @@ export default function HabitsPage() {
   const handleToggle = async (habitId: string) => {
     if (!userId) return;
     const done = todayLogs.has(habitId);
-    if (done) {
-      await supabase.from("habit_logs").delete().match({ habit_id: habitId, logged_date: today });
-      setTodayLogs(prev => { const s = new Set(prev); s.delete(habitId); return s; });
-    } else {
-      await supabase.from("habit_logs").insert({ habit_id: habitId, user_id: userId, logged_date: today });
-      setTodayLogs(prev => new Set(prev).add(habitId));
-    }
+    try {
+      if (done) {
+        await supabase.from("habit_logs").delete().match({ habit_id: habitId, logged_date: today });
+        setTodayLogs(prev => { const s = new Set(prev); s.delete(habitId); return s; });
+      } else {
+        await supabase.from("habit_logs").insert({ habit_id: habitId, user_id: userId, logged_date: today });
+        setTodayLogs(prev => new Set(prev).add(habitId));
+      }
+    } catch { /* habit_logs table may not exist yet */ }
   };
 
   const handleDelete = async (id: string) => {
