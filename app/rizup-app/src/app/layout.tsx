@@ -24,6 +24,15 @@ export default function RootLayout({
               navigator.serviceWorker.register('/sw.js').catch(() => {});
             });
           }
+          // iOS keyboard fix: reset scroll/height when keyboard closes
+          if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', () => {
+              if (window.visualViewport.height >= document.documentElement.clientHeight * 0.8) {
+                window.scrollTo(0, 0);
+                document.body.style.height = '';
+              }
+            });
+          }
         `}} />
       </body>
     </html>
