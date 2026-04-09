@@ -44,7 +44,7 @@ export default function ProfilePage() {
         setUserId(user.id);
 
         const { data: prof } = await supabase.from("profiles").select("*").eq("id", user.id).single();
-        if (prof) setProfile(prof);
+        setProfile(prof || { name: "ゲスト", dream: "", avatar_url: null, streak: 0, plan: "free" });
 
         const { data: userPosts, count } = await supabase.from("posts")
           .select("*, profiles(name, avatar_url)", { count: "exact" })
