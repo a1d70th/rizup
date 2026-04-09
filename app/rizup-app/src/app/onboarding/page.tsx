@@ -123,7 +123,7 @@ export default function OnboardingPage() {
           {/* Terms & Age confirmation */}
           <div className="bg-gray-50 rounded-2xl p-4 mb-4">
             <label className="flex items-start gap-2 mb-3 cursor-pointer">
-              <input type="checkbox" checked={agreedTerms} onChange={(e) => setAgreedTerms(e.target.checked)}
+              <input type="checkbox" checked={agreedTerms} onChange={(e) => { (document.activeElement as HTMLElement)?.blur(); setAgreedTerms(e.target.checked); }}
                 className="mt-0.5 accent-mint w-4 h-4" />
               <span className="text-xs text-text-mid leading-relaxed">
                 <a href="/legal/terms-of-service.html" target="_blank" className="text-mint font-bold">利用規約</a> と
@@ -131,7 +131,7 @@ export default function OnboardingPage() {
               </span>
             </label>
             <label className="flex items-start gap-2 cursor-pointer">
-              <input type="checkbox" checked={agreedAge} onChange={(e) => setAgreedAge(e.target.checked)}
+              <input type="checkbox" checked={agreedAge} onChange={(e) => { (document.activeElement as HTMLElement)?.blur(); setAgreedAge(e.target.checked); }}
                 className="mt-0.5 accent-mint w-4 h-4" />
               <span className="text-xs text-text-mid">13歳以上です</span>
             </label>

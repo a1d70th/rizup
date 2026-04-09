@@ -24,11 +24,20 @@ export default function RootLayout({
               navigator.serviceWorker.register('/sw.js').catch(() => {});
             });
           }
-          // iOS keyboard fix: reset scroll/height when keyboard closes
+          // iOS keyboard fix: dismiss keyboard on non-input tap & reset viewport
+          document.addEventListener('touchend', function(e) {
+            var tag = e.target && e.target.tagName;
+            if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
+              if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+                document.activeElement.blur();
+              }
+            }
+          });
           if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', () => {
-              if (window.visualViewport.height >= document.documentElement.clientHeight * 0.8) {
-                window.scrollTo(0, 0);
+            var initialHeight = window.visualViewport.height;
+            window.visualViewport.addEventListener('resize', function() {
+              if (window.visualViewport.height >= initialHeight * 0.9) {
+                setTimeout(function() { window.scrollTo(0, 0); }, 50);
                 document.body.style.height = '';
               }
             });
