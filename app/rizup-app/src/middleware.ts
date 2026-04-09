@@ -41,37 +41,6 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/home", request.url));
   }
 
-  // Authenticated + protected page → check onboarding_completed flag
-  if (user && protectedPaths.some((p) => pathname.startsWith(p))) {
-    const { data: profile } = await supabase
-      .from("profiles").select("onboarding_completed").eq("id", user.id).single();
-
-    if (!profile?.onboarding_completed) {
-      // Safety valve: prevent infinite redirect loop using cookie counter
-      const redirectCount = parseInt(request.cookies.get("onboarding_redirect_count")?.value || "0");
-      if (redirectCount >= 3) {
-        // Too many redirects — let user through to avoid loop
-        response.cookies.set("onboarding_redirect_count", "0", { path: "/", maxAge: 0 });
-        return response;
-      }
-      const redirectResponse = NextResponse.redirect(new URL("/onboarding", request.url));
-      redirectResponse.cookies.set("onboarding_redirect_count", String(redirectCount + 1), { path: "/", maxAge: 120 });
-      return redirectResponse;
-    } else {
-      // Onboarding complete — clear redirect counter
-      response.cookies.set("onboarding_redirect_count", "0", { path: "/", maxAge: 0 });
-    }
-  }
-
-  // Already onboarded → redirect away from /onboarding
-  if (user && pathname === "/onboarding") {
-    const { data: profile } = await supabase
-      .from("profiles").select("onboarding_completed").eq("id", user.id).single();
-    if (profile?.onboarding_completed) {
-      return NextResponse.redirect(new URL("/home", request.url));
-    }
-  }
-
   return response;
 }
 
