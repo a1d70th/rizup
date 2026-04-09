@@ -26,7 +26,8 @@ export default function HabitsPage() {
       if (!user) return;
       setUserId(user.id);
 
-      const { data: h } = await supabase.from("habits").select("*").eq("user_id", user.id).order("created_at");
+      const { data: h, error: hErr } = await supabase.from("habits").select("*").eq("user_id", user.id).order("created_at");
+      if (hErr) console.error("[Habits] Select error:", hErr.message);
       if (h) setHabits(h);
 
       try {
@@ -47,9 +48,13 @@ export default function HabitsPage() {
     (document.activeElement as HTMLElement)?.blur();
     setAddError("");
     const { data, error } = await supabase.from("habits").insert({
-      user_id: userId, name: newName.trim(), icon: newIcon,
+      user_id: userId, name: newName.trim(), icon: newIcon, streak: 0,
     }).select().single();
-    if (error) { setAddError(`保存できませんでした：${error.message}`); return; }
+    if (error) {
+      console.error("[Habits] Insert error:", error.message, error.code, error.details);
+      setAddError(`保存できませんでした：${error.message}`);
+      return;
+    }
     if (data) setHabits(prev => [...prev, data]);
     setNewName(""); setShowAdd(false);
   };

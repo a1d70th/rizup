@@ -124,17 +124,26 @@ export default function RecommendPage() {
     (document.activeElement as HTMLElement)?.blur();
     setPosting(true);
     setPostError("");
-    const { data, error } = await supabase.from("recommendations").insert({
+    const insertData: Record<string, unknown> = {
       type: formType,
       title: formTitle.trim(),
       description: formDesc.trim(),
       url: formUrl.trim() || null,
-      map_url: placeCategories.has(formType) && formMapUrl.trim() ? formMapUrl.trim() : null,
       user_id: userId,
-      posted_by: "user",
-      likes: 0,
-    }).select("*, profiles(name, avatar_url)").single();
-    if (error) { setPostError(`投稿できませんでした：${error.message}`); setPosting(false); return; }
+    };
+    if (placeCategories.has(formType) && formMapUrl.trim()) insertData.map_url = formMapUrl.trim();
+    // Optional columns — include only if table has them
+    insertData.posted_by = "user";
+    insertData.likes = 0;
+
+    const { data, error } = await supabase.from("recommendations")
+      .insert(insertData).select("*, profiles(name, avatar_url)").single();
+    if (error) {
+      console.error("[Recommend] Insert error:", error.message, error.code, error.details);
+      setPostError(`投稿できませんでした：${error.message}`);
+      setPosting(false);
+      return;
+    }
     if (data) {
       setRecs(prev => [data as Recommendation, ...prev]);
       setFormTitle(""); setFormDesc(""); setFormUrl(""); setFormMapUrl("");
