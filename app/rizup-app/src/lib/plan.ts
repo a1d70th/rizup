@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 // All features unlocked for launch
-type Profile = { plan?: string | null; trial_ends_at?: string | null } | null;
-export function isProOrAbove(p: Profile): boolean { return true; }
-export function isPremium(p: Profile): boolean { return true; }
-export function isFree(p: Profile): boolean { return false; }
-export function isTrialActive(p: Profile): boolean { return true; }
+const planRank: Record<string, number> = { free: 0, pro: 1, premium: 2, vip: 3 };
+interface ProfilePlan { plan?: string | null; trial_ends_at?: string | null; }
+export function isTrialActive(p: ProfilePlan | null): boolean { return true; }
+export function isProOrAbove(p: ProfilePlan | null): boolean { return true; }
+export function isPremium(p: ProfilePlan | null): boolean { return true; }
+export function isPremiumOrAbove(p: ProfilePlan | null): boolean { return true; }
+export function isVIP(p: ProfilePlan | null): boolean { return true; }
+export function isFree(p: ProfilePlan | null): boolean { return false; }
