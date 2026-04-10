@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" width="240" height="60">
+  <text x="0" y="48" font-family="-apple-system, 'Helvetica Neue', sans-serif" font-size="52" font-weight="800" letter-spacing="6" fill="#ffffff">RIZUP</text>
+  <rect x="0" y="54" width="110" height="3" rx="1.5" fill="#4ECBA4"/>
+  <rect x="118" y="54" width="116" height="3" rx="1.5" fill="rgba(255,255,255,0.3)"/>
+</svg>
