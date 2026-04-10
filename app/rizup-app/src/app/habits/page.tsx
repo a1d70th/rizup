@@ -9,7 +9,6 @@ interface Habit {
   id: string;
   title: string;
   icon?: string | null;
-  streak?: number;
 }
 
 const iconOptions = ["📚", "🏃", "🧘", "📝", "🙏", "💪", "🎵", "🍎", "💤", "🚶"];
@@ -22,6 +21,7 @@ export default function HabitsPage() {
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
   const [newIcon, setNewIcon] = useState("📚");
+  const [addError, setAddError] = useState("");
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
 
   useEffect(() => {
@@ -35,14 +35,12 @@ export default function HabitsPage() {
       try {
         const { data: logs } = await supabase.from("habit_logs").select("habit_id")
           .eq("user_id", user.id).eq("logged_date", today);
-        if (logs) setTodayLogs(new Set(logs.map(l => l.habit_id)));
+        if (logs) setTodayLogs(new Set(logs.map((l: { habit_id: string }) => l.habit_id)));
       } catch { /* habit_logs table may not exist yet */ }
       setLoading(false);
     };
     init();
   }, [today]);
-
-  const [addError, setAddError] = useState("");
 
   const handleAdd = async () => {
     if (!userId || !newName.trim() || habits.length >= 5) return;
@@ -53,7 +51,7 @@ export default function HabitsPage() {
       title: newName.trim(),
     }).select().single();
     if (error) {
-      console.error("[Habits] Insert error:", error.message, error.code, error.details);
+      console.error("[Habits] Insert error:", error.message);
       setAddError(`保存できませんでした：${error.message}`);
       return;
     }
@@ -73,7 +71,7 @@ export default function HabitsPage() {
         await supabase.from("habit_logs").insert({ habit_id: habitId, user_id: userId, logged_date: today });
         setTodayLogs(prev => new Set(prev).add(habitId));
       }
-    } catch { /* habit_logs table may not exist yet */ }
+    } catch { /* ignore */ }
   };
 
   const handleDelete = async (id: string) => {
