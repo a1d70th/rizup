@@ -168,6 +168,12 @@ export default function RecommendPage() {
     setRecs(prev => prev.map(r => r.id === recId ? { ...r, likes: isLiked ? Math.max(0, r.likes - 1) : r.likes + 1 } : r));
   };
 
+  const handleDeleteRec = async (recId: string) => {
+    if (!confirm("このおすすめを削除しますか？")) return;
+    await supabase.from("recommendations").delete().eq("id", recId);
+    setRecs(prev => prev.filter(r => r.id !== recId));
+  };
+
   const loadComments = async (recId: string) => {
     if (openComments === recId) { setOpenComments(null); return; }
     setOpenComments(recId);
@@ -317,6 +323,9 @@ export default function RecommendPage() {
                     <button onClick={() => loadComments(r.id)} className="text-xs text-text-light hover:text-mint transition">
                       💬 コメント{comments[r.id]?.length ? ` (${comments[r.id].length})` : ""}
                     </button>
+                    {r.user_id === userId && (
+                      <button onClick={() => handleDeleteRec(r.id)} className="text-xs text-text-light hover:text-red-400 transition ml-auto">削除</button>
+                    )}
                   </div>
                   {openComments === r.id && (
                     <CommentSection comments={comments[r.id] || []} commentText={commentText}
@@ -369,6 +378,9 @@ export default function RecommendPage() {
                     <button onClick={() => loadComments(r.id)} className="text-xs text-text-light hover:text-mint transition">
                       💬 コメント{comments[r.id]?.length ? ` (${comments[r.id].length})` : ""}
                     </button>
+                    {r.user_id === userId && (
+                      <button onClick={() => handleDeleteRec(r.id)} className="text-xs text-text-light hover:text-red-400 transition ml-auto">削除</button>
+                    )}
                   </div>
                   {openComments === r.id && (
                     <CommentSection comments={comments[r.id] || []} commentText={commentText}
