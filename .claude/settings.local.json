@@ -14,7 +14,10 @@
       "Bash(node:*)",
       "Bash(grep -l \"comments\\\\|notifications\" /c/Users/81806/Desktop/rizup/app/rizup-app/*.sql)",
       "Bash(gh api:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(mkdir -p ~/.gmail-mcp)",
+      "Read(//c/Users/81806/**)",
+      "mcp__notion-mcp__API-post-page"
     ]
   }
 }

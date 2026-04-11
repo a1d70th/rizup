@@ -224,7 +224,7 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
           </div>
         </div>
       ) : (
-        <p className="text-sm text-text-mid leading-relaxed mb-3">{displayContent}</p>
+        <p className="text-sm text-text-mid leading-relaxed mb-3 whitespace-pre-wrap">{displayContent}</p>
       )}
 
       {/* Post Image */}
