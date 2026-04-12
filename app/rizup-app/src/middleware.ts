@@ -31,14 +31,24 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Redirect helper that propagates any auth cookies Supabase just refreshed
+  const redirectWithCookies = (url: URL) => {
+    const redirect = NextResponse.redirect(url);
+    response.cookies.getAll().forEach((c) => {
+      const { name, value, ...options } = c;
+      redirect.cookies.set(name, value, options);
+    });
+    return redirect;
+  };
+
   // Unauthenticated → /login
   if (!user && (protectedPaths.some((p) => pathname.startsWith(p)) || pathname === "/onboarding")) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return redirectWithCookies(new URL("/login", request.url));
   }
 
   // Authenticated → skip auth pages
   if (authPaths.some((p) => pathname.startsWith(p)) && user) {
-    return NextResponse.redirect(new URL("/home", request.url));
+    return redirectWithCookies(new URL("/home", request.url));
   }
 
   return response;

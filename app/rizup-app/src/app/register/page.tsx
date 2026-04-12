@@ -1,10 +1,12 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -26,7 +28,7 @@ export default function RegisterPage() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: "https://rizup-app.vercel.app/auth/callback" },
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     });
 
     if (error) {
@@ -42,7 +44,8 @@ export default function RegisterPage() {
     } else if (data?.session) {
       // Email confirmation disabled — session returned immediately
       console.log("[Rizup Register] Session created, redirecting to onboarding");
-      window.location.href = "https://rizup-app.vercel.app/onboarding";
+      router.replace("/onboarding");
+      router.refresh();
     } else if (data?.user && !data.session) {
       // Email confirmation enabled — show confirmation screen
       console.log("[Rizup Register] Email confirmation required");
@@ -65,7 +68,7 @@ export default function RegisterPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: "https://rizup-app.vercel.app/auth/callback",
+          redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: { prompt: "select_account" },
         },
       });

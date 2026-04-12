@@ -84,11 +84,11 @@ export default function OnboardingPage() {
       }
 
       // Always navigate to /home regardless of save result
-      window.location.href = "https://rizup-app.vercel.app/home";
+      window.location.href = "/home";
     } catch (err) {
       console.error("[Onboarding] Unexpected error:", err);
       // Always navigate to /home
-      window.location.href = "https://rizup-app.vercel.app/home";
+      window.location.href = "/home";
     }
   };
 

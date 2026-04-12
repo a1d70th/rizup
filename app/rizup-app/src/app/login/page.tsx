@@ -1,10 +1,12 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -60,7 +62,9 @@ export default function LoginPage() {
 
       if (data?.session) {
         console.log("[Rizup Login] Success! Redirecting to /home");
-        window.location.href = "https://rizup-app.vercel.app/home";
+        // Navigate first, then refresh so middleware re-runs with the new cookie session
+        router.replace("/home");
+        router.refresh();
       } else {
         console.log("[Rizup Login] No session returned");
         showError("ログインに失敗しました。もう一度お試しください。");
@@ -78,7 +82,7 @@ export default function LoginPage() {
     if (!email) { showError("メールアドレスを入力してください"); return; }
     setResetLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://rizup-app.vercel.app/login",
+      redirectTo: `${window.location.origin}/login`,
     });
     setResetLoading(false);
     if (error) { showError("リセットメールの送信に失敗しました"); }
@@ -96,7 +100,7 @@ export default function LoginPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: "https://rizup-app.vercel.app/auth/callback",
+          redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: { prompt: "select_account" },
         },
       });
