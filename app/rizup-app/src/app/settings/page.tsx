@@ -10,6 +10,7 @@ export default function SettingsPage() {
   const [plan, setPlan] = useState("free");
   const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [theme, setTheme] = useState<"light" | "dark" | "auto">("auto");
 
   useEffect(() => {
     (async () => {
@@ -19,7 +20,22 @@ export default function SettingsPage() {
         .select("plan, trial_ends_at").eq("id", user.id).single();
       if (p) { setPlan(p.plan || "free"); setTrialEndsAt(p.trial_ends_at); }
     })();
+    const stored = typeof window !== "undefined" ? localStorage.getItem("theme") : null;
+    if (stored === "dark" || stored === "light") setTheme(stored);
+    else setTheme("auto");
   }, []);
+
+  const applyTheme = (t: "light" | "dark" | "auto") => {
+    setTheme(t);
+    if (t === "auto") {
+      localStorage.removeItem("theme");
+      const sys = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.classList.toggle("dark", sys);
+    } else {
+      localStorage.setItem("theme", t);
+      document.documentElement.classList.toggle("dark", t === "dark");
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -95,6 +111,25 @@ export default function SettingsPage() {
             loading={checkoutLoading === "premium"}
             onSelect={() => handleCheckout("premium")}
           />
+        </div>
+
+        {/* テーマ切替 */}
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4">
+          <p className="text-sm font-bold mb-2">🌓 テーマ</p>
+          <div className="flex bg-gray-50 rounded-xl p-1 gap-1">
+            {([
+              { k: "auto", label: "自動", emoji: "🌓" },
+              { k: "light", label: "ライト", emoji: "☀️" },
+              { k: "dark", label: "ダーク", emoji: "🌙" },
+            ] as const).map(o => (
+              <button key={o.k} onClick={() => applyTheme(o.k)}
+                className={`flex-1 py-2 rounded-lg text-xs font-extrabold transition ${
+                  theme === o.k ? "bg-white text-mint shadow-sm" : "text-text-mid"
+                }`}>
+                {o.emoji} {o.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mb-4">

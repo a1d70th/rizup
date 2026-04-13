@@ -68,6 +68,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ja">
       <head>
+        {/* Dark mode init — FOUC回避のため他より前に実行 */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            try {
+              var t = localStorage.getItem('theme');
+              var sys = window.matchMedia('(prefers-color-scheme: dark)').matches;
+              if (t === 'dark' || (t === null && sys)) document.documentElement.classList.add('dark');
+              else document.documentElement.classList.remove('dark');
+            } catch(e){}
+          })();
+        `}} />
         <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
         <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png" />

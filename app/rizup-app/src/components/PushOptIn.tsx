@@ -60,22 +60,27 @@ export default function PushOptIn() {
     setLoading(false);
   };
 
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem("push_optin_dismissed") === "1") setDismissed(true);
+  }, []);
+
   if (!supported) return null;
-  if (permission === "granted") {
-    return (
-      <div className="flex items-center gap-2 bg-mint-light rounded-xl p-3 text-xs">
-        <span>🔔</span>
-        <p className="flex-1 text-mint font-bold">通知ON</p>
-      </div>
-    );
-  }
+  if (permission === "granted") return null; // 通知ONになったら非表示
+  if (dismissed) return null;
   return (
-    <div className="bg-white rounded-2xl border border-mint/30 shadow-sm p-4">
-      <div className="flex items-center gap-2 mb-2">
+    <div className="bg-white rounded-2xl border border-mint/30 shadow-sm p-4 relative">
+      <button onClick={() => { localStorage.setItem("push_optin_dismissed", "1"); setDismissed(true); }}
+        aria-label="閉じる"
+        className="absolute top-2 right-2 text-text-light hover:text-text text-sm w-6 h-6 rounded-full flex items-center justify-center">
+        ✕
+      </button>
+      <div className="flex items-center gap-2 mb-2 pr-6">
         <span className="text-xl">🔔</span>
-        <p className="text-sm font-extrabold flex-1">朝の通知をON</p>
+        <p className="text-[15px] font-extrabold flex-1">朝の通知をON</p>
       </div>
-      <p className="text-xs text-text-mid leading-relaxed mb-3">
+      <p className="text-[13px] text-text-mid leading-relaxed mb-3">
         毎朝7時、Rizupが一声かけます。ジャーナル忘れを防ぎます。
       </p>
       <button onClick={enable} disabled={loading}

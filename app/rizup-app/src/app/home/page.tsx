@@ -1,24 +1,26 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import PostCard from "@/components/PostCard";
 import Confetti from "@/components/Confetti";
-import CountUp from "@/components/CountUp";
-import PushOptIn from "@/components/PushOptIn";
-import { showToast } from "@/components/Toast";
 import Image from "next/image";
 import Link from "next/link";
 import { SkeletonTimeline } from "@/components/Skeleton";
-import { compoundPercent } from "@/lib/compound";
 import { findTodayPost } from "@/lib/safe-insert";
+
+type TimelineTab = "all" | "following" | "morning" | "evening";
+const PAGE_SIZE = 10;
 
 interface PostWithProfile {
   id: string; user_id: string; type: string; content: string;
   mood: number; ai_feedback: string | null; created_at: string;
   image_url?: string | null;
-  profiles: { name: string; avatar_url: string | null };
+  morning_goal?: string | null;
+  goal_achieved?: string | null;
+  compound_score_today?: number | null;
+  profiles: { name: string; avatar_url: string | null; streak?: number | null };
 }
 
 interface Todo { id: string; title: string; is_done: boolean; vision_id: string | null; }
@@ -27,41 +29,31 @@ function todayJST(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
 }
 
-function getTimeBasedGreeting(hour: number, name: string): { greeting: string; subline: string; emoji: string } {
-  const who = name || "あなた";
-  if (hour >= 5 && hour < 12) {
-    return { greeting: `おはよう、${who}！`, subline: "今日も1%積もう🌱", emoji: "☀️" };
-  }
-  if (hour >= 12 && hour < 18) {
-    return { greeting: `お疲れ様、${who}！`, subline: "習慣チェック、した？", emoji: "🌤" };
-  }
-  if (hour >= 18 && hour < 24) {
-    return { greeting: `今日どうだった、${who}？`, subline: "夜ジャーナルで振り返ろう🌙", emoji: "🌙" };
-  }
-  return { greeting: `まだ起きてるんだね、${who}`, subline: "早く休んで、明日に備えよう", emoji: "🌌" };
-}
-
 export default function HomePage() {
   const [posts, setPosts] = useState<PostWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [userName, setUserName] = useState<string>("");
   const [streak, setStreak] = useState(0);
-  const [shoInsight, setShoInsight] = useState("おはよう。今日も1%、積んでいこう。");
   const [todayTodos, setTodayTodos] = useState<Todo[]>([]);
   const [habitsCompleted, setHabitsCompleted] = useState({ done: 0, total: 0 });
   const [hasMorningPost, setHasMorningPost] = useState(false);
   const [hasEveningPost, setHasEveningPost] = useState(false);
-  const [compoundScoreToday, setCompoundScoreToday] = useState<number | null>(null);
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [celebrating, setCelebrating] = useState<string | null>(null);
-  const [confettiKey, setConfettiKey] = useState(0);
+  const [confettiKey] = useState(0);
+
+  // Timeline state
+  const [tab, setTab] = useState<TimelineTab>("all");
+  const [hasMore, setHasMore] = useState(true);
+  const [fetchingMore, setFetchingMore] = useState(false);
+  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  const [newPostsCount, setNewPostsCount] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
+  const loaderRef = useRef<HTMLDivElement | null>(null);
+  const latestSeenAtRef = useRef<string | null>(null);
+  const timelineTopRef = useRef<HTMLDivElement | null>(null);
 
   const today = todayJST();
-  const hour = new Date().getHours();
-  const isMorning = hour < 15;
-  const timeGreeting = getTimeBasedGreeting(hour, userName);
 
   useEffect(() => {
     const init = async () => {
@@ -70,30 +62,14 @@ export default function HomePage() {
         if (user) {
           setUserId(user.id);
           const { data: profile } = await supabase.from("profiles")
-            .select("name, streak, zodiac, birthday, rizup_type, mbti, trial_ends_at, plan, is_admin")
+            .select("name, streak, trial_ends_at, plan, is_admin")
             .eq("id", user.id).single();
           if (profile) {
-            setUserName(profile.name || "");
             setStreak(profile.streak || 0);
             if (profile.is_admin) setIsAdmin(true);
             if (profile.trial_ends_at) {
               const daysLeft = Math.ceil((new Date(profile.trial_ends_at).getTime() - Date.now()) / 86400000);
               if (daysLeft > 0) setTrialDaysLeft(daysLeft);
-            }
-            const cacheKey = `sho_insight_${today}`;
-            const cached = localStorage.getItem(cacheKey);
-            if (cached) {
-              setShoInsight(cached);
-            } else {
-              fetch("/api/sho-insight", {
-                method: "POST", headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  zodiac: profile.zodiac, birthday: profile.birthday,
-                  rizupType: profile.rizup_type, mbti: profile.mbti, name: profile.name,
-                }),
-              }).then(r => r.json()).then(d => {
-                if (d.insight) { setShoInsight(d.insight); localStorage.setItem(cacheKey, d.insight); }
-              }).catch(() => {});
             }
           }
 
@@ -112,14 +88,6 @@ export default function HomePage() {
           const eveningP = await findTodayPost(supabase, user.id, "evening");
           setHasEveningPost(!!eveningP);
 
-          if (eveningP) {
-            try {
-              const { data: e } = await supabase.from("posts")
-                .select("compound_score_today").eq("id", eveningP.id).maybeSingle();
-              if (e?.compound_score_today != null) setCompoundScoreToday(e.compound_score_today);
-            } catch { /* ignore */ }
-          }
-
           // 今日の習慣達成
           try {
             const { data: allHabits } = await supabase.from("habits")
@@ -136,10 +104,31 @@ export default function HomePage() {
           }).catch(() => {});
         }
 
-        const { data } = await supabase.from("posts")
-          .select("*, profiles(name, avatar_url)")
-          .order("created_at", { ascending: false }).limit(20);
-        if (data) setPosts(data as PostWithProfile[]);
+        // フォロー中IDs
+        if (user) {
+          try {
+            const { data: fol } = await supabase.from("follows")
+              .select("followee_id").eq("follower_id", user.id);
+            if (fol) setFollowingIds(new Set(fol.map((r: { followee_id: string }) => r.followee_id)));
+          } catch { /* ignore */ }
+        }
+
+        // 初回タイムライン（streakカラム未作成でも落ちないフォールバック）
+        const first = await supabase.from("posts")
+          .select("*, profiles(name, avatar_url, streak)")
+          .order("created_at", { ascending: false }).limit(PAGE_SIZE);
+        let data = first.data;
+        if (first.error) {
+          const fb = await supabase.from("posts")
+            .select("*, profiles(name, avatar_url)")
+            .order("created_at", { ascending: false }).limit(PAGE_SIZE);
+          data = fb.data;
+        }
+        if (data) {
+          setPosts(data as PostWithProfile[]);
+          if (data.length < PAGE_SIZE) setHasMore(false);
+          if (data[0]) latestSeenAtRef.current = data[0].created_at;
+        }
       } catch (err) {
         console.error("[Home]", err);
       }
@@ -148,211 +137,220 @@ export default function HomePage() {
     init();
   }, [today]);
 
-  const handleToggleTodo = async (t: Todo) => {
-    const newDone = !t.is_done;
+  // タブ切替時にページングリセット（フィルターはクライアント側）
+  useEffect(() => {
+    setHasMore(true);
+  }, [tab]);
+
+  // 無限スクロール（依存をref化して IntersectionObserver の再登録ループを防ぐ）
+  const postsRef = useRef<PostWithProfile[]>([]);
+  const fetchingRef = useRef(false);
+  const hasMoreRef = useRef(true);
+  useEffect(() => { postsRef.current = posts; }, [posts]);
+  useEffect(() => { fetchingRef.current = fetchingMore; }, [fetchingMore]);
+  useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
+
+  const fetchMore = useCallback(async () => {
+    if (fetchingRef.current || !hasMoreRef.current || postsRef.current.length === 0) return;
+    setFetchingMore(true);
+    const oldest = postsRef.current[postsRef.current.length - 1].created_at;
     try {
-      const { error } = await supabase.from("todos")
-        .update({ is_done: newDone, done_at: newDone ? new Date().toISOString() : null })
-        .eq("id", t.id);
-      if (error) { showToast("error", "更新できませんでした"); return; }
-      setTodayTodos(prev => prev.map(x => x.id === t.id ? { ...x, is_done: newDone } : x));
-      if (newDone) {
-        setCelebrating(t.id);
-        setConfettiKey(k => k + 1);
-        setTimeout(() => setCelebrating(null), 700);
+      const first = await supabase.from("posts")
+        .select("*, profiles(name, avatar_url, streak)")
+        .lt("created_at", oldest)
+        .order("created_at", { ascending: false })
+        .limit(PAGE_SIZE);
+      let data = first.data;
+      if (first.error) {
+        const fb = await supabase.from("posts")
+          .select("*, profiles(name, avatar_url)")
+          .lt("created_at", oldest)
+          .order("created_at", { ascending: false })
+          .limit(PAGE_SIZE);
+        data = fb.data;
       }
-    } catch { showToast("error", "ネットワークエラー"); }
+      if (data && data.length > 0) {
+        setPosts(prev => [...prev, ...(data as PostWithProfile[])]);
+        if (data.length < PAGE_SIZE) setHasMore(false);
+      } else {
+        setHasMore(false);
+      }
+    } catch (err) {
+      console.error("[fetchMore]", err);
+      setHasMore(false);
+    }
+    setFetchingMore(false);
+  }, []);
+
+  useEffect(() => {
+    if (!loaderRef.current) return;
+    const el = loaderRef.current;
+    const io = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) fetchMore();
+    }, { rootMargin: "400px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [fetchMore, loading]);
+
+  // 新着ポーリング（60秒ごと）
+  useEffect(() => {
+    const iv = setInterval(async () => {
+      if (!latestSeenAtRef.current) return;
+      try {
+        const { count } = await supabase.from("posts")
+          .select("id", { count: "exact", head: true })
+          .gt("created_at", latestSeenAtRef.current);
+        if (count && count > 0) setNewPostsCount(count);
+      } catch { /* ignore */ }
+    }, 60000);
+    return () => clearInterval(iv);
+  }, []);
+
+  const refreshTimeline = async () => {
+    setRefreshing(true);
+    try {
+      const { data } = await supabase.from("posts")
+        .select("*, profiles(name, avatar_url, streak)")
+        .order("created_at", { ascending: false }).limit(PAGE_SIZE);
+      if (data) {
+        setPosts(data as PostWithProfile[]);
+        setHasMore(data.length >= PAGE_SIZE);
+        if (data[0]) latestSeenAtRef.current = data[0].created_at;
+      }
+    } catch { /* ignore */ }
+    setNewPostsCount(0);
+    setRefreshing(false);
+    timelineTopRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  const filteredPosts = posts.filter(p => {
+    if (tab === "all") return true;
+    if (tab === "morning") return p.type === "morning";
+    if (tab === "evening") return p.type === "evening";
+    if (tab === "following") return p.user_id === userId || followingIds.has(p.user_id);
+    return true;
+  });
 
   const doneTodos = todayTodos.filter(t => t.is_done).length;
   const totalTodos = todayTodos.length;
-  const allDone = totalTodos > 0 && doneTodos === totalTodos;
-  const compoundPct = compoundPercent(streak);
-
-  // Sho の今日の案内
-  const nextActionHint = (() => {
-    if (!hasMorningPost) return { label: "朝ジャーナルを書く", href: "/journal", emoji: "☀️" };
-    if (totalTodos === 0) return { label: "今日やること3つを決める", href: "/today", emoji: "✅" };
-    if (!allDone) return { label: "ToDoを1つ完了する", href: "/today", emoji: "✓" };
-    if (habitsCompleted.total > 0 && habitsCompleted.done < habitsCompleted.total)
-      return { label: "習慣をチェックする", href: "/habits", emoji: "🔄" };
-    if (!isMorning && !hasEveningPost) return { label: "夜ジャーナルで振り返る", href: "/journal", emoji: "🌙" };
-    return { label: "成長グラフを見る", href: "/growth", emoji: "📈" };
-  })();
 
   return (
     <div className="min-h-screen bg-bg pb-20">
       <Confetti trigger={confettiKey} />
       <Header />
-      <div className="max-w-md mx-auto px-4 py-4">
-        {/* ── Sho 挨拶 + 次の一歩 ─────────────────────────────────────── */}
-        <div className="glass-mint rounded-3xl p-5 mb-4 animate-slide-up relative overflow-hidden border border-mint/20"
-          style={{ boxShadow: "0 20px 40px rgba(110,203,176,0.15)" }}>
-          <div className="absolute -top-8 -right-8 w-32 h-32 bg-gradient-to-br from-mint/15 to-orange/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-gradient-to-tr from-orange/10 to-mint/5 rounded-full blur-2xl pointer-events-none" />
-          <div className="relative z-10">
-          <div className="flex items-center gap-3 mb-2">
-            <Image src="/icons/icon-192.png" alt="Rizup" width={44} height={44} className="rounded-full animate-sho-float shadow-lg shadow-mint/30" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-bold text-mint tracking-wide">
-                {timeGreeting.emoji} Rizup から
-              </p>
-              <p className="text-base font-extrabold truncate">{timeGreeting.greeting}</p>
-            </div>
-            {streak > 0 && (
-              <div className="text-right">
-                <p className="text-[10px] text-text-mid">連続</p>
-                <p className="text-lg font-extrabold text-orange leading-none"><span className="streak-fire">🔥</span>{streak}</p>
-              </div>
-            )}
-          </div>
-          <p className="text-xs font-bold text-mint mb-1">{timeGreeting.subline}</p>
-          <p className="text-sm text-text leading-relaxed mb-3">{shoInsight}</p>
-          <Link href={nextActionHint.href}
-            className="flex items-center gap-3 bg-white/70 rounded-2xl p-3 hover:bg-white transition">
-            <span className="text-2xl" aria-hidden="true">{nextActionHint.emoji}</span>
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-bold text-mint">今日はこれをやろう</p>
-              <p className="text-sm font-extrabold truncate">{nextActionHint.label}</p>
-            </div>
-            <span className="text-mint text-lg">→</span>
-          </Link>
-          {trialDaysLeft !== null && trialDaysLeft <= 3 && (
-            <p className="text-[10px] text-orange mt-2 font-bold text-center">⏰ トライアル残り{trialDaysLeft}日</p>
-          )}
-          </div>
-        </div>
+      <div className="max-w-md mx-auto px-4 py-2">
+        {/* ── 1行ステータスバー（朝夜・ToDo・習慣・🔥） ─────────────── */}
+        <Link href="/today"
+          className="flex items-center gap-3 bg-white rounded-2xl border border-gray-100 shadow-sm px-3 py-2 mb-3 active:scale-[0.99] transition">
+          <span className="flex items-center gap-0.5 text-[13px] font-bold">
+            <span className={hasMorningPost ? "text-mint" : "text-text-light"}>{hasMorningPost ? "☀️✅" : "☀️⬜"}</span>
+            <span className={hasEveningPost ? "text-mint" : "text-text-light"}>{hasEveningPost ? "🌙✅" : "🌙⬜"}</span>
+          </span>
+          <span className="h-4 w-px bg-gray-200" />
+          <span className="text-[13px] font-bold text-mint">
+            🔄 {habitsCompleted.done}/{habitsCompleted.total || 0}
+          </span>
+          <span className="h-4 w-px bg-gray-200" />
+          <span className="text-[13px] font-bold text-mint">
+            ✅ {doneTodos}/{totalTodos || 0}
+          </span>
+          <span className="h-4 w-px bg-gray-200" />
+          <span className="text-[13px] font-bold text-orange ml-auto">
+            <span className="streak-fire">🔥</span>{streak}日
+          </span>
+        </Link>
 
-        {/* ── 今日のダッシュボード（4マス） ──────────────────────────── */}
-        <div className="bg-white rounded-3xl p-4 border border-mint/20 shadow-sm mb-4 animate-slide-up">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-extrabold">📊 今日のダッシュボード</h2>
-            <span className="text-[10px] text-text-light">
-              {new Date().toLocaleDateString("ja-JP", { month: "long", day: "numeric", weekday: "short" })}
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <Link href="/journal" className="bg-gradient-to-br from-mint-light/60 to-white rounded-2xl p-3 border border-mint/10 hover:scale-[1.03] active:scale-95 transition shadow-sm">
-              <p className="text-[10px] text-text-mid mb-1 font-bold">📝 ジャーナル</p>
-              <p className="text-sm font-extrabold flex gap-2">
-                <span className={hasMorningPost ? "text-mint" : "text-text-light"}>☀️{hasMorningPost ? "✅" : "⬜"}</span>
-                <span className={hasEveningPost ? "text-mint" : "text-text-light"}>🌙{hasEveningPost ? "✅" : "⬜"}</span>
-              </p>
-            </Link>
-            <Link href="/today" className="bg-gradient-to-br from-mint-light/60 to-white rounded-2xl p-3 border border-mint/10 hover:scale-[1.03] active:scale-95 transition shadow-sm">
-              <p className="text-[10px] text-text-mid mb-1 font-bold">✅ ToDo</p>
-              <p className="text-sm font-extrabold text-mint">
-                <CountUp value={doneTodos} />/{totalTodos || "—"}
-                <span className="text-[10px] text-text-light ml-1 font-normal">完了</span>
-              </p>
-            </Link>
-            <Link href="/habits" className="bg-gradient-to-br from-mint-light/60 to-white rounded-2xl p-3 border border-mint/10 hover:scale-[1.03] active:scale-95 transition shadow-sm">
-              <p className="text-[10px] text-text-mid mb-1 font-bold">🔄 習慣</p>
-              <p className="text-sm font-extrabold text-mint">
-                <CountUp value={habitsCompleted.done} />/{habitsCompleted.total || "—"}
-                <span className="text-[10px] text-text-light ml-1 font-normal">チェック</span>
-              </p>
-            </Link>
-            <Link href="/growth" className="bg-gradient-to-br from-orange-light/50 to-white rounded-2xl p-3 border border-orange/10 hover:scale-[1.03] active:scale-95 transition shadow-sm">
-              <p className="text-[10px] text-text-mid mb-1 font-bold">✨ 複利成長</p>
-              {compoundScoreToday !== null ? (
-                <p className="text-sm font-extrabold text-orange">
-                  <CountUp value={compoundScoreToday} />
-                  <span className="text-[10px] text-text-light ml-1 font-normal">点</span>
-                </p>
-              ) : (
-                <p className="text-sm font-extrabold text-orange">+<CountUp value={compoundPct} suffix="%" /></p>
-              )}
-            </Link>
-          </div>
-        </div>
-
-        {/* ── 今日のToDo詳細 ──────────────────────────────────────────── */}
-        {totalTodos > 0 && (
-          <div className="bg-white rounded-3xl p-4 border border-gray-100 shadow-sm mb-4 animate-slide-up">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-xl">✅</span>
-              <h3 className="text-sm font-extrabold flex-1">今日やること</h3>
-              <span className="text-[10px] font-bold text-mint bg-mint-light px-2 py-0.5 rounded-full">
-                {doneTodos}/{totalTodos}
-              </span>
-            </div>
-            <div className="flex flex-col gap-2 mb-2">
-              {todayTodos.map((t, i) => {
-                const celebrate = celebrating === t.id;
-                return (
-                  <div key={t.id}
-                    className={`flex items-center gap-3 p-2.5 rounded-2xl transition animate-slide-up ${t.is_done ? "bg-mint-light" : "bg-bg"}`}
-                    style={{ animationDelay: `${i * 40}ms` }}>
-                    <button onClick={() => handleToggleTodo(t)}
-                      aria-label={t.is_done ? `${t.title}を未完了にする` : `${t.title}を完了にする`}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm border-2 transition shrink-0 ${t.is_done ? "bg-mint border-mint text-white animate-check-pulse" : "border-gray-300"}`}>
-                      {t.is_done ? "✓" : ""}
-                    </button>
-                    <p className={`text-sm font-medium flex-1 break-words ${t.is_done ? "line-through text-text-light" : ""}`}>{t.title}</p>
-                    {celebrate && (
-                      <Image src="/icons/icon-192.png" alt="Rizup" width={32} height={32} className="rounded-full animate-sho-bounce shrink-0" />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-            {allDone && (
-              <div className="glass-mint rounded-2xl p-3 flex items-center gap-2 animate-slide-up">
-                <Image src="/icons/icon-192.png" alt="Rizup" width={32} height={32} className="rounded-full animate-sho-bounce" />
-                <p className="text-xs font-extrabold text-mint flex-1">今日のToDoぜんぶクリア🎉</p>
-              </div>
-            )}
-            <Link href="/today" className="block text-center text-xs text-mint font-bold py-2">
-              すべて見る →
-            </Link>
-          </div>
+        {trialDaysLeft !== null && trialDaysLeft <= 3 && (
+          <p className="text-[11px] text-orange mb-2 font-bold text-center">⏰ トライアル残り{trialDaysLeft}日</p>
         )}
 
-        {/* ── Push通知オプトイン ───────────────────────────────────────── */}
-        <div className="mb-4">
-          <PushOptIn />
+        {/* ── タイムライン ────────────────────────────────────────────── */}
+        <div ref={timelineTopRef} className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-extrabold">💬 みんなの今日</h3>
+          <div className="flex items-center gap-2">
+            <button onClick={refreshTimeline} disabled={refreshing}
+              aria-label="タイムラインを更新"
+              className="text-xs text-text-mid hover:text-mint transition disabled:opacity-50">
+              {refreshing ? "更新中…" : "🔄"}
+            </button>
+            <Link href="/journal" className="text-xs text-mint font-extrabold">＋投稿</Link>
+          </div>
         </div>
 
-        {/* ── クイックアクセス ─────────────────────────────────────────── */}
-        <div className="grid grid-cols-3 gap-2 mb-5">
-          {[
-            { href: "/vision", icon: "🎯", label: "ビジョン" },
-            { href: "/anti-vision", icon: "🚫", label: "アンチ" },
-            { href: "/recommend", icon: "📖", label: "おすすめ" },
-          ].map(x => (
-            <Link key={x.href} href={x.href}
-              className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center hover:border-mint transition active:scale-95">
-              <div className="text-2xl mb-1" aria-hidden="true">{x.icon}</div>
-              <p className="text-[11px] font-bold text-text-mid">{x.label}</p>
-            </Link>
+        {/* タブフィルター */}
+        <div className="flex bg-white rounded-2xl p-1 border border-gray-100 mb-3 shadow-sm overflow-x-auto no-scrollbar">
+          {([
+            { key: "all", label: "全員", emoji: "🌿" },
+            { key: "following", label: "フォロー中", emoji: "🫂" },
+            { key: "morning", label: "朝", emoji: "☀️" },
+            { key: "evening", label: "夜", emoji: "🌙" },
+          ] as const).map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)}
+              className={`flex-1 min-w-fit px-3 py-2 rounded-xl text-[12px] font-extrabold transition-all whitespace-nowrap ${
+                tab === t.key ? "bg-gradient-to-br from-mint-light to-white text-mint shadow-sm scale-[1.02]" : "text-text-light"
+              }`}>
+              {t.emoji} {t.label}
+            </button>
           ))}
         </div>
 
-        {/* ── タイムライン ────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-extrabold">💬 みんなの今日</h3>
-          <Link href="/journal" className="text-xs text-mint font-bold">＋投稿</Link>
-        </div>
+        {/* 新着通知バナー */}
+        {newPostsCount > 0 && (
+          <button onClick={refreshTimeline}
+            className="w-full bg-mint text-white text-[13px] font-extrabold py-2.5 rounded-full shadow-lg shadow-mint/30 mb-3 animate-slide-up hover:bg-mint/90 transition">
+            ⬆ 新しい投稿が {newPostsCount} 件あります
+          </button>
+        )}
+
         {loading ? (
           <SkeletonTimeline />
-        ) : posts.length === 0 ? (
-          <div className="text-center py-8 bg-white rounded-2xl border border-gray-100">
-            <Image src="/icons/icon-192.png" alt="Rizup" width={48} height={48} className="rounded-full mx-auto mb-2 animate-sho-float" />
-            <p className="text-sm font-bold mb-1">まだ投稿がないよ</p>
-            <p className="text-xs text-text-mid mb-3">最初の一歩になってみる？</p>
-            <Link href="/journal" className="inline-block bg-mint text-white font-bold px-6 py-2.5 rounded-full shadow-md">
-              📝 書いてみる
-            </Link>
+        ) : filteredPosts.length === 0 ? (
+          <div className="text-center py-10 bg-white rounded-2xl border border-gray-100">
+            <Image src="/icons/icon-192.png" alt="Rizup" width={56} height={56} className="rounded-full mx-auto mb-2 animate-sho-float" />
+            <p className="text-sm font-bold mb-1">
+              {tab === "following" ? "フォロー中のユーザーの投稿はまだ" :
+               tab === "morning" ? "朝の投稿はまだ" :
+               tab === "evening" ? "夜の投稿はまだ" : "まだ投稿がないよ"}
+            </p>
+            <p className="text-xs text-text-mid mb-3">
+              {tab === "all" ? "最初の一歩になってみる？" : "全員タブで色んな投稿を見てみよう"}
+            </p>
+            {tab === "all" ? (
+              <Link href="/journal" className="inline-block bg-mint text-white font-bold px-6 py-2.5 rounded-full shadow-md">
+                📝 書いてみる
+              </Link>
+            ) : (
+              <button onClick={() => setTab("all")} className="inline-block bg-mint text-white font-bold px-6 py-2.5 rounded-full shadow-md">
+                全員を見る
+              </button>
+            )}
           </div>
         ) : (
-          <div className="flex flex-col gap-3">
-            {posts.map(post => (
-              <PostCard key={post.id} post={post} userId={userId}
-                isAdmin={isAdmin}
-                onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
-            ))}
-          </div>
+          <>
+            <div className="flex flex-col gap-4">
+              {filteredPosts.map(post => (
+                <PostCard key={post.id} post={post} userId={userId}
+                  isAdmin={isAdmin}
+                  onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
+              ))}
+            </div>
+            {/* 無限スクロールセンチネル */}
+            {hasMore && (
+              <div ref={loaderRef} className="py-6 flex justify-center">
+                {fetchingMore ? (
+                  <div className="flex items-center gap-2 text-xs text-text-light">
+                    <Image src="/icons/icon-192.png" alt="Rizup" width={20} height={20} className="rounded-full animate-sho-float" />
+                    読み込み中…
+                  </div>
+                ) : (
+                  <span className="text-xs text-text-light">↓ スクロールでもっと見る</span>
+                )}
+              </div>
+            )}
+            {!hasMore && filteredPosts.length >= PAGE_SIZE && (
+              <p className="text-center text-xs text-text-light py-6">ここまでだよ🌿</p>
+            )}
+          </>
         )}
       </div>
       <BottomNav />
