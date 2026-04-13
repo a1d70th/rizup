@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rizup SNS ダッシュボード</title>
+<style>
+  :root {
+    --mint: #6ecbb0; --mint-light: #e8f7f2; --orange: #f4976c; --orange-light: #fef0e9;
+    --bg: #fafafa; --card: #ffffff; --text: #3a3a3a; --text-mid: #6b6b6b; --text-light: #a0a0a0;
+    --border: #ebebeb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1512; --card: #1a2320; --text: #f0f3f1; --text-mid: #b5c0bb; --text-light: #6b7a74; --border: #24302c;
+      --mint-light: rgba(110, 203, 176, 0.16); --orange-light: rgba(244, 151, 108, 0.16);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "M PLUS Rounded 1c", system-ui, sans-serif;
+    background: var(--bg); color: var(--text); padding: 1rem;
+    max-width: 900px; margin: 0 auto;
+  }
+  header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.2rem; }
+  header img { width: 48px; height: 48px; border-radius: 50%; }
+  h1 { font-size: 1.4rem; }
+  .subtitle { color: var(--text-mid); font-size: 0.85rem; }
+
+  .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; overflow-x: auto; padding-bottom: 0.3rem; }
+  .tab {
+    background: var(--card); border: 1.5px solid var(--border); border-radius: 999px;
+    padding: 0.6rem 1.2rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+    color: var(--text-mid); font-size: 0.85rem;
+  }
+  .tab.active { background: var(--mint); color: #fff; border-color: var(--mint); }
+  .pane { display: none; }
+  .pane.active { display: block; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 1rem; margin-bottom: 1rem;
+  }
+  .post-card { display: flex; gap: 0.6rem; align-items: flex-start; }
+  .post-card input[type="checkbox"] { margin-top: 0.4rem; width: 20px; height: 20px; accent-color: var(--mint); }
+  .post-body { flex: 1; min-width: 0; }
+  .post-meta { font-size: 0.72rem; color: var(--text-light); margin-bottom: 0.3rem; }
+  .post-text { font-size: 0.87rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .post-actions { display: flex; gap: 0.4rem; margin-top: 0.6rem; }
+  button {
+    background: var(--mint); color: #fff; border: none; padding: 0.45rem 1rem;
+    border-radius: 999px; font-weight: 700; font-size: 0.78rem; cursor: pointer;
+    font-family: inherit;
+  }
+  button.secondary { background: transparent; color: var(--mint); border: 1.5px solid var(--mint); }
+  button.orange { background: var(--orange); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  input, textarea, select {
+    font-family: inherit; font-size: 0.9rem; padding: 0.55rem 0.8rem;
+    border: 1.5px solid var(--border); border-radius: 10px;
+    background: var(--card); color: var(--text); width: 100%;
+  }
+  label { display: block; font-size: 0.75rem; color: var(--text-mid); margin-bottom: 0.3rem; font-weight: 700; }
+  .form-row { margin-bottom: 0.7rem; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.8rem; }
+  .stat { text-align: center; padding: 0.8rem; background: var(--mint-light); border-radius: 12px; }
+  .stat-label { font-size: 0.7rem; color: var(--text-mid); }
+  .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--mint); }
+
+  .config-section { background: var(--mint-light); border: 1px solid var(--mint); padding: 0.8rem; border-radius: 12px; margin-bottom: 1rem; }
+  .toast {
+    position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
+    background: var(--mint); color: #fff; padding: 0.7rem 1.5rem; border-radius: 999px;
+    font-weight: 700; z-index: 9999; font-size: 0.85rem;
+  }
+</style>
+</head>
+<body>
+<header>
+  <img src="https://rizup-app.vercel.app/sho.png" alt="Sho" />
+  <div>
+    <h1>🌿 Rizup SNS ダッシュボード</h1>
+    <p class="subtitle">Threads / X の投稿管理・分析</p>
+  </div>
+</header>
+
+<!-- GAS URL 設定 -->
+<div class="config-section">
+  <label>GAS WebApp URL（一度だけ設定）</label>
+  <input type="url" id="gasUrl" placeholder="https://script.google.com/macros/s/xxx/exec" />
+  <div style="display:flex;gap:.5rem;margin-top:.4rem;">
+    <label style="flex:1;margin:0;">
+      <span style="display:block;font-size:.7rem;margin-bottom:.2rem;">合言葉（DISPATCH_SECRET）</span>
+      <input type="password" id="gasSecret" placeholder="任意" />
+    </label>
+    <button onclick="saveConfig()" style="margin-top:1.2rem;">保存</button>
+  </div>
+</div>
+
+<!-- タブ -->
+<div class="tabs">
+  <div class="tab active" data-pane="posts">📝 投稿管理</div>
+  <div class="tab" data-pane="stats">📊 数値記録</div>
+  <div class="tab" data-pane="analytics">📈 分析</div>
+  <div class="tab" data-pane="buzz">🔥 バズ参考</div>
+</div>
+
+<!-- 投稿管理 -->
+<div class="pane active" id="pane-posts">
+  <div class="card">
+    <h3 style="margin-bottom:.6rem;">新規投稿を追加</h3>
+    <div class="form-row"><label>本文（500字以内）</label><textarea id="postText" rows="3" placeholder="投稿文を貼り付け"></textarea></div>
+    <div class="form-row"><label>投稿予定時刻（空欄で即時）</label><input type="datetime-local" id="postSched" /></div>
+    <button onclick="addPost()">キューに追加</button>
+    <button class="orange" onclick="addAndPublish()" style="margin-left:.4rem;">即時投稿</button>
+  </div>
+  <div id="postList"></div>
+</div>
+
+<!-- 数値記録 -->
+<div class="pane" id="pane-stats">
+  <div class="card">
+    <h3>今週の数値を入力</h3>
+    <div class="form-row"><label>投稿ID（Threads のmedia_id）</label><input type="text" id="statPostId" /></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem;">
+      <div class="form-row"><label>インプレッション</label><input type="number" id="statImpr" min="0" /></div>
+      <div class="form-row"><label>いいね</label><input type="number" id="statLikes" min="0" /></div>
+      <div class="form-row"><label>返信</label><input type="number" id="statReplies" min="0" /></div>
+      <div class="form-row"><label>フォロワー（現在）</label><input type="number" id="statFollowers" min="0" /></div>
+    </div>
+    <button onclick="saveStats()">保存</button>
+  </div>
+</div>
+
+<!-- 分析 -->
+<div class="pane" id="pane-analytics">
+  <div class="card">
+    <h3>今週のサマリー</h3>
+    <div class="stat-grid" id="statGrid">
+      <div class="stat"><div class="stat-label">総投稿</div><div class="stat-value" id="aPosts">-</div></div>
+      <div class="stat"><div class="stat-label">総いいね</div><div class="stat-value" id="aLikes">-</div></div>
+      <div class="stat"><div class="stat-label">平均いいね率</div><div class="stat-value" id="aLikeRate">-</div></div>
+      <div class="stat"><div class="stat-label">フォロワー増</div><div class="stat-value" id="aFollowers">-</div></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>TOP投稿</h3>
+    <div id="topPosts"></div>
+  </div>
+</div>
+
+<!-- バズ参考 -->
+<div class="pane" id="pane-buzz">
+  <div class="card">
+    <h3>バズ投稿を記録</h3>
+    <div class="form-row"><label>バズ投稿 URL</label><input type="url" id="buzzUrl" /></div>
+    <div class="form-row"><label>元投稿の本文（抜粋）</label><textarea id="buzzOrig" rows="2"></textarea></div>
+    <div class="form-row"><label>Rizup 版アレンジ案</label><textarea id="buzzRizup" rows="3"></textarea></div>
+    <button onclick="saveBuzz()">記録</button>
+  </div>
+  <div class="card">
+    <p style="color:var(--text-mid);font-size:.82rem;">
+      詳しいリサーチ手順は <code>social-automation/buzz-research.md</code> 参照。
+      毎週月曜に Kai が実施。
+    </p>
+  </div>
+</div>
+
+<script>
+const cfg = {
+  url: localStorage.getItem("gas_url") || "",
+  secret: localStorage.getItem("gas_secret") || "",
+};
+document.getElementById("gasUrl").value = cfg.url;
+document.getElementById("gasSecret").value = cfg.secret;
+
+function toast(msg) {
+  const d = document.createElement("div"); d.className = "toast"; d.textContent = msg;
+  document.body.appendChild(d); setTimeout(() => d.remove(), 2500);
+}
+
+function saveConfig() {
+  cfg.url = document.getElementById("gasUrl").value.trim();
+  cfg.secret = document.getElementById("gasSecret").value.trim();
+  localStorage.setItem("gas_url", cfg.url); localStorage.setItem("gas_secret", cfg.secret);
+  toast("✅ 保存しました");
+  loadPosts();
+}
+
+// タブ切替
+document.querySelectorAll(".tab").forEach((t) => {
+  t.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach((x) => x.classList.remove("active"));
+    document.querySelectorAll(".pane").forEach((x) => x.classList.remove("active"));
+    t.classList.add("active");
+    document.getElementById("pane-" + t.dataset.pane).classList.add("active");
+    if (t.dataset.pane === "analytics") loadAnalytics();
+    if (t.dataset.pane === "posts") loadPosts();
+  });
+});
+
+async function callGas(method, body = null) {
+  if (!cfg.url) { toast("⚠️ GAS URL を設定してください"); return null; }
+  try {
+    const opts = { method, redirect: "follow" };
+    if (body) {
+      opts.headers = { "Content-Type": "application/json" };
+      opts.body = JSON.stringify({ ...body, secret: cfg.secret });
+    }
+    const url = method === "GET" ? cfg.url + (body ? "?" + new URLSearchParams(body) : "") : cfg.url;
+    const res = await fetch(url, opts);
+    return await res.json();
+  } catch (e) {
+    toast("❌ 通信エラー: " + e.message); return null;
+  }
+}
+
+async function loadPosts() {
+  const data = await callGas("GET");
+  if (!data?.items) { document.getElementById("postList").innerHTML = "<p style='color:#aaa;text-align:center;padding:1rem;'>GAS URLを設定すると投稿が表示されます</p>"; return; }
+  const list = document.getElementById("postList");
+  list.innerHTML = data.items.reverse().slice(0, 30).map((p) => `
+    <div class="card post-card">
+      <input type="checkbox" ${p.status === "published" ? "checked disabled" : ""} />
+      <div class="post-body">
+        <div class="post-meta">${p.id || "—"} / ${p.status || "queued"} / ${p.posted_at || p.scheduled_at || ""}</div>
+        <div class="post-text">${(p.text || "").slice(0, 400)}</div>
+        <div class="post-actions">
+          <button class="secondary" onclick="copyText(${JSON.stringify(p.text || "")})">コピー</button>
+        </div>
+      </div>
+    </div>
+  `).join("");
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => toast("✅ コピーしました"));
+}
+
+async function addPost() {
+  const text = document.getElementById("postText").value.trim();
+  if (!text) return;
+  const sched = document.getElementById("postSched").value;
+  const r = await callGas("POST", { text, scheduled_at: sched || "now", publish_immediately: false });
+  if (r?.ok) { toast("✅ キューに追加"); document.getElementById("postText").value = ""; loadPosts(); }
+}
+
+async function addAndPublish() {
+  const text = document.getElementById("postText").value.trim();
+  if (!text) return;
+  const r = await callGas("POST", { text, scheduled_at: "now", publish_immediately: true });
+  if (r?.ok) { toast("✅ 投稿しました"); document.getElementById("postText").value = ""; loadPosts(); }
+}
+
+async function saveStats() {
+  const body = {
+    action: "saveStats",
+    post_id: document.getElementById("statPostId").value,
+    impressions: Number(document.getElementById("statImpr").value || 0),
+    likes: Number(document.getElementById("statLikes").value || 0),
+    replies: Number(document.getElementById("statReplies").value || 0),
+    followers: Number(document.getElementById("statFollowers").value || 0),
+    recorded_at: new Date().toISOString(),
+  };
+  const r = await callGas("POST", body);
+  if (r?.ok) toast("✅ 保存しました");
+}
+
+async function saveBuzz() {
+  const body = {
+    action: "saveBuzz",
+    buzz_url: document.getElementById("buzzUrl").value,
+    original: document.getElementById("buzzOrig").value,
+    rizup_version: document.getElementById("buzzRizup").value,
+  };
+  const r = await callGas("POST", body);
+  if (r?.ok) {
+    toast("✅ 記録しました");
+    ["buzzUrl","buzzOrig","buzzRizup"].forEach(id => document.getElementById(id).value = "");
+  }
+}
+
+async function loadAnalytics() {
+  const data = await callGas("GET", { action: "insights" });
+  if (!data || !Array.isArray(data)) return;
+  const totalPosts = data.length;
+  const totalLikes = data.reduce((s, x) => s + (x.likes || 0), 0);
+  const totalImpr = data.reduce((s, x) => s + (x.views || x.impressions || 0), 0);
+  const rate = totalImpr > 0 ? ((totalLikes / totalImpr) * 100).toFixed(2) + "%" : "—";
+  document.getElementById("aPosts").textContent = totalPosts;
+  document.getElementById("aLikes").textContent = totalLikes;
+  document.getElementById("aLikeRate").textContent = rate;
+  document.getElementById("aFollowers").textContent = "—";
+
+  const top = [...data].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 5);
+  document.getElementById("topPosts").innerHTML = top.map((p, i) =>
+    `<div class="card post-card" style="margin-bottom:.4rem;">
+      <div class="post-body">
+        <div class="post-meta">#${i + 1} ・ ${p.likes || 0} likes ・ ${p.replies || 0} replies</div>
+        <div class="post-text">${(p.media_id || p.id || "").slice(0, 40)}</div>
+      </div>
+    </div>`).join("") || "<p style='color:#aaa;padding:.8rem;'>データなし</p>";
+}
+
+loadPosts();
+</script>
+</body>
+</html>

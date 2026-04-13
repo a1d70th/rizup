@@ -6,7 +6,10 @@ import type { RizupType } from "@/lib/rizup-types";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import PostCard from "@/components/PostCard";
+import CountUp from "@/components/CountUp";
 import Link from "next/link";
+import Image from "next/image";
+import { compoundPercent } from "@/lib/compound";
 
 interface ProfileData {
   name: string;
@@ -177,23 +180,41 @@ export default function ProfilePage() {
               ✏️ プロフィールを編集
             </button>
           </div>
-          <div className="flex justify-center gap-6 mt-4">
-            <div className="text-center"><div className="text-xl font-extrabold text-mint">{totalPosts}</div><div className="text-[10px] text-text-light">投稿</div></div>
-            <div className="text-center"><div className="text-xl font-extrabold text-orange">🔥 {profile.streak}</div><div className="text-[10px] text-text-light">連続日数</div></div>
-            <div className="text-center"><div className="text-xl font-extrabold text-mint">{totalReactions}</div><div className="text-[10px] text-text-light">受けた応援</div></div>
+          {/* シンプル3統計 */}
+          <div className="flex justify-center gap-8 mt-5">
+            <div className="text-center">
+              <div className="text-2xl font-extrabold text-mint"><CountUp value={totalPosts} /></div>
+              <div className="text-[10px] text-text-light mt-0.5">投稿</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-extrabold text-orange">
+                <span className="streak-fire">🔥</span><CountUp value={profile.streak} />
+              </div>
+              <div className="text-[10px] text-text-light mt-0.5">連続日数</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-extrabold text-mint"><CountUp value={totalReactions} /></div>
+              <div className="text-[10px] text-text-light mt-0.5">応援</div>
+            </div>
           </div>
         </div>
 
-        {/* 成長グラフへ */}
-        <Link href="/growth" className="block bg-gradient-to-br from-mint-light to-orange-light rounded-2xl p-4 mb-4 border border-mint/20 hover:shadow-md transition">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">📈</span>
-            <div className="flex-1">
-              <p className="text-sm font-bold">成長グラフを見る</p>
-              <p className="text-[10px] text-text-mid">気分・睡眠・ポジティブ度の推移</p>
+        {/* 複利成長カード（大） */}
+        <Link href="/growth"
+          className="block glass-mint rounded-3xl p-5 mb-4 shadow-lg shadow-mint/10 hover:shadow-xl transition animate-slide-up">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-[11px] font-bold text-mint mb-1">✨ 今の複利成長</p>
+              <p className="text-3xl font-extrabold text-text leading-none">
+                +<CountUp value={compoundPercent(profile.streak)} suffix="%" />
+              </p>
+              <p className="text-[10px] text-text-mid mt-1">連続{profile.streak}日の積み上げ</p>
             </div>
-            <span className="text-text-light">→</span>
+            <Image src="/sho.png" alt="Sho" width={64} height={64}
+              className="rounded-full animate-sho-float drop-shadow-md" />
           </div>
+          <CompoundBar streak={profile.streak} />
+          <p className="text-[10px] text-center text-mint font-bold mt-2">タップして成長グラフを見る →</p>
         </Link>
 
         {/* Actions */}
@@ -313,6 +334,42 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div>
       <label className="text-xs font-bold text-text-mid block mb-1">{label}</label>
       {children}
+    </div>
+  );
+}
+
+/** 複利成長の小さな可視化バー（連続日数に応じて30/90/365のマイルストーン表示） */
+function CompoundBar({ streak }: { streak: number }) {
+  const milestones = [
+    { day: 30, pct: compoundPercent(30), label: "30日" },
+    { day: 90, pct: compoundPercent(90), label: "90日" },
+    { day: 365, pct: compoundPercent(365), label: "1年" },
+  ];
+  const max = 365;
+  const pos = Math.min((streak / max) * 100, 100);
+  return (
+    <div className="relative pt-2 pb-1">
+      <div className="w-full bg-white/60 rounded-full h-2 overflow-hidden">
+        <div
+          className="h-2 rounded-full bg-gradient-to-r from-mint to-orange transition-all duration-1000"
+          style={{ width: `${pos}%` }}
+        />
+      </div>
+      <div className="flex justify-between mt-1">
+        {milestones.map((m) => {
+          const reached = streak >= m.day;
+          return (
+            <div key={m.day} className="text-center">
+              <p className={`text-[9px] font-bold ${reached ? "text-mint" : "text-text-light"}`}>
+                {m.label}
+              </p>
+              <p className={`text-[8px] ${reached ? "text-orange font-bold" : "text-text-light"}`}>
+                +{m.pct.toLocaleString()}%
+              </p>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

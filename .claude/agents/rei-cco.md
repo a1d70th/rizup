@@ -87,3 +87,16 @@ curl -X POST "$DISPATCH_URL/task" \
 - `social-automation/posted-log.json` — 投稿済みログ
 
 実装後は必ずqa-reviewerに文章レビューを依頼する（翔平さんの言葉として自然かチェック）。
+
+---
+
+## 「今週のスレッズ投稿作って」ワークフロー（v2）
+
+1. 先週のデータを読み込む：`social-automation/sns-dashboard.html` の数値（いいね率・リプ率）
+2. バズ参考：`social-automation/buzz-research.md` の手順で集めた投稿を確認
+3. いいね率が高いパターン（A:数字/B:弱さ開示/C:対比/D:問いかけ/E:ストーリー/F:言い換え/G:決意）を踏襲
+4. 翔平さんの実績（GU全国1位/ROAS 78→180%/TOEIC 850/Claude Code）に置き換える
+5. `marketing/threads-weekN.md` に21本（毎日3本×7日）保存
+6. 「今週の投稿準備完了」と報告
+
+先週データの確認：`curl "$THREADS_GAS_URL?action=insights" | jq`
