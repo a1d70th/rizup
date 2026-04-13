@@ -6,6 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import PostCard from "@/components/PostCard";
 import Confetti from "@/components/Confetti";
 import CountUp from "@/components/CountUp";
+import PushOptIn from "@/components/PushOptIn";
 import Image from "next/image";
 import Link from "next/link";
 import { SkeletonTimeline } from "@/components/Skeleton";
@@ -274,6 +275,11 @@ export default function HomePage() {
             <span className="text-text-light">→</span>
           </Link>
         )}
+
+        {/* Push 通知オプトイン（初回のみ表示） */}
+        <div className="mb-4">
+          <PushOptIn />
+        </div>
 
         {/* クイックアクセス */}
         <div className="grid grid-cols-3 gap-2 mb-5">

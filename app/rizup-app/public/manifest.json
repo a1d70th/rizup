@@ -1,26 +1,57 @@
 {
-  "name": "Rizup — 毎日の複利成長",
+  "name": "Rizup — 毎日1%の複利成長",
   "short_name": "Rizup",
-  "description": "朝夜ジャーナリング × ビジョン × 習慣で複利成長を可視化",
+  "description": "朝夜ジャーナリング × ビジョン × 習慣 × 今日のToDo。毎日の1%が、1年で37倍になる自己成長アプリ。",
+  "id": "/home",
   "start_url": "/home",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": ["standalone", "minimal-ui", "browser"],
   "orientation": "portrait",
   "background_color": "#fafafa",
   "theme_color": "#6ecbb0",
-  "categories": ["productivity", "lifestyle", "health"],
+  "categories": ["productivity", "lifestyle", "health", "education"],
   "lang": "ja",
   "dir": "ltr",
   "prefer_related_applications": false,
   "icons": [
     { "src": "/sho.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/sho.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/sho.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
     { "src": "/sho.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
+  "screenshots": [
+    {
+      "src": "/sho.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "ホーム画面：今日やること3つが一目で見える"
+    }
+  ],
   "shortcuts": [
-    { "name": "朝ジャーナル", "short_name": "朝", "url": "/journal", "icons": [{ "src": "/sho.png", "sizes": "192x192" }] },
-    { "name": "今日のToDo", "short_name": "ToDo", "url": "/today", "icons": [{ "src": "/sho.png", "sizes": "192x192" }] },
-    { "name": "成長グラフ", "short_name": "成長", "url": "/growth", "icons": [{ "src": "/sho.png", "sizes": "192x192" }] }
-  ]
+    {
+      "name": "朝ジャーナル",
+      "short_name": "朝",
+      "description": "今日の気分と目標を記録",
+      "url": "/journal",
+      "icons": [{ "src": "/sho.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "今日のToDo",
+      "short_name": "ToDo",
+      "description": "今日やることを確認",
+      "url": "/today",
+      "icons": [{ "src": "/sho.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "成長グラフ",
+      "short_name": "成長",
+      "description": "複利成長を見る",
+      "url": "/growth",
+      "icons": [{ "src": "/sho.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ],
+  "related_applications": [],
+  "iarc_rating_id": "e84b072a-71b3-4d3e-86ae-31a8ce4e53b7"
 }

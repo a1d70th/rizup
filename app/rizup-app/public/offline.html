@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rizup — オフライン</title>
+<style>
+  body { font-family: "M PLUS Rounded 1c", system-ui, sans-serif; background: #fafafa; color: #3a3a3a; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 2rem; }
+  @media (prefers-color-scheme: dark) { body { background: #0f1512; color: #f0f3f1; } }
+  img { width: 96px; height: 96px; border-radius: 50%; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  h1 { font-size: 1.5rem; margin: 1rem 0 0.5rem; }
+  p { font-size: 0.95rem; color: #6b6b6b; margin: 0.25rem 0; }
+  .retry { margin-top: 1.5rem; background: #6ecbb0; color: white; border: none; padding: 0.8rem 2rem; border-radius: 999px; font-weight: 700; font-size: 0.9rem; cursor: pointer; }
+</style>
+</head>
+<body>
+  <div>
+    <img src="/sho.png" alt="Sho" />
+    <h1>オフラインみたいだね</h1>
+    <p>ネットにつながったらまた一緒にやろう。</p>
+    <p style="font-size: 0.8rem; color: #a0a0a0; margin-top: 0.5rem;">「今、何もしない」も1%の休息です🌿</p>
+    <button class="retry" onclick="location.reload()">再接続する</button>
+  </div>
+</body>
+</html>
