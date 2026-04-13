@@ -117,13 +117,15 @@ function TodayInner() {
       <div className="max-w-md mx-auto px-4 py-4">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-lg font-extrabold">✅ 今日のToDo</h2>
+            <h2 className="text-xl font-extrabold">✅ 今日のToDo</h2>
             <p className="text-xs text-text-light">{new Date().toLocaleDateString("ja-JP", { month: "long", day: "numeric", weekday: "short" })}</p>
           </div>
-          <button onClick={() => setShowAdd(!showAdd)} aria-label="ToDoを追加"
-            className="bg-mint text-white text-xs font-bold px-4 py-2 rounded-full shadow-md shadow-mint/30">
-            {showAdd ? "✕" : "＋ 追加"}
-          </button>
+          {todos.length > 0 && (
+            <button onClick={() => setShowAdd(!showAdd)} aria-label="ToDoを追加"
+              className="bg-mint text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-md shadow-mint/30 hover:scale-105 active:scale-95 transition">
+              {showAdd ? "✕ 閉じる" : "＋ 追加"}
+            </button>
+          )}
         </div>
 
         {/* 進捗 */}
@@ -172,10 +174,19 @@ function TodayInner() {
 
         {/* 一覧 */}
         {todos.length === 0 ? (
-          <div className="text-center py-12">
-            <Image src="/sho.png" alt="Sho" width={64} height={64} className="rounded-full mx-auto mb-3 opacity-50" />
-            <p className="text-sm font-bold text-text-mid mb-1">今日のToDoがまだないよ</p>
-            <p className="text-xs text-text-light">小さな一歩を3つだけ決めよう</p>
+          <div className="glass-mint rounded-3xl p-6 text-center animate-slide-up shadow-lg shadow-mint/10">
+            <Image src="/sho.png" alt="Sho" width={96} height={96}
+              className="rounded-full mx-auto mb-4 animate-sho-float drop-shadow-lg" />
+            <p className="text-xl font-extrabold mb-1">今日の3つを決めよう！</p>
+            <p className="text-xs text-text-mid mb-5 leading-relaxed">
+              どんなに小さなことでもOK。<br />
+              「腕立て1回」「本1ページ」でいい。
+            </p>
+            <button onClick={() => setShowAdd(true)} autoFocus={false}
+              className="inline-flex items-center gap-2 bg-mint text-white font-extrabold px-8 py-4 rounded-full shadow-lg shadow-mint/40 hover:scale-105 active:scale-95 transition text-base">
+              <span className="text-xl">＋</span> ToDoを追加する
+            </button>
+            <p className="text-[10px] text-text-light mt-3">3つまで選べるよ</p>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
@@ -210,9 +221,9 @@ function TodayInner() {
         )}
 
         {/* 空状態ヒント */}
-        {todos.length === 0 && visions.length === 0 && (
-          <div className="mt-4 bg-mint-light/50 rounded-2xl p-4 text-center">
-            <p className="text-xs text-text-mid">まずは <a href="/vision" className="text-mint font-bold underline">ビジョン</a> から目標を決めてみよう</p>
+        {todos.length === 0 && visions.length === 0 && !showAdd && (
+          <div className="mt-4 bg-white/60 rounded-2xl p-4 text-center border border-gray-100">
+            <p className="text-xs text-text-mid">慣れてきたら <a href="/vision" className="text-mint font-bold underline">ビジョン</a> と紐付けると複利効果UP</p>
           </div>
         )}
       </div>

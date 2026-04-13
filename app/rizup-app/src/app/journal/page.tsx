@@ -334,9 +334,13 @@ export default function JournalPage() {
 
   if (posted) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
-        <Image src="/sho.png" alt="Sho" width={80} height={80} className="rounded-full mb-4 animate-sho-bounce" />
-        <h2 className="text-xl font-extrabold mb-4">投稿できたよ！</h2>
+      <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6 text-center">
+        <div className="relative mb-4">
+          <Image src="/sho.png" alt="Sho" width={120} height={120} className="rounded-full animate-sho-bounce drop-shadow-xl" />
+          <div className="absolute -top-2 -right-2 text-3xl animate-pop">🎉</div>
+        </div>
+        <h2 className="text-2xl font-extrabold mb-1">投稿できたよ！</h2>
+        <p className="text-xs text-text-mid mb-4">複利が+1%積まれた 🌱</p>
         {aiFeedback && (
           <div className="bg-mint-light rounded-2xl p-4 max-w-xs mb-6 text-left">
             <div className="flex items-center gap-1.5 mb-2">

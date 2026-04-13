@@ -27,6 +27,20 @@ function todayJST(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
 }
 
+function getTimeBasedGreeting(hour: number, name: string): { greeting: string; subline: string; emoji: string } {
+  const who = name || "あなた";
+  if (hour >= 5 && hour < 12) {
+    return { greeting: `おはよう、${who}！`, subline: "今日も1%積もう🌱", emoji: "☀️" };
+  }
+  if (hour >= 12 && hour < 18) {
+    return { greeting: `お疲れ様、${who}！`, subline: "習慣チェック、した？", emoji: "🌤" };
+  }
+  if (hour >= 18 && hour < 24) {
+    return { greeting: `今日どうだった、${who}？`, subline: "夜ジャーナルで振り返ろう🌙", emoji: "🌙" };
+  }
+  return { greeting: `まだ起きてるんだね、${who}`, subline: "早く休んで、明日に備えよう", emoji: "🌌" };
+}
+
 export default function HomePage() {
   const [posts, setPosts] = useState<PostWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +61,7 @@ export default function HomePage() {
   const today = todayJST();
   const hour = new Date().getHours();
   const isMorning = hour < 15;
+  const timeGreeting = getTimeBasedGreeting(hour, userName);
 
   useEffect(() => {
     const init = async () => {
@@ -175,8 +190,10 @@ export default function HomePage() {
           <div className="flex items-center gap-3 mb-2">
             <Image src="/sho.png" alt="Sho" width={44} height={44} className="rounded-full animate-sho-float" />
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-bold text-mint tracking-wide">Sho から</p>
-              <p className="text-base font-extrabold truncate">おはよう、{userName || "あなた"}！</p>
+              <p className="text-[11px] font-bold text-mint tracking-wide">
+                {timeGreeting.emoji} Sho から
+              </p>
+              <p className="text-base font-extrabold truncate">{timeGreeting.greeting}</p>
             </div>
             {streak > 0 && (
               <div className="text-right">
@@ -185,6 +202,7 @@ export default function HomePage() {
               </div>
             )}
           </div>
+          <p className="text-xs font-bold text-mint mb-1">{timeGreeting.subline}</p>
           <p className="text-sm text-text leading-relaxed mb-3">{shoInsight}</p>
           <Link href={nextActionHint.href}
             className="flex items-center gap-3 bg-white/70 rounded-2xl p-3 hover:bg-white transition">
