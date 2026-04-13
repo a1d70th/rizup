@@ -1,1 +1,45 @@
+# Claude
 .claude.json
+.claude/local/
+.claude/cache/
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Dispatch queue & logs
+dispatch-queue.jsonl
+dispatch-queue-results.jsonl
+dispatch.log
+
+# Social automation (OAuth cache only. posted log is kept under git)
+social-automation/oauth-cache.json
+social-automation/*.log
+
+# Credentials / keys
+*.pem
+*.p8
+*.key
+credentials.json
+service-account*.json
+
+# Vercel / Netlify
+.vercel/
+.netlify/
