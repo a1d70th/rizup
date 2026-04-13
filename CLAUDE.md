@@ -1,7 +1,7 @@
-# Rizup HQ — AI引継ぎファイル（v3.2 / 社内基盤完成版）
+# Rizup HQ — AI引継ぎファイル（v4.0 / ホーム刷新+ダーク+PWA確定）
 
 > 新しいチャットを開いたらまずこのファイルを読んで即作業開始。確認不要。
-> **最終更新：2026-04-13 夜（v3.2 本番準備完了）**
+> **最終更新：2026-04-13 深夜（v4.0 リリース・コミット f8582aa）**
 
 ---
 
@@ -13,38 +13,36 @@
 
 ## 🎯 現在のステータス
 
-### ✅ 完了（2026-04-13）
-**アプリ v3.2**
-- 朝夜ジャーナル（朝→夜ループ・linked_morning_post_id で接続）
-- ビジョン4階層 × 6カテゴリ（進捗自動計算）
-- アンチビジョン
-- 今日のToDo（ヒーロー表示・Rizupジャンプ）
-- 習慣トラッカー（ビジョン紐付け・複利予測）
-- 成長グラフ（理想 vs 実績の複利曲線）
-- 複利スコア（0-100点自動算出）
-- 時間帯別 Sho 挨拶（朝/昼/夜/深夜）
-- PWA・オフラインページ・ダークモード
-- Toast通知・Confetti・Rizupアニメ
-- `safe-insert.ts`：DB未マイグレーション時でも動作するフォールバック
-- Stripe Webhook
-- 3ステップ オンボーディング
+### ✅ 完了（2026-04-13・v3.2 → v4.0 まで一気通貫）
 
-**社内基盤**
+**v3.2 → v3.5 → v3.5.1 → v4.0 のアプリ進化**
+- v3.2: 朝夜ジャーナル / ビジョン4階層 / アンチビジョン / 今日のToDo / 習慣 / 複利スコア / Stripe / 3stepオンボーディング
+- v3.3-3.4: BottomNav 5項目統一・LP複利軸・PWA基盤・Apple Splash全解像度
+- v3.5: PWAホーム画面追加バグ完全修正（sho.png 1408x768横長 → 正方形15サイズ生成）
+- v3.5.1: 全画面 sho.png 参照を /icons/icon-192.png に統一（歪み解消）
+- **v4.0（最新）**:
+  - **ホーム完全刷新**：「Rizupから」大カード・ダッシュボード・通知バナー・クイックアクセス全削除 → 1行ステータスバー + Threads風タイムライン
+  - **PostCard 全面書換**：48pxアバター・15px本文・44pxタップリアクション・ストリーク/複利スコアバッジ・5行省略+続きを読む
+  - **タイムライン機能**：無限スクロール（IntersectionObserver+ref化でループ防止）/ 60秒新着ポーリング / タブフィルター（全員/フォロー中/朝/夜）/ 朝目標・夜達成状況コンテキスト
+  - **真っ白バグ修正**：profiles(streak)未マイグレーション環境でフォールバック
+  - **ダークモード本格対応**：globals.css に .dark セレクタで個別オーバーライド15項目 + settings画面に自動/ライト/ダーク3択トグル + localStorage永続化 + FOUC回避スクリプト
+  - **PWA最終調整**：manifest start_url="/"・vercel.json で manifest+json Content-Type / Service-Worker-Allowed / icons immutable cache
+
+**社内基盤（不変）**
 - `dispatch-server.mjs` v2：携帯から POST で intent routing
 - `social-automation/`：Threads/X 自動投稿 + GAS連携
-- `.claude/agents/`：Sora/Haru/Kai/Rei/Leo/QA の6人
-- `company/tomorrow-first-actions.md`：明日の朝一リスト
-- `app-store/`：申請用ドキュメント4点
-- `notion-workspace/`：Notion構築手順（3方式）
-- 投稿ストック：計56本（x-profile.md 48 + 8）
+- `.claude/agents/`：Sora/Haru/Kai/Rei/Leo/QA の6人（qa-reviewer に「実ブラウザ動作確認」必須項目追加済）
+- `research/timeline-ux-research.md`：Kai が書き上げた Threads/X/Fabulous 等のフィードUX研究
+- 投稿ストック：56本（Rei が threads-week1.md にフック追記済）
 
 ### 🔴 未完了（翔平さん操作必要）
-1. **Supabase SQL 実行**：`supabase-v3-rebuild.sql` + `supabase-v3.2-appstore.sql`
-2. **Stripe 本番設定**：商品作成・Webhook登録・Vercel環境変数
-3. **X アカウント開設**：`@shohei_rizup` で登録・初日5投稿
-4. **Threads トークン取得**：Meta Developer でApp作成
-5. **GAS 自動投稿セットアップ**：15分で完了
-6. **CW スカウト① 返信**：48時間ルール
+1. **Supabase SQL 実行**：`app/rizup-app/supabase-final-fix.sql`（全テーブル整合）+ `social-automation/supabase-seed-recommendations.sql`（おすすめ11件）
+2. **PWA実機テスト**：iPhone Safari → ホーム画面追加 → 正方形ミントアイコンで起動確認
+3. **ダーク切替テスト**：設定 → テーマ → ダーク → 背景 #111111 確認
+4. **Stripe本番設定**：商品作成・Webhook登録・Vercel環境変数
+5. **X アカウント開設**：`@shohei_rizup`
+6. **Threads トークン取得**：Meta Developer でApp作成
+7. **CW スカウト① 送信**：`consulting/crowdworks-send-ready.md` 完成版コピペ送信
 
 ---
 
@@ -86,19 +84,23 @@
 | ファイル | 用途 |
 |---|---|
 | `company/spec.md` | Rizup v3 仕様書 |
-| `company/tomorrow-first-actions.md` | **明日朝イチで開く** |
-| `app/rizup-app/supabase-v3-rebuild.sql` | DB統合マイグレーション |
-| `app/rizup-app/supabase-v3.2-appstore.sql` | App Store対応 追加 |
-| `app/rizup-app/supabase-seed-recommendations.sql` | 初期Sho推薦18件 |
+| `company/tomorrow-priorities.md` | **🔥 明日朝イチで開く（v4.0以降の最優先5タスク）** |
+| `company/morning-briefing-tomorrow.md` | 朝礼コマンド一発コピペ |
+| `app/rizup-app/supabase-final-fix.sql` | **DB全テーブル整合・1本で同期完了** |
+| `app/rizup-app/supabase-v3-rebuild.sql` | （旧）DB統合マイグレーション |
+| `social-automation/supabase-seed-recommendations.sql` | おすすめ初期11件 |
+| `app/rizup-app/scripts/gen-icons.mjs` | sharp製 PWAアイコン15サイズ生成スクリプト |
+| `app/rizup-app/public/icons/` | 16/32/72/96/128/144/152/167/180/192/384/512+maskable |
 | `app/rizup-app/ENV_CHECKLIST.md` | Vercel環境変数11項目 |
 | `app/rizup-app/APP_STORE_GUIDE.md` | Capacitorラップ手順 |
 | `app-store/` | App Store申請4点セット |
-| `consulting/crowdworks-send-ready.md` | **CW送信準備完了版** |
+| `consulting/crowdworks-send-ready.md` | **CW送信完成版（件名A/B/C・本文・10改善）** |
+| `marketing/threads-week1.md` | **Reiが磨いたWeek1×21本（フック行付き）** |
 | `marketing/x-profile.md` | X投稿ストック56本 |
-| `marketing/x-twitter-ready.md` | **X開設&初日投稿準備** |
-| `social-automation/` | Threads/X自動投稿 |
-| `social-automation/gas/setup-auto.md` | **GAS 15分セットアップ** |
-| `social-automation/threads-setup-guide.md` | Threadsトークン取得 |
+| `marketing/x-twitter-ready.md` | X開設&初日投稿準備 |
+| `social-automation/sns-dashboard.html` | SNS運用ダッシュボード（Week1可視化済） |
+| `social-automation/gas/setup-auto.md` | GAS 15分セットアップ |
+| `research/timeline-ux-research.md` | **Kai：Threads/X/Fabulous 等のフィードUX研究** |
 | `notion-workspace/NOTION_IMPORT.md` | Notion構築3方式 |
 
 ---
@@ -121,4 +123,4 @@
 
 ---
 
-*最終更新：2026-04-13 夜 / Rizup v3.2 / 児玉翔平*
+*最終更新：2026-04-13 深夜 / Rizup v4.0 (commit f8582aa) / 児玉翔平*

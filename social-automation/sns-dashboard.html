@@ -70,6 +70,35 @@
   .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--mint); }
 
   .config-section { background: var(--mint-light); border: 1px solid var(--mint); padding: 0.8rem; border-radius: 12px; margin-bottom: 1rem; }
+
+  .day-section { margin-bottom: 1.2rem; }
+  .day-title {
+    display: inline-block; background: var(--orange); color: #fff;
+    padding: 0.3rem 0.9rem; border-radius: 999px;
+    font-size: 0.8rem; font-weight: 800; margin-bottom: 0.6rem;
+  }
+  .week-post {
+    background: var(--card); border: 1px solid var(--border);
+    border-left: 3px solid var(--mint); border-radius: 12px;
+    padding: 0.75rem 0.9rem; margin-bottom: 0.5rem;
+  }
+  .week-post .slot {
+    font-size: 0.7rem; color: var(--orange); font-weight: 800;
+    letter-spacing: 0.03em; margin-bottom: 0.2rem;
+  }
+  .week-post .hook {
+    font-size: 0.95rem; font-weight: 800; color: var(--text);
+    line-height: 1.45; margin-bottom: 0.25rem;
+  }
+  .week-post .title {
+    font-size: 0.75rem; color: var(--text-mid);
+  }
+  .week-summary {
+    background: var(--mint-light); border-radius: 12px;
+    padding: 0.8rem; margin-bottom: 1rem;
+    font-size: 0.8rem; color: var(--text-mid); line-height: 1.6;
+  }
+  .week-summary b { color: var(--mint); }
   .toast {
     position: fixed; top: 1rem; left: 50%; transform: translateX(-50%);
     background: var(--mint); color: #fff; padding: 0.7rem 1.5rem; border-radius: 999px;
@@ -102,6 +131,7 @@
 <!-- タブ -->
 <div class="tabs">
   <div class="tab active" data-pane="posts">📝 投稿管理</div>
+  <div class="tab" data-pane="week">🗓 今週の投稿</div>
   <div class="tab" data-pane="stats">📊 数値記録</div>
   <div class="tab" data-pane="analytics">📈 分析</div>
   <div class="tab" data-pane="buzz">🔥 バズ参考</div>
@@ -117,6 +147,19 @@
     <button class="orange" onclick="addAndPublish()" style="margin-left:.4rem;">即時投稿</button>
   </div>
   <div id="postList"></div>
+</div>
+
+<!-- 今週の投稿一覧（Rei生成・21本） -->
+<div class="pane" id="pane-week">
+  <div class="card">
+    <h3 style="margin-bottom:.4rem;">🗓 今週の投稿（2026-04-14 〜 04-20）</h3>
+    <div class="week-summary">
+      Rei（CCO）生成：<b>21本</b>（7日 × 朝8:00 / 昼12:00 / 夜21:00）<br/>
+      全投稿に「一発で止まる」フック行を追加済み。
+      原文：<code>marketing/threads-week1.md</code>
+    </div>
+    <div id="weekList"></div>
+  </div>
 </div>
 
 <!-- 数値記録 -->
@@ -303,6 +346,63 @@ async function loadAnalytics() {
       </div>
     </div>`).join("") || "<p style='color:#aaa;padding:.8rem;'>データなし</p>";
 }
+
+// 今週の投稿（Rei生成・21本）
+const weekPosts = [
+  { day: "Day 1（月 4/14）— ローンチ・自己紹介", posts: [
+    { slot: "朝 08:00", hook: "28歳・全国1位・即辞めた。", title: "M1 自己紹介（固定ツイート候補）" },
+    { slot: "昼 12:00", hook: "見えない1%を、グラフにしました。", title: "M2 Rizupとは何か" },
+    { slot: "夜 21:00", hook: "正直、ビビってます。", title: "M3 初日の締め" },
+  ]},
+  { day: "Day 2（火 4/15）— 過去の実績", posts: [
+    { slot: "朝 08:00", hook: "離職率28%→1.4%。やったのは1つだけ。", title: "T1 離職率-95%" },
+    { slot: "昼 12:00", hook: "ROAS 78%（赤字）→180%。効いたのは広告じゃなかった。", title: "T2 広告ROASの話" },
+    { slot: "夜 21:00", hook: "情報量を減らすほど、人は動ける。", title: "T3 Rizup設計思想" },
+  ]},
+  { day: "Day 3（水 4/16）— アプリ開発の裏側", posts: [
+    { slot: "朝 08:00", hook: "3年かかる仕事が、1日で動いた。", title: "W1 Claude Codeの話" },
+    { slot: "昼 12:00", hook: "マネタイズより、世界観を取った。", title: "W2 ランキング削除の判断" },
+    { slot: "夜 21:00", hook: "「続かない」の正体は、意思力じゃなかった。", title: "W3 習慣トラッカーの思想" },
+  ]},
+  { day: "Day 4（木 4/17）— コンパウンドエフェクト", posts: [
+    { slot: "朝 08:00", hook: "毎日1% × 365日 = 37倍。人生変わった1冊。", title: "Th1 ダーレン・ハーディ" },
+    { slot: "昼 12:00", hook: "同じ1%でも、365日後に1500倍の差がつく。", title: "Th2 複利を信じる理由" },
+    { slot: "夜 21:00", hook: "僕の独立1日目のToDoは「コーヒー淹れる」だった。", title: "Th3 最初の1日目" },
+  ]},
+  { day: "Day 5（金 4/18）— コミュニティと前向きさ", posts: [
+    { slot: "朝 08:00", hook: "上からの評価より、横の「わかるよ」。", title: "F1 ランキングがない理由" },
+    { slot: "昼 12:00", hook: "いいねも低評価もない。あるのは、優しさだけ。", title: "F2 応援しかないSNS" },
+    { slot: "夜 21:00", hook: "数字で見ると、言い訳できない。", title: "F3 週次複利スコア公開" },
+  ]},
+  { day: "Day 6（土 4/19）— 休み方", posts: [
+    { slot: "朝 08:00", hook: "休めない人の複利は、伸びない。", title: "S1 土曜の過ごし方" },
+    { slot: "昼 12:00", hook: "年収700万→0円。答えは、静かな場所にあった。", title: "S2 中之島公園のベンチ" },
+    { slot: "夜 21:00", hook: "月曜の朝は、日曜の夜に決まる。", title: "S3 明日への準備" },
+  ]},
+  { day: "Day 7（日 4/20）— 1週間のまとめ", posts: [
+    { slot: "朝 08:00", hook: "先週ゼロ、今週は1。これが複利の1日目。", title: "Su1 発信1週間の数字公開" },
+    { slot: "昼 12:00", hook: "あなたは今日、1%前に進めましたか？", title: "Su2 感謝" },
+    { slot: "夜 21:00", hook: "目標じゃなくて、コミット。逃げ道は、晒して潰す。", title: "Su3 来週の宣言" },
+  ]},
+];
+
+function renderWeek() {
+  const el = document.getElementById("weekList");
+  if (!el) return;
+  el.innerHTML = weekPosts.map(d => `
+    <div class="day-section">
+      <div class="day-title">${d.day}</div>
+      ${d.posts.map(p => `
+        <div class="week-post">
+          <div class="slot">${p.slot}</div>
+          <div class="hook">${p.hook}</div>
+          <div class="title">${p.title}</div>
+        </div>
+      `).join("")}
+    </div>
+  `).join("");
+}
+renderWeek();
 
 loadPosts();
 </script>
