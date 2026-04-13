@@ -4,67 +4,109 @@
 
 @import url("https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap");
 
+:root {
+  --bg: #fafafa;
+  --card: #ffffff;
+  --text: #3a3a3a;
+  --text-mid: #6b6b6b;
+  --text-light: #a0a0a0;
+  --border: #ebebeb;
+  --mint: #6ecbb0;
+  --mint-light: #e8f7f2;
+  --orange: #f4976c;
+  --orange-light: #fef0e9;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.4);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1512;
+    --card: #1a2320;
+    --text: #f0f3f1;
+    --text-mid: #b5c0bb;
+    --text-light: #6b7a74;
+    --border: #24302c;
+    --mint-light: rgba(110, 203, 176, 0.16);
+    --orange-light: rgba(244, 151, 108, 0.16);
+    --glass-bg: rgba(26, 35, 32, 0.6);
+    --glass-border: rgba(110, 203, 176, 0.15);
+  }
+}
+
+html { color-scheme: light dark; }
+
 body {
   font-family: "M PLUS Rounded 1c", sans-serif;
-  background: #fafafa;
-  color: #3a3a3a;
+  background: var(--bg);
+  color: var(--text);
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
-/* ── iOS/Android: prevent zoom on input focus ── */
+/* Tailwind class overrides to honor dark-mode tokens */
+.bg-bg { background-color: var(--bg) !important; }
+.bg-white { background-color: var(--card) !important; }
+.text-text { color: var(--text) !important; }
+.text-text-mid { color: var(--text-mid) !important; }
+.text-text-light { color: var(--text-light) !important; }
+.border-gray-100 { border-color: var(--border) !important; }
+.border-gray-200 { border-color: var(--border) !important; }
+.bg-gray-50 { background-color: var(--bg) !important; }
+.bg-gray-100 { background-color: var(--border) !important; }
+
 input[type="text"], input[type="email"], input[type="password"],
 input[type="number"], input[type="date"], input[type="time"],
 input[type="url"], textarea, select {
   font-size: 16px !important;
   box-sizing: border-box;
   max-width: 100%;
+  color: var(--text);
+  background-color: var(--card);
 }
 
-/* ── Android: eliminate 300ms tap delay ── */
 a, button, input, select, textarea, [role="button"] {
   touch-action: manipulation;
 }
 
-/* ── Tap feedback for buttons ── */
 button:active, a:active, [role="button"]:active {
   opacity: 0.7;
   transition: opacity 0.1s;
 }
 
-/* ── Minimum tap target ── */
 button, a, [role="button"] {
   min-height: 44px;
   min-width: 44px;
 }
-/* Exceptions: inline links and tiny icons */
 .inline-link, p a, span a { min-height: auto; min-width: auto; }
 
-/* ── Accessibility: focus outline ── */
 button:focus-visible, a:focus-visible, input:focus-visible,
 textarea:focus-visible, select:focus-visible, [role="button"]:focus-visible {
-  outline: 2px solid #6ecbb0;
+  outline: 2px solid var(--mint);
   outline-offset: 2px;
 }
 
-/* ── iOS Safari: safe area padding for bottom nav ── */
 .pb-20 { padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }
 
-/* ── Smooth scroll everywhere ── */
 html { scroll-behavior: smooth; }
 * { -webkit-overflow-scrolling: touch; }
 
-/* ── Hide scrollbar for filter bars ── */
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 
-/* ── Prevent text selection on buttons ── */
 button, [role="button"] { -webkit-user-select: none; user-select: none; }
 
-/* ── Image loading placeholder ── */
-img { background-color: #f0f0f0; }
+img { background-color: transparent; }
+
+/* ── Glassmorphism ── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid var(--glass-border);
+}
 
 /* ── Animations ── */
 @keyframes fadeIn {
@@ -72,6 +114,12 @@ img { background-color: #f0f0f0; }
   to { opacity: 1; transform: translateY(0); }
 }
 .animate-fade-in { animation: fadeIn 0.4s ease both; }
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-slide-up { animation: slideUp 0.5s cubic-bezier(.22,.8,.35,1) both; }
 
 @keyframes pop {
   0% { transform: scale(1); }
@@ -88,21 +136,62 @@ img { background-color: #f0f0f0; }
 
 @keyframes shoBounce {
   0% { transform: translateY(0) scale(1); }
-  30% { transform: translateY(-14px) scale(1.15); }
-  60% { transform: translateY(0) scale(0.95); }
+  30% { transform: translateY(-18px) scale(1.18); }
+  60% { transform: translateY(0) scale(0.94); }
   100% { transform: translateY(0) scale(1); }
 }
-.animate-sho-bounce { animation: shoBounce 0.55s cubic-bezier(.36,.07,.19,.97); }
+.animate-sho-bounce { animation: shoBounce 0.6s cubic-bezier(.36,.07,.19,.97); }
 
 @keyframes checkPulse {
   0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(110,203,176,.45); }
-  70% { transform: scale(1.08); box-shadow: 0 0 0 12px rgba(110,203,176,0); }
+  70% { transform: scale(1.08); box-shadow: 0 0 0 14px rgba(110,203,176,0); }
   100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(110,203,176,0); }
 }
-.animate-check-pulse { animation: checkPulse 0.5s ease-out; }
+.animate-check-pulse { animation: checkPulse 0.55s ease-out; }
 
-@keyframes confetti {
-  0% { transform: translateY(0) rotate(0); opacity: 1; }
-  100% { transform: translateY(-40px) rotate(360deg); opacity: 0; }
+@keyframes firePulse {
+  0%, 100% { transform: scale(1) rotate(-2deg); filter: drop-shadow(0 0 4px rgba(244,151,108,.5)); }
+  50% { transform: scale(1.12) rotate(3deg); filter: drop-shadow(0 0 10px rgba(244,151,108,.8)); }
 }
-.animate-confetti { animation: confetti 0.7s ease-out forwards; }
+.animate-fire { animation: firePulse 1.2s ease-in-out infinite; display: inline-block; }
+
+@keyframes confettiFall {
+  0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(80px) rotate(540deg); opacity: 0; }
+}
+.animate-confetti { animation: confettiFall 0.9s ease-out forwards; }
+
+@keyframes countUp {
+  from { transform: translateY(8px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-count-up { animation: countUp 0.45s cubic-bezier(.22,.8,.35,1) both; }
+
+@keyframes shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--border) 0%, rgba(255,255,255,0.5) 50%, var(--border) 100%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* Streak fire emoji highlight */
+.streak-fire {
+  display: inline-block;
+  font-size: 1.1em;
+  animation: firePulse 1.4s ease-in-out infinite;
+}
+
+/* Glass card helper (mint tinted) */
+.glass-mint {
+  background: linear-gradient(135deg, rgba(110,203,176,0.18), rgba(244,151,108,0.10));
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border: 1px solid rgba(110,203,176,0.25);
+}
+
+/* Tab transition for BottomNav */
+.tab-enter { opacity: 0; transform: translateY(6px); }
+.tab-enter-active { opacity: 1; transform: translateY(0); transition: all 0.3s cubic-bezier(.22,.8,.35,1); }

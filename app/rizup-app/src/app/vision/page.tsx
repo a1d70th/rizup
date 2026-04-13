@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import Image from "next/image";
 import Link from "next/link";
+import { estimateDaysToGoal } from "@/lib/compound";
 
 interface Vision {
   id: string;
@@ -243,6 +244,9 @@ export default function VisionPage() {
                   const prog = autoProgress[v.id] ?? v.progress;
                   const linkedHabits = habits.filter(h => h.vision_id === v.id).length;
                   const linkedTodos = todos.filter(t => t.vision_id === v.id).length;
+                  // 達成予測：直近7日の進捗推定
+                  const weeklyGain = prog > 0 ? Math.min(prog, 7) : 0;
+                  const daysToGoal = estimateDaysToGoal({ currentProgress: prog, recentWeeklyGainPct: weeklyGain });
                   return (
                     <div key={v.id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm animate-fade-in">
                       <div className="flex items-start gap-2 mb-2">
@@ -258,10 +262,16 @@ export default function VisionPage() {
                           <span className="text-xs font-extrabold" style={{ color: group.color }}>{prog}%</span>
                         </div>
                         <div className="w-full bg-gray-100 rounded-full h-2">
-                          <div className="rounded-full h-2 transition-all"
+                          <div className="rounded-full h-2 transition-all duration-500"
                             style={{ width: `${prog}%`, background: group.color }} />
                         </div>
                       </div>
+                      {daysToGoal !== null && daysToGoal > 0 && prog < 100 && (
+                        <p className="text-[10px] text-text-light mb-2">⏳ 今のペースなら、あと<span className="font-extrabold text-mint">{daysToGoal}日</span>で達成</p>
+                      )}
+                      {prog >= 100 && (
+                        <p className="text-[10px] font-extrabold text-mint mb-2">🎉 目標達成！</p>
+                      )}
                       {/* 逆算導線 */}
                       <div className="flex gap-2 mb-2">
                         <Link href={`/habits?vision_id=${v.id}`}

@@ -1,22 +1,26 @@
 {
-  "name": "Rizup",
+  "name": "Rizup — 毎日の複利成長",
   "short_name": "Rizup",
-  "description": "毎日成長が見える、前向きな人だけが集まるSNS",
+  "description": "朝夜ジャーナリング × ビジョン × 習慣で複利成長を可視化",
   "start_url": "/home",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#FFFBF7",
-  "theme_color": "#4ECBA4",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
+  "background_color": "#fafafa",
+  "theme_color": "#6ecbb0",
+  "categories": ["productivity", "lifestyle", "health"],
+  "lang": "ja",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
-    {
-      "src": "/sho.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/sho.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+    { "src": "/sho.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/sho.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/sho.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "朝ジャーナル", "short_name": "朝", "url": "/journal", "icons": [{ "src": "/sho.png", "sizes": "192x192" }] },
+    { "name": "今日のToDo", "short_name": "ToDo", "url": "/today", "icons": [{ "src": "/sho.png", "sizes": "192x192" }] },
+    { "name": "成長グラフ", "short_name": "成長", "url": "/growth", "icons": [{ "src": "/sho.png", "sizes": "192x192" }] }
   ]
 }

@@ -1,6 +1,7 @@
 -- ========================================================================
--- Rizup v3 — 統合マイグレーション
--- 実行手順：Supabase → SQL Editor → New query → 全文貼り付け → Run
+-- Rizup v3 — 統合マイグレーション（完全版）
+-- 実行：Supabase → SQL Editor → New query → 全文貼り付け → Run
+-- 冪等（何度でも実行可能）
 -- ========================================================================
 
 -- ── 1. 削除（競争系・VIP・デッドコード）──────────────────────────────────
@@ -13,13 +14,19 @@ DROP TABLE IF EXISTS challenges CASCADE;
 DELETE FROM notifications
   WHERE type IN ('mvp_announcement','vip_message','badge','sho_weekly','unreplied');
 
--- profiles.plan から 'vip' を除外（既存vipユーザーは premium に降格）
+-- profiles.plan から 'vip' を除外
 ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_plan_check;
 UPDATE profiles SET plan = 'premium' WHERE plan = 'vip';
 ALTER TABLE profiles ADD CONSTRAINT profiles_plan_check
   CHECK (plan IN ('free','pro','premium'));
 
--- ── 2. posts 拡張 ────────────────────────────────────────────────────────
+-- ── 2. profiles 拡張（複利スコア） ───────────────────────────────────────
+ALTER TABLE profiles
+  ADD COLUMN IF NOT EXISTS compound_score INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT,
+  ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
+
+-- ── 3. posts 拡張 ───────────────────────────────────────────────────────
 ALTER TABLE posts
   ADD COLUMN IF NOT EXISTS morning_goal TEXT,
   ADD COLUMN IF NOT EXISTS goal_achieved TEXT
@@ -27,15 +34,15 @@ ALTER TABLE posts
   ADD COLUMN IF NOT EXISTS linked_morning_post_id UUID REFERENCES posts(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS sleep_hours NUMERIC(3,1),
   ADD COLUMN IF NOT EXISTS bedtime TIME,
-  ADD COLUMN IF NOT EXISTS gratitudes TEXT[];
+  ADD COLUMN IF NOT EXISTS gratitudes TEXT[],
+  ADD COLUMN IF NOT EXISTS compound_score_today INTEGER;
 
--- 1ユーザー 1日 1タイプ 1投稿の一意制約
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS posted_date DATE
   GENERATED ALWAYS AS ((created_at AT TIME ZONE 'Asia/Tokyo')::date) STORED;
 CREATE UNIQUE INDEX IF NOT EXISTS posts_user_date_type_unique
   ON posts (user_id, posted_date, type);
 
--- ── 3. visions テーブル（未定義だったので明示作成）────────────────────
+-- ── 4. visions ──────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS visions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -55,7 +62,7 @@ DO $$ BEGIN
   END IF;
 END $$;
 
--- ── 4. habits 統一（name→title）+ vision_id 追加 ─────────────────────
+-- ── 5. habits（name→title + vision_id + 複利予測） ────────────────────
 DO $$ BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.columns
              WHERE table_name='habits' AND column_name='name') THEN
@@ -66,9 +73,28 @@ END $$;
 ALTER TABLE habits
   ADD COLUMN IF NOT EXISTS title TEXT,
   ADD COLUMN IF NOT EXISTS vision_id UUID REFERENCES visions(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ;
+  ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS predicted_30days NUMERIC(6,2),
+  ADD COLUMN IF NOT EXISTS predicted_90days NUMERIC(8,2),
+  ADD COLUMN IF NOT EXISTS predicted_1year NUMERIC(10,2);
 
--- ── 5. todos 新設 ───────────────────────────────────────────────────────
+-- ── 6. habit_logs（存在保証） ────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS habit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  habit_id UUID NOT NULL REFERENCES habits(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  logged_date DATE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(habit_id, logged_date)
+);
+ALTER TABLE habit_logs ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname='habit_logs_own' AND tablename='habit_logs') THEN
+    CREATE POLICY "habit_logs_own" ON habit_logs FOR ALL USING (auth.uid() = user_id);
+  END IF;
+END $$;
+
+-- ── 7. todos ────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS todos (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -87,7 +113,6 @@ DO $$ BEGIN
   END IF;
 END $$;
 
--- ── 6. 朝ジャーナル × ToDo 紐付け ──────────────────────────────────────
 CREATE TABLE IF NOT EXISTS journal_todos (
   post_id UUID REFERENCES posts(id) ON DELETE CASCADE,
   todo_id UUID REFERENCES todos(id) ON DELETE CASCADE,
@@ -102,7 +127,7 @@ DO $$ BEGIN
   END IF;
 END $$;
 
--- ── 7. アンチビジョン ───────────────────────────────────────────────────
+-- ── 8. アンチビジョン ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS anti_visions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
@@ -116,7 +141,54 @@ DO $$ BEGIN
   END IF;
 END $$;
 
--- ── 8. 既存 content → 独立カラムへのデータ移行（可能なら）───────────
+-- ── 9. reports（通報） ──────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+  reporter_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  reason TEXT,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending','resolved','rejected')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname='reports_insert' AND tablename='reports') THEN
+    CREATE POLICY "reports_insert" ON reports FOR INSERT WITH CHECK (auth.uid() = reporter_id);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname='reports_admin_read' AND tablename='reports') THEN
+    CREATE POLICY "reports_admin_read" ON reports FOR SELECT USING (
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = TRUE)
+    );
+  END IF;
+END $$;
+
+-- ── 10. admin_broadcasts ────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS admin_broadcasts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  type TEXT NOT NULL,
+  content TEXT NOT NULL,
+  target TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE admin_broadcasts ENABLE ROW LEVEL SECURITY;
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname='admin_broadcasts_admin' AND tablename='admin_broadcasts') THEN
+    CREATE POLICY "admin_broadcasts_admin" ON admin_broadcasts FOR ALL USING (
+      EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND is_admin = TRUE)
+    );
+  END IF;
+END $$;
+
+-- ── 11. profiles 追加保証 ──────────────────────────────────────────────
+ALTER TABLE profiles
+  ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS is_suspended BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS warning_count INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT FALSE,
+  ADD COLUMN IF NOT EXISTS trial_started_at TIMESTAMPTZ DEFAULT NOW(),
+  ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '7 days');
+
+-- ── 12. posts.content → 独立カラムへの一度限りの移行 ──────────────────
 UPDATE posts SET sleep_hours = (
   CASE WHEN content ~ '昨夜の睡眠：[0-9.]+時間'
        THEN (regexp_matches(content, '昨夜の睡眠：([0-9.]+)時間'))[1]::numeric
@@ -129,5 +201,5 @@ UPDATE posts SET bedtime = (
        ELSE NULL END
 ) WHERE bedtime IS NULL AND type = 'evening';
 
--- ── 9. 完了 ──────────────────────────────────────────────────────────────
+-- ── 完了 ────────────────────────────────────────────────────────────────
 SELECT 'Rizup v3 migration completed' AS status;

@@ -5,6 +5,8 @@ import Image from "next/image";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import { compressImage } from "@/lib/image-compress";
+import { dailyCompoundScore } from "@/lib/compound";
+import CountUp from "@/components/CountUp";
 
 const moodOptions = [
   { value: 1, emoji: "😔", label: "つらい" },
@@ -53,6 +55,7 @@ export default function JournalPage() {
   const [morningPost, setMorningPost] = useState<MorningPost | null>(null);
   const [goalAchieved, setGoalAchieved] = useState<"yes" | "partial" | "no" | null>(null);
   const [morningTodos, setMorningTodos] = useState<(Todo & { done: boolean })[]>([]);
+  const [habitDoneRatio, setHabitDoneRatio] = useState(0);
 
   const imageRef = useRef<HTMLInputElement>(null);
   const today = todayJST();
@@ -72,6 +75,15 @@ export default function JournalPage() {
         .eq("user_id", user.id).eq("due_date", today)
         .order("created_at");
       if (todos) setAvailableTodos(todos);
+
+      // 習慣達成率（夜の複利スコア計算用）
+      const { data: habitsData } = await supabase.from("habits")
+        .select("id").eq("user_id", user.id).is("archived_at", null);
+      if (habitsData && habitsData.length > 0) {
+        const { data: logs } = await supabase.from("habit_logs")
+          .select("habit_id").eq("user_id", user.id).eq("logged_date", today);
+        setHabitDoneRatio((logs?.length || 0) / habitsData.length);
+      }
 
       // 夜モードなら朝投稿を取得
       const currentHour = new Date().getHours();
@@ -201,6 +213,15 @@ export default function JournalPage() {
         payload.linked_morning_post_id = morningPost.id;
         if (goalAchieved) payload.goal_achieved = goalAchieved;
       }
+      // 夜の複利スコアを保存
+      const todoRate = morningTodos.length === 0 ? 0.5
+        : morningTodos.filter(t => t.done).length / morningTodos.length;
+      const score = dailyCompoundScore({
+        todoCompletionRate: todoRate,
+        habitCompletionRate: habitDoneRatio,
+        positivityRate: mood / 5,
+      });
+      payload.compound_score_today = score;
     }
 
     const { data, error } = await supabase.from("posts").insert(payload).select().single();
@@ -487,6 +508,31 @@ export default function JournalPage() {
             <p className="text-xs text-red-600 leading-relaxed">{moderationError}</p>
           </div>
         )}
+
+        {/* 夜モード: 今日の複利スコア予測 */}
+        {mode === "evening" && (() => {
+          const todoRate = morningTodos.length === 0 ? 0.5
+            : morningTodos.filter(t => t.done).length / morningTodos.length;
+          const score = dailyCompoundScore({
+            todoCompletionRate: todoRate,
+            habitCompletionRate: habitDoneRatio,
+            positivityRate: mood / 5,
+          });
+          return (
+            <div className="glass-mint rounded-2xl p-4 mb-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-xl">✨</span>
+                <p className="text-sm font-extrabold flex-1">今日の複利スコア</p>
+                <span className="text-2xl font-extrabold text-mint"><CountUp value={score} />/100</span>
+              </div>
+              <div className="w-full bg-white/60 rounded-full h-2 mb-2">
+                <div className="bg-gradient-to-r from-mint to-orange rounded-full h-2 transition-all duration-700"
+                  style={{ width: `${score}%` }} />
+              </div>
+              <p className="text-[10px] text-text-mid">ToDo達成 × 習慣 × 気分から算出。この積み重ねが明日のあなたを作る。</p>
+            </div>
+          );
+        })()}
 
         {mode === "evening" && (
           <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-3">
