@@ -6,31 +6,29 @@ import type { RizupType } from "@/lib/rizup-types";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import PostCard from "@/components/PostCard";
-// Image import removed — profile uses img tags for dynamic avatar URLs
+import Link from "next/link";
 
 interface ProfileData {
-  name: string; dream: string; avatar_url: string | null;
-  streak: number; plan: string; zodiac?: string;
-  rizup_type?: string; birthday?: string; is_admin?: boolean;
+  name: string;
+  dream: string;
+  avatar_url: string | null;
+  streak: number;
+  plan: string;
+  zodiac?: string;
+  rizup_type?: string;
+  birthday?: string;
+  is_admin?: boolean;
+  mbti?: string;
 }
-
-const moodColors: Record<number, string> = { 1: "#ef4444", 2: "#f97316", 3: "#eab308", 4: "#6ecbb0", 5: "#5ab89d" };
-const moodLabels = [
-  { c: "#ef4444", l: "つらい" }, { c: "#f97316", l: "ふつう" },
-  { c: "#eab308", l: "まあまあ" }, { c: "#6ecbb0", l: "いい感じ" }, { c: "#5ab89d", l: "最高" },
-];
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [posts, setPosts] = useState<any[]>([]);
-  const [badges, setBadges] = useState<string[]>([]);
   const [totalPosts, setTotalPosts] = useState(0);
   const [totalReactions, setTotalReactions] = useState(0);
-  const [moodHistory, setMoodHistory] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [wordAnalysis, setWordAnalysis] = useState<{ weeklyTrend: { week: string; score: number }[]; topWords: { word: string; count: number }[]; overallScore: number; changeMessage: string | null } | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const [showEdit, setShowEdit] = useState(false);
@@ -56,25 +54,15 @@ export default function ProfilePage() {
         if (userPosts) setPosts(userPosts);
         if (count) setTotalPosts(count);
 
-        // Mood history from real posts (last 14)
-        const { data: moodPosts } = await supabase.from("posts").select("mood")
-          .eq("user_id", user.id).order("created_at", { ascending: true }).limit(14);
-        if (moodPosts) setMoodHistory(moodPosts.map(p => p.mood));
-
-        const { data: userBadges } = await supabase.from("badges").select("type").eq("user_id", user.id);
-        if (userBadges) setBadges(userBadges.map(b => b.type));
-
         if (userPosts && userPosts.length > 0) {
           const { count: rxCount } = await supabase.from("reactions")
             .select("id", { count: "exact", head: true })
             .in("post_id", userPosts.map(p => p.id));
           setTotalReactions(rxCount || 0);
         }
-        // Fetch word analysis
-        fetch("/api/analyze/words").then(r => r.json()).then(d => {
-          if (d && !d.error) setWordAnalysis(d);
-        }).catch(() => {});
-      } catch (err) { console.error("[Rizup Profile]", err); }
+      } catch (err) {
+        console.error("[Profile]", err);
+      }
       setLoading(false);
     };
     init();
@@ -86,15 +74,11 @@ export default function ProfilePage() {
     setUploading(true);
     const ext = file.name.split(".").pop();
     const path = `${userId}/avatar.${ext}`;
-
     const { error: uploadErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
-    if (uploadErr) { console.error("[Avatar Upload]", uploadErr); setUploading(false); return; }
-
+    if (uploadErr) { setUploading(false); return; }
     const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
-    const publicUrl = urlData.publicUrl;
-
-    await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("id", userId);
-    setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : prev);
+    await supabase.from("profiles").update({ avatar_url: urlData.publicUrl }).eq("id", userId);
+    setProfile(prev => prev ? { ...prev, avatar_url: urlData.publicUrl } : prev);
     setUploading(false);
   };
 
@@ -116,35 +100,20 @@ export default function ProfilePage() {
   const handleQuizAnswer = (type: string) => {
     const newAnswers = [...quizAnswers, type];
     setQuizAnswers(newAnswers);
-    if (quizIndex < typeQuestions.length - 1) {
-      setQuizIndex(quizIndex + 1);
-    } else {
-      const result = calculateType(newAnswers);
-      setQuizResult(result);
-    }
+    if (quizIndex < typeQuestions.length - 1) setQuizIndex(quizIndex + 1);
+    else setQuizResult(calculateType(newAnswers));
   };
 
   const handleQuizSave = async () => {
     if (!quizResult || !userId) return;
     await supabase.from("profiles").update({ rizup_type: quizResult }).eq("id", userId);
     setProfile(prev => prev ? { ...prev, rizup_type: quizResult } : prev);
-    setShowQuiz(false);
-    setQuizIndex(0);
-    setQuizAnswers([]);
-    setQuizResult(null);
+    setShowQuiz(false); setQuizIndex(0); setQuizAnswers([]); setQuizResult(null);
   };
 
   const handlePostDelete = (postId: string) => {
     setPosts(prev => prev.filter(p => p.id !== postId));
     setTotalPosts(prev => prev - 1);
-  };
-
-  const badgeMap: Record<string, { emoji: string; label: string }> = {
-    first_post: { emoji: "🌱", label: "初投稿" }, streak_7: { emoji: "🔥", label: "7日連続" },
-    streak_14: { emoji: "🔥", label: "14日連続" }, streak_30: { emoji: "💎", label: "30日連続" },
-    posts_100: { emoji: "📝", label: "100投稿" }, comments_50: { emoji: "💬", label: "励ましの達人" },
-    reactions_100: { emoji: "❤️", label: "応援王" }, weekly_mvp: { emoji: "⭐", label: "週間MVP" },
-    monthly_mvp: { emoji: "👑", label: "月間MVP" },
   };
 
   if (loading) return (
@@ -153,12 +122,7 @@ export default function ProfilePage() {
       <div className="max-w-md mx-auto px-4 py-4">
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center mb-4 animate-pulse">
           <div className="w-20 h-20 rounded-full bg-gray-200 mx-auto mb-3" />
-          <div className="h-5 bg-gray-200 rounded-full w-32 mx-auto mb-2" />
-          <div className="h-3 bg-gray-100 rounded-full w-48 mx-auto" />
-        </div>
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4 animate-pulse">
-          <div className="h-4 bg-gray-200 rounded-full w-24 mb-3" />
-          <div className="h-20 bg-gray-100 rounded-xl" />
+          <div className="h-5 bg-gray-200 rounded-full w-32 mx-auto" />
         </div>
       </div>
       <BottomNav />
@@ -191,21 +155,23 @@ export default function ProfilePage() {
           </div>
           <h1 className="text-xl font-extrabold">{profile.name}</h1>
           {profile.dream && <p className="text-sm text-text-mid mt-1">🎯 {profile.dream}</p>}
-          {typeInfo ? (
-            <button onClick={() => { setShowQuiz(true); setQuizIndex(0); setQuizAnswers([]); setQuizResult(null); }}
-              className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold transition hover:opacity-80" style={{ background: `${typeInfo.color}20`, color: typeInfo.color }}>
-              {typeInfo.emoji} {typeInfo.label}タイプ（再診断）
-            </button>
-          ) : (
-            <button onClick={() => { setShowQuiz(true); setQuizIndex(0); setQuizAnswers([]); setQuizResult(null); }}
-              className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold bg-mint-light text-mint transition hover:opacity-80">
-              Rizupタイプを診断する
-            </button>
-          )}
-          {profile.zodiac && <span className="inline-block mt-1 ml-2 px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-light text-orange">{profile.zodiac}</span>}
+          <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
+            {typeInfo && (
+              <button onClick={() => { setShowQuiz(true); setQuizIndex(0); setQuizAnswers([]); setQuizResult(null); }}
+                className="px-3 py-1 rounded-full text-xs font-bold transition hover:opacity-80"
+                style={{ background: `${typeInfo.color}20`, color: typeInfo.color }}>
+                {typeInfo.emoji} {typeInfo.label}タイプ
+              </button>
+            )}
+            {profile.zodiac && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-light text-orange">{profile.zodiac}</span>}
+          </div>
           <div className="mt-3">
             <button onClick={() => {
-              setEditForm({ name: profile.name, dream: profile.dream || "", zodiac: profile.zodiac || "", birthday: profile.birthday || "", rizup_type: profile.rizup_type || "", mbti: (profile as unknown as Record<string, string>).mbti || "" });
+              setEditForm({
+                name: profile.name, dream: profile.dream || "",
+                zodiac: profile.zodiac || "", birthday: profile.birthday || "",
+                rizup_type: profile.rizup_type || "", mbti: profile.mbti || "",
+              });
               setShowEdit(true);
             }} className="text-xs text-mint font-bold border border-mint rounded-full px-4 py-1.5 hover:bg-mint-light transition">
               ✏️ プロフィールを編集
@@ -214,121 +180,27 @@ export default function ProfilePage() {
           <div className="flex justify-center gap-6 mt-4">
             <div className="text-center"><div className="text-xl font-extrabold text-mint">{totalPosts}</div><div className="text-[10px] text-text-light">投稿</div></div>
             <div className="text-center"><div className="text-xl font-extrabold text-orange">🔥 {profile.streak}</div><div className="text-[10px] text-text-light">連続日数</div></div>
-            <div className="text-center"><div className="text-xl font-extrabold text-mint">{totalReactions}</div><div className="text-[10px] text-text-light">もらった応援</div></div>
+            <div className="text-center"><div className="text-xl font-extrabold text-mint">{totalReactions}</div><div className="text-[10px] text-text-light">受けた応援</div></div>
           </div>
         </div>
 
-        {/* Badges */}
-        {badges.length > 0 && (
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
-            <h3 className="text-sm font-bold mb-3">🏅 獲得バッジ</h3>
-            <div className="flex flex-wrap gap-2">
-              {badges.map((b) => { const info = badgeMap[b] || { emoji: "🎖️", label: b }; return (
-                <span key={b} className="bg-mint-light text-mint px-3 py-1 rounded-full text-xs font-bold">{info.emoji} {info.label}</span>
-              ); })}
+        {/* 成長グラフへ */}
+        <Link href="/growth" className="block bg-gradient-to-br from-mint-light to-orange-light rounded-2xl p-4 mb-4 border border-mint/20 hover:shadow-md transition">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">📈</span>
+            <div className="flex-1">
+              <p className="text-sm font-bold">成長グラフを見る</p>
+              <p className="text-[10px] text-text-mid">気分・睡眠・ポジティブ度の推移</p>
             </div>
+            <span className="text-text-light">→</span>
           </div>
-        )}
-
-        {/* Mood Graph — real data */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
-          <h3 className="text-sm font-bold mb-3">📊 気分の推移</h3>
-          {moodHistory.length === 0 ? (
-            <p className="text-xs text-text-light text-center py-4">ジャーナルを投稿すると、ここにグラフが表示されます</p>
-          ) : (
-            <>
-              <div className="flex items-end gap-1 h-20" style={{ maxWidth: moodHistory.length <= 3 ? `${moodHistory.length * 48}px` : "100%" }}>
-                {moodHistory.map((mood, i) => (
-                  <div key={i} className="rounded-t-md" style={{ height: `${mood * 20}%`, background: moodColors[mood] || "#6ecbb0", flex: "1 1 0", maxWidth: 40, minWidth: 12 }} />
-                ))}
-              </div>
-              <div className="flex justify-between text-[10px] text-text-light mt-1">
-                <span>{moodHistory.length}件前</span><span>最新</span>
-              </div>
-              <div className="flex gap-2 mt-2 flex-wrap">
-                {moodLabels.map(x => (
-                  <div key={x.l} className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full" style={{ background: x.c }} />
-                    <span className="text-[9px] text-text-light">{x.l}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-
-        {/* Sleep × Mood correlation */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
-          <h3 className="text-sm font-bold mb-3">😴 睡眠 × 気分の相関</h3>
-          {moodHistory.length < 5 ? (
-            <p className="text-xs text-text-light text-center py-4">データが増えると睡眠と気分の相関が見えてきます（5件以上で表示）</p>
-          ) : (
-            <>
-              <div className="relative h-24 border-l border-b border-gray-200 ml-4 mb-2">
-                {moodHistory.slice(-10).map((mood, i) => {
-                  const x = (i / Math.max(moodHistory.slice(-10).length - 1, 1)) * 90 + 5;
-                  const y = 100 - mood * 20;
-                  return <div key={i} className="absolute w-3 h-3 rounded-full border-2 border-white shadow-sm" style={{ left: `${x}%`, top: `${y}%`, background: moodColors[mood] }} />;
-                })}
-              </div>
-              <div className="flex justify-between text-[10px] text-text-light ml-4">
-                <span>少ない睡眠</span><span>多い睡眠</span>
-              </div>
-              <p className="text-[10px] text-text-light mt-2 text-center">睡眠データを記録するほど、相関の精度が上がります</p>
-            </>
-          )}
-        </div>
-
-        {/* Word Analysis */}
-        {wordAnalysis && (wordAnalysis.weeklyTrend.length > 0 || wordAnalysis.topWords.length > 0) && (
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
-            <h3 className="text-sm font-bold mb-3">📝 言葉のポジティブ度</h3>
-            {/* Overall score */}
-            <div className="flex items-center justify-between bg-mint-light rounded-xl p-3 mb-3">
-              <span className="text-xs font-bold">ポジティブ度</span>
-              <span className="text-xl font-extrabold text-mint">{wordAnalysis.overallScore}%</span>
-            </div>
-            {wordAnalysis.changeMessage && (
-              <p className="text-xs text-text-mid text-center mb-3">{wordAnalysis.changeMessage}</p>
-            )}
-            {/* Weekly trend */}
-            {wordAnalysis.weeklyTrend.length > 1 && (
-              <>
-                <p className="text-xs font-bold mb-2">週別トレンド</p>
-                <div className="flex items-end gap-1 h-16 mb-2">
-                  {wordAnalysis.weeklyTrend.map((w, i) => (
-                    <div key={i} className="flex-1 flex flex-col items-center gap-0.5">
-                      <div className="w-full rounded-t-md bg-mint" style={{ height: `${Math.max(w.score * 0.6, 4)}px` }} />
-                      <span className="text-[8px] text-text-light">{w.week}</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-            {/* Top words */}
-            {wordAnalysis.topWords.length > 0 && (
-              <>
-                <p className="text-xs font-bold mb-2 mt-3">よく使うポジティブワード</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {wordAnalysis.topWords.map((w, i) => (
-                    <span key={i} className="bg-mint-light text-mint px-2.5 py-1 rounded-full text-xs font-bold">
-                      {w.word} ({w.count})
-                    </span>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        )}
+        </Link>
 
         {/* Actions */}
         <div className="flex gap-2 mb-4">
-          <a href="/vision" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">🎯 ビジョン</a>
-          <a href="/settings" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">⚙️ 設定</a>
-          <button onClick={async () => { await supabase.auth.signOut(); window.location.href = "https://rizup-app.vercel.app/"; }}
-            className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-red-400 hover:bg-red-50 transition">
-            ログアウト
-          </button>
+          <Link href="/vision" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">🎯 ビジョン</Link>
+          <Link href="/anti-vision" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">🚫 アンチ</Link>
+          <Link href="/settings" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">⚙️ 設定</Link>
         </div>
 
         <h3 className="text-sm font-bold mb-3">📝 投稿履歴</h3>
@@ -349,54 +221,38 @@ export default function ProfilePage() {
       {/* Edit Modal */}
       {showEdit && (
         <div className="fixed inset-0 bg-black/50 flex items-end justify-center" style={{ zIndex: 9999 }} onClick={() => setShowEdit(false)}>
-          <div className="bg-white rounded-t-3xl w-full max-w-md p-6 animate-fade-in overflow-y-auto" style={{ maxHeight: "calc(100vh - env(safe-area-inset-bottom, 0px))", paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))" }} onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-t-3xl w-full max-w-md p-6 animate-fade-in overflow-y-auto"
+            style={{ maxHeight: "calc(100vh - env(safe-area-inset-bottom, 0px))", paddingBottom: "calc(2rem + env(safe-area-inset-bottom, 0px))" }}
+            onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-extrabold">プロフィール編集</h2>
               <button onClick={() => setShowEdit(false)} className="text-text-light text-xl">✕</button>
             </div>
             <div className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-text-mid block mb-1">名前</label>
-                <input type="text" value={editForm.name} onChange={(e) => setEditForm(f => ({ ...f, name: e.target.value }))}
-                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-text-mid block mb-1">夢・目標</label>
-                <input type="text" value={editForm.dream} onChange={(e) => setEditForm(f => ({ ...f, dream: e.target.value }))}
-                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-text-mid block mb-1">星座</label>
-                <select value={editForm.zodiac} onChange={(e) => setEditForm(f => ({ ...f, zodiac: e.target.value }))}
-                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint bg-white">
+              <Field label="名前"><input type="text" value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} className="fld" /></Field>
+              <Field label="夢・目標"><input type="text" value={editForm.dream} onChange={e => setEditForm(f => ({ ...f, dream: e.target.value }))} className="fld" /></Field>
+              <Field label="星座">
+                <select value={editForm.zodiac} onChange={e => setEditForm(f => ({ ...f, zodiac: e.target.value }))} className="fld bg-white">
                   <option value="">選択してください</option>
                   {zodiacSigns.map(z => <option key={z} value={z}>{z}</option>)}
                 </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-text-mid block mb-1">生年月日</label>
-                <input type="date" value={editForm.birthday} onChange={(e) => setEditForm(f => ({ ...f, birthday: e.target.value }))}
-                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint" />
-              </div>
-              <div>
-                <label className="text-xs font-bold text-text-mid block mb-1">Rizup タイプ</label>
-                <select value={editForm.rizup_type} onChange={(e) => setEditForm(f => ({ ...f, rizup_type: e.target.value }))}
-                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint bg-white">
+              </Field>
+              <Field label="生年月日"><input type="date" value={editForm.birthday} onChange={e => setEditForm(f => ({ ...f, birthday: e.target.value }))} className="fld" /></Field>
+              <Field label="Rizup タイプ">
+                <select value={editForm.rizup_type} onChange={e => setEditForm(f => ({ ...f, rizup_type: e.target.value }))} className="fld bg-white">
                   <option value="">選択してください</option>
                   {(Object.keys(rizupTypes) as RizupType[]).map(t => (
                     <option key={t} value={t}>{rizupTypes[t].emoji} {rizupTypes[t].label}</option>
                   ))}
                 </select>
-              </div>
-              <div>
-                <label className="text-xs font-bold text-text-mid block mb-1">MBTI</label>
-                <select value={editForm.mbti} onChange={(e) => setEditForm(f => ({ ...f, mbti: e.target.value }))}
-                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint bg-white">
+              </Field>
+              <Field label="MBTI">
+                <select value={editForm.mbti} onChange={e => setEditForm(f => ({ ...f, mbti: e.target.value }))} className="fld bg-white">
                   <option value="">選択してください</option>
                   {["INTJ","INTP","ENTJ","ENTP","INFJ","INFP","ENFJ","ENFP","ISTJ","ISFJ","ESTJ","ESFJ","ISTP","ISFP","ESTP","ESFP"].map(t => <option key={t} value={t}>{t}</option>)}
                   <option value="unknown">わからない</option>
                 </select>
-              </div>
+              </Field>
             </div>
             <button onClick={handleEditSave} disabled={!editForm.name.trim()}
               className="w-full bg-mint text-white font-bold py-3 rounded-full mt-5 shadow-lg shadow-mint/30 disabled:opacity-30">保存する</button>
@@ -407,7 +263,7 @@ export default function ProfilePage() {
       {/* Type Quiz Modal */}
       {showQuiz && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center px-4" style={{ zIndex: 9999 }} onClick={() => setShowQuiz(false)}>
-          <div className="bg-white rounded-3xl w-full max-w-sm p-6 animate-fade-in" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 animate-fade-in" onClick={e => e.stopPropagation()}>
             {!quizResult ? (
               <>
                 <div className="flex items-center justify-between mb-4">
@@ -431,27 +287,32 @@ export default function ProfilePage() {
                 </div>
               </>
             ) : (
-              <>
-                <div className="text-center">
-                  <div className="text-5xl mb-3">{rizupTypes[quizResult].emoji}</div>
-                  <h2 className="text-xl font-extrabold mb-1">あなたは{rizupTypes[quizResult].label}タイプ！</h2>
-                  <p className="text-text-mid text-sm leading-relaxed mb-5">{rizupTypes[quizResult].desc}</p>
-                  <button onClick={handleQuizSave}
-                    className="w-full bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30 mb-2">
-                    このタイプに更新する
-                  </button>
-                  <button onClick={() => setShowQuiz(false)}
-                    className="w-full text-text-light text-sm py-2">
-                    キャンセル
-                  </button>
-                </div>
-              </>
+              <div className="text-center">
+                <div className="text-5xl mb-3">{rizupTypes[quizResult].emoji}</div>
+                <h2 className="text-xl font-extrabold mb-1">あなたは{rizupTypes[quizResult].label}タイプ！</h2>
+                <p className="text-text-mid text-sm leading-relaxed mb-5">{rizupTypes[quizResult].desc}</p>
+                <button onClick={handleQuizSave} className="w-full bg-mint text-white font-bold py-3.5 rounded-full shadow-lg shadow-mint/30 mb-2">このタイプに更新する</button>
+                <button onClick={() => setShowQuiz(false)} className="w-full text-text-light text-sm py-2">キャンセル</button>
+              </div>
             )}
           </div>
         </div>
       )}
 
       {!showEdit && !showQuiz && <BottomNav />}
+      <style jsx>{`
+        .fld { width: 100%; border: 2px solid #f3f4f6; border-radius: 0.75rem; padding: 0.625rem 1rem; font-size: 0.875rem; outline: none; }
+        .fld:focus { border-color: #6ecbb0; }
+      `}</style>
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="text-xs font-bold text-text-mid block mb-1">{label}</label>
+      {children}
     </div>
   );
 }

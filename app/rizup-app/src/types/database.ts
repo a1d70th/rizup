@@ -1,4 +1,4 @@
-export type UserPlan = "free" | "pro" | "premium" | "vip";
+export type UserPlan = "free" | "pro" | "premium";
 
 export interface Profile {
   id: string;
@@ -53,13 +53,6 @@ export interface Comment {
   content: string;
   created_at: string;
   profiles?: Profile;
-}
-
-export interface Badge {
-  id: string;
-  user_id: string;
-  type: string;
-  earned_at: string;
 }
 
 export interface Notification {

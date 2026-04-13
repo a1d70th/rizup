@@ -6,9 +6,9 @@ import { supabase } from "@/lib/supabase";
 
 const baseItems = [
   { href: "/home", icon: "🏠", label: "ホーム" },
-  { href: "/journal", icon: "📝", label: "ジャーナル" },
-  { href: "/habits", icon: "✅", label: "習慣" },
-  { href: "/notifications", icon: "🔔", label: "通知" },
+  { href: "/today", icon: "✅", label: "今日" },
+  { href: "/vision", icon: "🎯", label: "ビジョン" },
+  { href: "/growth", icon: "📈", label: "成長" },
   { href: "/profile", icon: "👤", label: "マイページ" },
 ];
 
@@ -22,12 +22,10 @@ export default function BottomNav() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { data: profile } = await supabase.from("profiles")
-        .select("plan, is_admin").eq("id", user.id).single();
-      if (!profile) return;
-      const extras: { href: string; icon: string; label: string }[] = [];
-      if (profile.plan === "vip") extras.push({ href: "/vip", icon: "👑", label: "VIP" });
-      if (profile.is_admin) extras.push({ href: "/admin", icon: "⚙️", label: "管理" });
-      setExtraItems(extras);
+        .select("is_admin").eq("id", user.id).single();
+      if (profile?.is_admin) {
+        setExtraItems([{ href: "/admin", icon: "⚙️", label: "管理" }]);
+      }
     };
     load();
   }, []);
@@ -35,8 +33,7 @@ export default function BottomNav() {
   useEffect(() => {
     const initialHeight = window.innerHeight;
     const handleResize = () => {
-      const currentHeight = window.innerHeight;
-      setKeyboardVisible(currentHeight < initialHeight - 100);
+      setKeyboardVisible(window.innerHeight < initialHeight - 100);
     };
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
@@ -64,7 +61,7 @@ export default function BottomNav() {
               className={`flex flex-col items-center justify-center gap-0.5 py-2 px-3 text-xs font-medium transition-colors ${active ? "text-mint" : "text-text-light"}`}
             >
               <span className="text-xl" aria-hidden="true">{item.icon}</span>
-              <span>{item.label}</span>
+              <span className="text-[10px]">{item.label}</span>
             </Link>
           );
         })}

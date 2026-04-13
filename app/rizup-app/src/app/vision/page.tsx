@@ -1,9 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import Image from "next/image";
+import Link from "next/link";
 
 interface Vision {
   id: string;
@@ -16,11 +17,15 @@ interface Vision {
   created_at: string;
 }
 
+interface HabitLight { id: string; vision_id: string | null; }
+interface TodoLight { id: string; vision_id: string | null; is_done: boolean; due_date: string; }
+interface HabitLogLight { habit_id: string; logged_date: string; }
+
 const horizons = [
   { value: "final" as const, label: "最終ゴール", emoji: "⭐", color: "#f4976c", desc: "人生で達成したい究極の夢" },
-  { value: "3year" as const, label: "3年後の姿", emoji: "🚀", color: "#e88a62", desc: "3年後にどうなっていたい？" },
-  { value: "1year" as const, label: "1年後の姿", emoji: "🎯", color: "#6ecbb0", desc: "1年後の具体的な目標" },
-  { value: "monthly" as const, label: "今月やること", emoji: "✅", color: "#5ab89d", desc: "今月中にやるアクション" },
+  { value: "3year" as const, label: "3年後", emoji: "🚀", color: "#e88a62", desc: "3年後にどうなっていたい？" },
+  { value: "1year" as const, label: "1年後", emoji: "🎯", color: "#6ecbb0", desc: "1年後の具体的な目標" },
+  { value: "monthly" as const, label: "今月", emoji: "✅", color: "#5ab89d", desc: "今月中にやるアクション" },
 ];
 
 const categoryOptions = [
@@ -32,25 +37,19 @@ const categoryOptions = [
   { value: "other", label: "その他", emoji: "✨" },
 ];
 
-const cheerMessages = [
-  "すごい進捗だね！この調子！",
-  "着実に前に進んでる。応援してるよ！",
-  "一歩一歩が大きな成果になる！",
-  "その努力、ちゃんと見えてるよ！",
-];
-
 export default function VisionPage() {
   const [visions, setVisions] = useState<Vision[]>([]);
+  const [habits, setHabits] = useState<HabitLight[]>([]);
+  const [todos, setTodos] = useState<TodoLight[]>([]);
+  const [habitLogs, setHabitLogs] = useState<HabitLogLight[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
-  const [formHorizon, setFormHorizon] = useState<Vision["time_horizon"]>("final");
+  const [formHorizon, setFormHorizon] = useState<Vision["time_horizon"]>("monthly");
   const [formTitle, setFormTitle] = useState("");
   const [formDesc, setFormDesc] = useState("");
   const [formCategory, setFormCategory] = useState("growth");
   const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
-  const [cheerMsg, setCheerMsg] = useState<string | null>(null);
   const [feedbackLoading, setFeedbackLoading] = useState<string | null>(null);
 
   useEffect(() => {
@@ -58,60 +57,83 @@ export default function VisionPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUserId(user.id);
-      const { data } = await supabase.from("visions")
-        .select("*").eq("user_id", user.id).order("created_at", { ascending: true });
-      if (data) setVisions(data);
+
+      const [{ data: vData }, { data: hData }, { data: tData }] = await Promise.all([
+        supabase.from("visions").select("*").eq("user_id", user.id).order("created_at", { ascending: true }),
+        supabase.from("habits").select("id, vision_id").eq("user_id", user.id),
+        supabase.from("todos").select("id, vision_id, is_done, due_date").eq("user_id", user.id),
+      ]);
+      if (vData) setVisions(vData);
+      if (hData) setHabits(hData);
+      if (tData) setTodos(tData);
+
+      // 過去7日の habit_logs
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      const { data: logData } = await supabase.from("habit_logs")
+        .select("habit_id, logged_date").eq("user_id", user.id)
+        .gte("logged_date", weekAgo.toISOString().split("T")[0]);
+      if (logData) setHabitLogs(logData);
+
       setLoading(false);
     };
     init();
   }, []);
 
+  const autoProgress = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const v of visions) {
+      const visionTodos = todos.filter(t => t.vision_id === v.id);
+      const visionHabits = habits.filter(h => h.vision_id === v.id);
+      const todoTotal = visionTodos.length;
+      const todoDone = visionTodos.filter(t => t.is_done).length;
+      const todoPct = todoTotal > 0 ? (todoDone / todoTotal) : 0;
+
+      let habitPct = 0;
+      if (visionHabits.length > 0) {
+        const target = visionHabits.length * 7;
+        const done = habitLogs.filter(l => visionHabits.some(h => h.id === l.habit_id)).length;
+        habitPct = Math.min(done / target, 1);
+      }
+
+      const hasTodo = todoTotal > 0;
+      const hasHabit = visionHabits.length > 0;
+      if (!hasTodo && !hasHabit) { map[v.id] = v.progress; continue; }
+      if (hasTodo && hasHabit) map[v.id] = Math.round((todoPct * 0.6 + habitPct * 0.4) * 100);
+      else if (hasTodo) map[v.id] = Math.round(todoPct * 100);
+      else map[v.id] = Math.round(habitPct * 100);
+    }
+    return map;
+  }, [visions, todos, habits, habitLogs]);
+
   const handleAdd = async () => {
     if (!userId || !formTitle.trim()) return;
     (document.activeElement as HTMLElement)?.blur();
     setSaving(true);
-    setSaveError("");
-    const { data, error } = await supabase.from("visions").insert({
-      user_id: userId,
-      title: formTitle.trim(),
+    const { data } = await supabase.from("visions").insert({
+      user_id: userId, title: formTitle.trim(),
       description: formDesc.trim() || null,
-      category: formCategory,
-      time_horizon: formHorizon,
-      progress: 0,
+      category: formCategory, time_horizon: formHorizon, progress: 0,
     }).select().single();
-    if (error) { setSaveError(`保存できませんでした：${error.message}`); setSaving(false); return; }
     if (data) setVisions(prev => [...prev, data]);
     setFormTitle(""); setFormDesc(""); setShowForm(false);
     setSaving(false);
   };
 
-  const handleProgress = async (id: string, progress: number) => {
-    await supabase.from("visions").update({ progress }).eq("id", id);
-    setVisions(prev => prev.map(v => v.id === id ? { ...v, progress } : v));
-    if (progress > 0 && progress % 25 === 0) {
-      setCheerMsg(cheerMessages[Math.floor(Math.random() * cheerMessages.length)]);
-      setTimeout(() => setCheerMsg(null), 3000);
-    }
-  };
-
-  const handleFeedback = async (vision: Vision) => {
-    setFeedbackLoading(vision.id);
+  const handleFeedback = async (v: Vision) => {
+    setFeedbackLoading(v.id);
     try {
       const res = await fetch("/api/vision-feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: vision.title,
-          description: vision.description,
-          category: vision.category,
-          time_horizon: vision.time_horizon,
-          progress: vision.progress,
+          title: v.title, description: v.description, category: v.category,
+          time_horizon: v.time_horizon, progress: autoProgress[v.id] ?? v.progress,
         }),
       });
       const data = await res.json();
       if (data.feedback) {
-        await supabase.from("visions").update({ ai_feedback: data.feedback }).eq("id", vision.id);
-        setVisions(prev => prev.map(v => v.id === vision.id ? { ...v, ai_feedback: data.feedback } : v));
+        await supabase.from("visions").update({ ai_feedback: data.feedback }).eq("id", v.id);
+        setVisions(prev => prev.map(x => x.id === v.id ? { ...x, ai_feedback: data.feedback } : x));
       }
     } catch { /* ignore */ }
     setFeedbackLoading(null);
@@ -123,17 +145,16 @@ export default function VisionPage() {
     setVisions(prev => prev.filter(v => v.id !== id));
   };
 
-  const getHorizonInfo = (h: string) => horizons.find(x => x.value === h) || horizons[0];
-  const getCategoryEmoji = (c: string) => categoryOptions.find(x => x.value === c)?.emoji || "✨";
+  const getHorizon = (h: string) => horizons.find(x => x.value === h) || horizons[3];
+  const getCatEmoji = (c: string) => categoryOptions.find(x => x.value === c)?.emoji || "✨";
 
-  // Group by horizon
   const grouped = horizons.map(h => ({
     ...h,
     items: visions.filter(v => v.time_horizon === h.value),
   }));
 
-  const totalProgress = visions.length > 0
-    ? Math.round(visions.reduce((sum, v) => sum + v.progress, 0) / visions.length)
+  const overall = visions.length > 0
+    ? Math.round(visions.reduce((s, v) => s + (autoProgress[v.id] ?? v.progress), 0) / visions.length)
     : 0;
 
   if (loading) return (
@@ -146,41 +167,30 @@ export default function VisionPage() {
     <div className="min-h-screen bg-bg pb-20">
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
-        {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-extrabold">🎯 逆算ビジョン</h2>
+          <h2 className="text-lg font-extrabold">🎯 ビジョン</h2>
           <button onClick={() => setShowForm(!showForm)}
             className="bg-mint text-white text-xs font-bold px-4 py-2 rounded-full shadow-md shadow-mint/30">
-            {showForm ? "✕ 閉じる" : "＋ 目標を追加"}
+            {showForm ? "✕" : "＋ 追加"}
           </button>
         </div>
 
-        {/* Overall Progress */}
         {visions.length > 0 && (
           <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-bold">全体の進捗</span>
-              <span className="text-sm font-extrabold" style={{ color: "#6ecbb0" }}>{totalProgress}%</span>
+              <span className="text-sm font-extrabold text-mint">{overall}%</span>
             </div>
             <div className="w-full bg-gray-100 rounded-full h-3">
-              <div className="rounded-full h-3 transition-all" style={{ width: `${totalProgress}%`, background: "linear-gradient(90deg, #6ecbb0, #f4976c)" }} />
+              <div className="rounded-full h-3 transition-all"
+                style={{ width: `${overall}%`, background: "linear-gradient(90deg, #6ecbb0, #f4976c)" }} />
             </div>
+            <p className="text-[10px] text-text-light mt-2">習慣とToDoの達成率から自動計算</p>
           </div>
         )}
 
-        {/* Cheer message */}
-        {cheerMsg && (
-          <div className="bg-gradient-to-r from-mint-light to-orange-light rounded-2xl p-3 mb-4 animate-fade-in flex items-center gap-2">
-            <Image src="/sho.png" alt="Sho" width={24} height={24} className="rounded-full" />
-            <p className="text-xs font-bold text-text">{cheerMsg}</p>
-          </div>
-        )}
-
-        {/* Add Form */}
         {showForm && (
           <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4 animate-fade-in">
-            <p className="text-sm font-bold mb-3">新しい目標を追加</p>
-            {/* Horizon */}
             <label className="text-xs font-bold text-text-mid block mb-2">いつまでの目標？</label>
             <div className="grid grid-cols-2 gap-1.5 mb-3">
               {horizons.map(h => (
@@ -191,7 +201,6 @@ export default function VisionPage() {
                 </button>
               ))}
             </div>
-            {/* Category */}
             <label className="text-xs font-bold text-text-mid block mb-2">カテゴリ</label>
             <div className="grid grid-cols-3 gap-1.5 mb-3">
               {categoryOptions.map(c => (
@@ -202,15 +211,12 @@ export default function VisionPage() {
                 </button>
               ))}
             </div>
-            {/* Title */}
-            <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)}
-              placeholder={getHorizonInfo(formHorizon).desc}
+            <input type="text" value={formTitle} onChange={e => setFormTitle(e.target.value)}
+              placeholder={getHorizon(formHorizon).desc}
               className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint mb-2" />
-            {/* Description */}
-            <textarea value={formDesc} onChange={(e) => setFormDesc(e.target.value)}
+            <textarea value={formDesc} onChange={e => setFormDesc(e.target.value)}
               placeholder="詳細（任意）"
               className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm resize-none h-16 outline-none focus:border-mint mb-2" />
-            {saveError && <p className="text-red-500 text-xs mb-2">{saveError}</p>}
             <button onClick={handleAdd} disabled={saving || !formTitle.trim()}
               className="w-full bg-mint text-white font-bold py-3 rounded-full shadow-lg shadow-mint/30 disabled:opacity-30">
               {saving ? "保存中..." : "追加する"}
@@ -218,12 +224,11 @@ export default function VisionPage() {
           </div>
         )}
 
-        {/* Grouped Vision Cards */}
         {visions.length === 0 ? (
           <div className="text-center py-12">
             <Image src="/sho.png" alt="Sho" width={64} height={64} className="rounded-full mx-auto mb-3 opacity-50" />
             <p className="text-sm font-bold text-text-mid mb-1">まだ目標がありません</p>
-            <p className="text-xs text-text-light">最終ゴールから逆算して、夢を形にしよう！</p>
+            <p className="text-xs text-text-light">最終ゴールから逆算してみよう</p>
           </div>
         ) : (
           grouped.filter(g => g.items.length > 0).map(group => (
@@ -234,54 +239,61 @@ export default function VisionPage() {
                 <span className="text-[10px] text-text-light ml-auto">{group.items.length}件</span>
               </div>
               <div className="flex flex-col gap-2">
-                {group.items.map(vision => (
-                  <div key={vision.id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm animate-fade-in">
-                    <div className="flex items-start gap-2 mb-2">
-                      <span className="text-base mt-0.5">{getCategoryEmoji(vision.category)}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold">{vision.title}</p>
-                        {vision.description && <p className="text-xs text-text-mid mt-0.5 leading-relaxed">{vision.description}</p>}
-                      </div>
-                    </div>
-                    {/* Progress */}
-                    <div className="mb-2">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] text-text-light">進捗</span>
-                        <span className="text-xs font-extrabold" style={{ color: group.color }}>{vision.progress}%</span>
-                      </div>
-                      <input type="range" min={0} max={100} step={5} value={vision.progress}
-                        onChange={(e) => handleProgress(vision.id, parseInt(e.target.value))}
-                        className="w-full h-2 rounded-full appearance-none cursor-pointer"
-                        style={{ background: `linear-gradient(90deg, ${group.color} ${vision.progress}%, #e5e7eb ${vision.progress}%)` }} />
-                    </div>
-                    {/* AI Feedback */}
-                    {vision.ai_feedback && (
-                      <div className="bg-mint-light rounded-xl p-3 mb-2">
-                        <div className="flex items-center gap-1 mb-1">
-                          <Image src="/sho.png" alt="Sho" width={16} height={16} className="rounded-full" />
-                          <span className="text-[10px] font-bold text-mint">Sho のアドバイス</span>
+                {group.items.map(v => {
+                  const prog = autoProgress[v.id] ?? v.progress;
+                  const linkedHabits = habits.filter(h => h.vision_id === v.id).length;
+                  const linkedTodos = todos.filter(t => t.vision_id === v.id).length;
+                  return (
+                    <div key={v.id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm animate-fade-in">
+                      <div className="flex items-start gap-2 mb-2">
+                        <span className="text-base mt-0.5">{getCatEmoji(v.category)}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold break-words">{v.title}</p>
+                          {v.description && <p className="text-xs text-text-mid mt-0.5 leading-relaxed">{v.description}</p>}
                         </div>
-                        <p className="text-xs text-text leading-relaxed">{vision.ai_feedback}</p>
                       </div>
-                    )}
-                    {/* Actions */}
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => handleFeedback(vision)} disabled={feedbackLoading === vision.id}
-                        className="text-[10px] font-bold text-mint border border-mint rounded-full px-3 py-1 hover:bg-mint-light transition disabled:opacity-50">
-                        {feedbackLoading === vision.id ? "分析中..." : "🤖 AIアドバイス"}
-                      </button>
-                      <button onClick={() => handleDelete(vision.id)}
-                        className="text-[10px] text-text-light hover:text-red-400 transition ml-auto">削除</button>
+                      <div className="mb-2">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] text-text-light">進捗</span>
+                          <span className="text-xs font-extrabold" style={{ color: group.color }}>{prog}%</span>
+                        </div>
+                        <div className="w-full bg-gray-100 rounded-full h-2">
+                          <div className="rounded-full h-2 transition-all"
+                            style={{ width: `${prog}%`, background: group.color }} />
+                        </div>
+                      </div>
+                      {/* 逆算導線 */}
+                      <div className="flex gap-2 mb-2">
+                        <Link href={`/habits?vision_id=${v.id}`}
+                          className="flex-1 bg-mint-light text-mint text-[10px] font-bold text-center py-1.5 rounded-full">
+                          ＋習慣 {linkedHabits > 0 && `(${linkedHabits})`}
+                        </Link>
+                        <Link href={`/today?vision_id=${v.id}`}
+                          className="flex-1 bg-orange-light text-orange text-[10px] font-bold text-center py-1.5 rounded-full">
+                          ＋ToDo {linkedTodos > 0 && `(${linkedTodos})`}
+                        </Link>
+                      </div>
+                      {v.ai_feedback && (
+                        <div className="bg-mint-light rounded-xl p-3 mb-2">
+                          <div className="flex items-center gap-1 mb-1">
+                            <Image src="/sho.png" alt="Sho" width={16} height={16} className="rounded-full" />
+                            <span className="text-[10px] font-bold text-mint">Sho のアドバイス</span>
+                          </div>
+                          <p className="text-xs text-text leading-relaxed">{v.ai_feedback}</p>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => handleFeedback(v)} disabled={feedbackLoading === v.id}
+                          className="text-[10px] font-bold text-mint border border-mint rounded-full px-3 py-1 hover:bg-mint-light transition disabled:opacity-50">
+                          {feedbackLoading === v.id ? "分析中..." : "🤖 AIアドバイス"}
+                        </button>
+                        <button onClick={() => handleDelete(v.id)}
+                          className="text-[10px] text-text-light hover:text-red-400 transition ml-auto">削除</button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
-              {/* Connector line */}
-              {group.items.length > 0 && group.value !== "monthly" && (
-                <div className="flex justify-center py-1">
-                  <div className="w-0.5 h-4 bg-gray-200 rounded-full" />
-                </div>
-              )}
             </div>
           ))
         )}

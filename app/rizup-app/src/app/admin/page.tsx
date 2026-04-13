@@ -9,7 +9,7 @@ export default function AdminDashboard() {
   const [authorized, setAuthorized] = useState(false);
   const [stats, setStats] = useState({
     totalUsers: 0, activeToday: 0, totalPosts: 0, totalReports: 0,
-    trialUsers: 0, proUsers: 0, premiumUsers: 0, vipUsers: 0, freeUsers: 0,
+    trialUsers: 0, proUsers: 0, premiumUsers: 0, freeUsers: 0,
   });
 
   useEffect(() => {
@@ -20,7 +20,6 @@ export default function AdminDashboard() {
       if (!profile?.is_admin) { window.location.href = "/home"; return; }
       setAuthorized(true);
 
-      // Stats
       const { count: totalUsers } = await supabase.from("profiles").select("id", { count: "exact", head: true });
       const today = new Date().toISOString().split("T")[0];
       const { count: totalPosts } = await supabase.from("posts").select("id", { count: "exact", head: true });
@@ -28,11 +27,10 @@ export default function AdminDashboard() {
       const { count: totalReports } = await supabase.from("reports").select("id", { count: "exact", head: true });
 
       const { data: plans } = await supabase.from("profiles").select("plan, trial_ends_at");
-      let trial = 0, pro = 0, premium = 0, vip = 0, free = 0;
+      let trial = 0, pro = 0, premium = 0, free = 0;
       plans?.forEach(p => {
         const plan = p.plan || "free";
-        if (plan === "vip") vip++;
-        else if (plan === "premium") premium++;
+        if (plan === "premium") premium++;
         else if (plan === "pro") pro++;
         else if (p.trial_ends_at && new Date(p.trial_ends_at) > new Date()) trial++;
         else free++;
@@ -41,7 +39,7 @@ export default function AdminDashboard() {
       setStats({
         totalUsers: totalUsers || 0, activeToday: todayPosts || 0,
         totalPosts: totalPosts || 0, totalReports: totalReports || 0,
-        trialUsers: trial, proUsers: pro, premiumUsers: premium, vipUsers: vip, freeUsers: free,
+        trialUsers: trial, proUsers: pro, premiumUsers: premium, freeUsers: free,
       });
       setLoading(false);
     };
@@ -67,15 +65,14 @@ export default function AdminDashboard() {
     { label: "トライアル", count: stats.trialUsers, color: "#fbbf24" },
     { label: "Pro", count: stats.proUsers, color: "#6ecbb0" },
     { label: "Premium", count: stats.premiumUsers, color: "#f4976c" },
-    { label: "VIP", count: stats.vipUsers, color: "#a855f7" },
   ];
   const maxPlan = Math.max(...planBars.map(b => b.count), 1);
 
   const navLinks = [
     { href: "/admin/users", icon: "👥", label: "ユーザー管理", desc: "一覧・停止・プラン変更" },
     { href: "/admin/posts", icon: "📝", label: "投稿管理", desc: "通報対応・削除" },
-    { href: "/admin/notifications", icon: "📣", label: "通知配信", desc: "お知らせ・VIPメッセージ" },
-    { href: "/admin/content", icon: "📚", label: "コンテンツ管理", desc: "レコメンド・VIP限定" },
+    { href: "/admin/notifications", icon: "📣", label: "通知配信", desc: "お知らせ・イベント" },
+    { href: "/admin/content", icon: "📚", label: "レコメンド管理", desc: "Shoのおすすめ" },
   ];
 
   return (
@@ -88,7 +85,6 @@ export default function AdminDashboard() {
         </div>
       </div>
       <div className="max-w-2xl mx-auto px-4 py-4">
-        {/* Stat cards */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           {statCards.map((s, i) => (
             <div key={i} className={`${s.bg} rounded-2xl p-4 text-center`}>
@@ -98,7 +94,6 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {/* Plan distribution */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
           <h3 className="text-sm font-bold mb-3">📊 プラン別ユーザー数</h3>
           <div className="space-y-2">
@@ -116,7 +111,6 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Navigation */}
         <div className="space-y-2">
           {navLinks.map((link, i) => (
             <Link key={i} href={link.href}

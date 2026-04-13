@@ -3,11 +3,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
-type FormType = "announce" | "vip" | "sho_weekly" | "event";
+type FormType = "announce" | "event";
 const formLabels: Record<FormType, { icon: string; title: string; desc: string }> = {
   announce: { icon: "📣", title: "全ユーザーへのお知らせ", desc: "全員に通知が届きます" },
-  vip: { icon: "👑", title: "VIP限定メッセージ", desc: "VIPプランのユーザーのみ" },
-  sho_weekly: { icon: "🧠", title: "Sho の週刊コンテンツ", desc: "幸福論・思考法・マインドセット" },
   event: { icon: "🎉", title: "イベント告知", desc: "コミュニティイベントの案内" },
 };
 
@@ -32,7 +30,6 @@ export default function AdminNotificationsPage() {
       if (!profile?.is_admin) { window.location.href = "/home"; return; }
       setAuthorized(true);
 
-      // Load history from admin_broadcasts
       const { data: broadcasts } = await supabase.from("admin_broadcasts")
         .select("*").order("created_at", { ascending: false }).limit(30);
       if (broadcasts) setHistory(broadcasts);
@@ -45,31 +42,20 @@ export default function AdminNotificationsPage() {
     setSending(true);
 
     const content = title ? `【${title}】${body}` : body;
-    let targetQuery = supabase.from("profiles").select("id");
-
-    if (activeForm === "vip") {
-      targetQuery = targetQuery.eq("plan", "vip");
-    }
-
-    const { data: targets } = await targetQuery;
+    const { data: targets } = await supabase.from("profiles").select("id");
     if (targets) {
       const notifs = targets.map(t => ({
         user_id: t.id,
-        type: activeForm === "vip" ? "vip_message" : activeForm === "sho_weekly" ? "sho_weekly" : activeForm === "event" ? "event" : "announcement",
+        type: activeForm === "event" ? "event" : "announcement",
         content,
       }));
-      // Batch insert (Supabase supports arrays)
-      if (notifs.length > 0) {
-        await supabase.from("notifications").insert(notifs);
-      }
+      if (notifs.length > 0) await supabase.from("notifications").insert(notifs);
     }
 
-    // Save to broadcast history
     await supabase.from("admin_broadcasts").insert({
-      type: activeForm, content, target: activeForm === "vip" ? "VIPのみ" : "全ユーザー",
+      type: activeForm, content, target: "全ユーザー",
     });
 
-    // Refresh history
     const { data: broadcasts } = await supabase.from("admin_broadcasts")
       .select("*").order("created_at", { ascending: false }).limit(30);
     if (broadcasts) setHistory(broadcasts);
@@ -91,7 +77,6 @@ export default function AdminNotificationsPage() {
         </div>
       </div>
       <div className="max-w-2xl mx-auto px-4 py-4">
-        {/* Form selector */}
         <div className="grid grid-cols-2 gap-2 mb-4">
           {(Object.keys(formLabels) as FormType[]).map(key => (
             <button key={key} onClick={() => { setActiveForm(key); setSent(false); }}
@@ -103,7 +88,6 @@ export default function AdminNotificationsPage() {
           ))}
         </div>
 
-        {/* Form */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
           <h3 className="text-sm font-bold mb-3">{formLabels[activeForm].icon} {formLabels[activeForm].title}</h3>
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
@@ -118,7 +102,6 @@ export default function AdminNotificationsPage() {
           </button>
         </div>
 
-        {/* History */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
           <h3 className="text-sm font-bold mb-3">📋 配信履歴</h3>
           {history.length === 0 ? (

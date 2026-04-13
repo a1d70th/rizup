@@ -11,20 +11,39 @@ import { SkeletonTimeline } from "@/components/Skeleton";
 interface PostWithProfile {
   id: string; user_id: string; type: string; content: string;
   mood: number; ai_feedback: string | null; created_at: string;
+  image_url?: string | null;
   profiles: { name: string; avatar_url: string | null };
+}
+
+interface Todo {
+  id: string;
+  title: string;
+  is_done: boolean;
+  vision_id: string | null;
+}
+
+function todayJST(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
 }
 
 export default function HomePage() {
   const [posts, setPosts] = useState<PostWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [streak, setStreak] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
-  const [shoInsight, setShoInsight] = useState("おはよう。今日も自分のペースで前に進もう。あなたの味方だよ。");
-  const [hasCommentedToday, setHasCommentedToday] = useState(true);
+  const [userName, setUserName] = useState<string>("");
+  const [streak, setStreak] = useState(0);
+  const [shoInsight, setShoInsight] = useState("おはよう。今日も自分のペースで前に進もう。");
+  const [todayTodos, setTodayTodos] = useState<Todo[]>([]);
+  const [habitsCompleted, setHabitsCompleted] = useState({ done: 0, total: 0 });
+  const [hasMorningPost, setHasMorningPost] = useState(false);
+  const [hasEveningPost, setHasEveningPost] = useState(false);
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
-  const [trialEnded, setTrialEnded] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [challenge, setChallenge] = useState<{ id: string; content: string; is_completed: boolean } | null>(null);
+  const [celebrating, setCelebrating] = useState<string | null>(null);
+
+  const today = todayJST();
+  const hour = new Date().getHours();
+  const isMorning = hour < 15;
 
   useEffect(() => {
     const init = async () => {
@@ -32,203 +51,237 @@ export default function HomePage() {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           setUserId(user.id);
-          const { data: profile } = await supabase.from("profiles").select("name, streak, zodiac, birthday, rizup_type, mbti, trial_ends_at, plan, is_admin").eq("id", user.id).single();
+          const { data: profile } = await supabase.from("profiles")
+            .select("name, streak, zodiac, birthday, rizup_type, mbti, trial_ends_at, plan, is_admin")
+            .eq("id", user.id).single();
           if (profile) {
+            setUserName(profile.name || "");
             setStreak(profile.streak || 0);
             if (profile.is_admin) setIsAdmin(true);
-            // Trial check
-            if (profile.plan === "free" || !profile.plan) {
-              if (profile.trial_ends_at) {
-                const endsAt = new Date(profile.trial_ends_at);
-                const now = new Date();
-                const daysLeft = Math.ceil((endsAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                if (daysLeft <= 0) {
-                  setTrialEnded(true);
-                } else {
-                  setTrialDaysLeft(daysLeft);
-                  // Send trial-ending notification (1 day before)
-                  if (daysLeft === 1) {
-                    const notifKey = `trial_notif_sent_${user.id}`;
-                    if (!localStorage.getItem(notifKey)) {
-                      await supabase.from("notifications").insert({
-                        user_id: user.id,
-                        type: "trial_ending",
-                        content: "Sho より：トライアルが明日終了するよ。Proプランで投稿やAIフィードバックを続けよう！",
-                      });
-                      localStorage.setItem(notifKey, "1");
-                    }
-                  }
-                }
-              }
+            if (profile.trial_ends_at) {
+              const daysLeft = Math.ceil((new Date(profile.trial_ends_at).getTime() - Date.now()) / 86400000);
+              if (daysLeft > 0) setTrialDaysLeft(daysLeft);
             }
-
-            // Fetch Sho Insight — check localStorage cache first
-            const cacheKey = `sho_insight_${new Date().toISOString().split("T")[0]}`;
+            // Sho Insight （キャッシュ）
+            const cacheKey = `sho_insight_${today}`;
             const cached = localStorage.getItem(cacheKey);
             if (cached) {
               setShoInsight(cached);
             } else {
               fetch("/api/sho-insight", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ zodiac: profile.zodiac, birthday: profile.birthday, rizupType: profile.rizup_type, mbti: profile.mbti, name: profile.name }),
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  zodiac: profile.zodiac, birthday: profile.birthday,
+                  rizupType: profile.rizup_type, mbti: profile.mbti, name: profile.name,
+                }),
               }).then(r => r.json()).then(d => {
                 if (d.insight) { setShoInsight(d.insight); localStorage.setItem(cacheKey, d.insight); }
-                // Clean old cache (keep 7 days)
-                for (let i = 0; i < localStorage.length; i++) {
-                  const k = localStorage.key(i);
-                  if (k?.startsWith("sho_insight_") && k !== cacheKey) {
-                    const parts = k.split("_"); const date = parts.slice(2).join("_");
-                    if (new Date(date) < new Date(Date.now() - 7 * 86400000)) localStorage.removeItem(k);
-                  }
-                }
               }).catch(() => {});
             }
           }
-          const today = new Date().toISOString().split("T")[0];
-          const { count } = await supabase.from("comments").select("id", { count: "exact", head: true })
-            .eq("user_id", user.id).gte("created_at", today);
-          setHasCommentedToday((count || 0) > 0);
 
-          // Check streak/badges/growth letter (non-blocking)
+          // 今日のToDo
+          const { data: todos } = await supabase.from("todos")
+            .select("id, title, is_done, vision_id")
+            .eq("user_id", user.id).eq("due_date", today)
+            .order("is_done").order("created_at").limit(5);
+          if (todos) setTodayTodos(todos);
+
+          // 今日の朝投稿チェック
+          const { data: morningP } = await supabase.from("posts")
+            .select("id").eq("user_id", user.id).eq("type", "morning").eq("posted_date", today).maybeSingle();
+          setHasMorningPost(!!morningP);
+
+          const { data: eveningP } = await supabase.from("posts")
+            .select("id").eq("user_id", user.id).eq("type", "evening").eq("posted_date", today).maybeSingle();
+          setHasEveningPost(!!eveningP);
+
+          // 今日の習慣達成
+          const { data: allHabits } = await supabase.from("habits")
+            .select("id").eq("user_id", user.id).is("archived_at", null);
+          if (allHabits) {
+            const { data: logs } = await supabase.from("habit_logs")
+              .select("habit_id").eq("user_id", user.id).eq("logged_date", today);
+            setHabitsCompleted({ done: (logs || []).length, total: allHabits.length });
+          }
+
+          // 進捗 & streak
           fetch("/api/check-progress", { method: "POST" }).then(r => r.json()).then(d => {
             if (d.streak !== undefined) setStreak(d.streak);
           }).catch(() => {});
-
-          // Load current week challenge
-          const weekStart = new Date();
-          weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1); // Monday
-          const { data: ch } = await supabase.from("challenges")
-            .select("id, content, is_completed")
-            .eq("user_id", user.id)
-            .gte("week_start", weekStart.toISOString().split("T")[0])
-            .limit(1)
-            .single();
-          if (ch) setChallenge(ch);
         }
-        const { data } = await supabase.from("posts").select("*, profiles(name, avatar_url)")
+
+        // タイムライン
+        const { data } = await supabase.from("posts")
+          .select("*, profiles(name, avatar_url)")
           .order("created_at", { ascending: false }).limit(20);
         if (data) setPosts(data as PostWithProfile[]);
       } catch (err) {
-        console.error("[Rizup Home]", err);
+        console.error("[Home]", err);
       }
       setLoading(false);
     };
     init();
-  }, []);
+  }, [today]);
 
-  // Trial ended — show inline banner instead of blocking screen (free users can still view timeline + react)
+  const handleToggleTodo = async (t: Todo) => {
+    const newDone = !t.is_done;
+    await supabase.from("todos")
+      .update({ is_done: newDone, done_at: newDone ? new Date().toISOString() : null })
+      .eq("id", t.id);
+    setTodayTodos(prev => prev.map(x => x.id === t.id ? { ...x, is_done: newDone } : x));
+    if (newDone) {
+      setCelebrating(t.id);
+      setTimeout(() => setCelebrating(null), 700);
+    }
+  };
 
+  const doneTodos = todayTodos.filter(t => t.is_done).length;
+  const totalTodos = todayTodos.length;
+  const allDone = totalTodos > 0 && doneTodos === totalTodos;
 
   return (
     <div className="min-h-screen bg-bg pb-20">
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
-        {/* Trial ended banner */}
-        {trialEnded && (
-          <div className="bg-orange-light rounded-2xl p-4 mb-4">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="text-xl">⏰</span>
-              <p className="text-sm font-bold text-orange flex-1">無料トライアルが終了しました</p>
-            </div>
-            <p className="text-xs text-text-mid mb-3">トライアル期間が終了しました。Proプラン（¥780/月）で投稿・AIフィードバック・感情グラフを引き続きご利用ください。</p>
-            <a href="/settings" className="block text-center bg-mint text-white text-sm font-bold py-2.5 rounded-full shadow-md shadow-mint/30">プランを確認する</a>
-          </div>
-        )}
-
-        {/* Trial banner */}
-        {trialDaysLeft !== null && (
-          <div className={`rounded-2xl p-3 mb-4 flex items-center gap-3 ${trialDaysLeft <= 1 ? "bg-orange-light" : "bg-mint-light"}`}>
-            <span className="text-xl">{trialDaysLeft <= 1 ? "⏰" : "🎉"}</span>
-            <p className={`text-xs font-bold flex-1 ${trialDaysLeft <= 1 ? "text-orange" : "text-mint"}`}>
-              {trialDaysLeft <= 1
-                ? "明日トライアルが終了します。Proプランで続けませんか？"
-                : `無料トライアル残り${trialDaysLeft}日 — 全機能をお試しください`}
-            </p>
-          </div>
-        )}
-
-        {/* Sho Insight */}
+        {/* Sho 挨拶 */}
         <div className="bg-gradient-to-br from-mint-light to-orange-light rounded-2xl p-4 mb-4 border border-mint/20">
-          <div className="flex items-center gap-2 mb-2">
-            <Image src="/sho.png" alt="Sho" width={32} height={32} className="rounded-full" />
-            <div>
-              <span className="text-xs font-bold text-mint">今日の Sho Insight</span>
-              <span className="text-[10px] text-text-light ml-2">毎朝 6:00 更新</span>
-            </div>
+          <div className="flex items-center gap-2 mb-1">
+            <Image src="/sho.png" alt="Sho" width={28} height={28} className="rounded-full" />
+            <span className="text-xs font-bold text-mint flex-1">Sho から</span>
+            {streak > 0 && <span className="text-[10px] font-bold text-orange bg-white px-2 py-0.5 rounded-full">🔥 {streak}日連続</span>}
           </div>
-          <p className="text-sm text-text leading-relaxed">{shoInsight}</p>
+          <p className="text-sm text-text leading-relaxed">
+            {userName && `${userName}さん、`}{shoInsight}
+          </p>
+          {trialDaysLeft !== null && trialDaysLeft <= 3 && (
+            <p className="text-[10px] text-orange mt-2 font-bold">⏰ トライアル残り{trialDaysLeft}日</p>
+          )}
         </div>
 
-        {/* Comment banner */}
-        {!hasCommentedToday && (
-          <div className="bg-orange-light rounded-2xl p-3 mb-4 flex items-center gap-3">
-            <span className="text-xl">💬</span>
-            <p className="text-xs font-bold text-orange flex-1">今日はまだ誰かの投稿にコメントしていません。前向きな一言を送ろう！</p>
-          </div>
-        )}
-
-        {/* Quick links */}
-        <div className="flex gap-2 mb-4">
-          <Link href="/vision" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">🎯 ビジョン</Link>
-          <Link href="/habits" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">✅ 習慣</Link>
-          <Link href="/recommend" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">📖 おすすめ</Link>
-        </div>
-
-        {/* Streak */}
-        <div className="flex items-center justify-between bg-white rounded-2xl p-4 border border-gray-100 mb-4 shadow-sm">
-          <div className="flex items-center gap-3">
-            <Image src="/sho.png" alt="Sho" width={40} height={40} className="rounded-full" />
-            <div>
-              <p className="text-xs text-text-mid">連続投稿</p>
-              <p className="text-lg font-extrabold text-orange">🔥 {streak}日</p>
-            </div>
-          </div>
-          <Link href="/journal"
-            className="bg-mint text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-md shadow-mint/30 hover:bg-mint-dark transition">
-            📝 ジャーナル
-          </Link>
-        </div>
-
-        {/* Weekly Challenge */}
-        {challenge ? (
-          <div className={`rounded-2xl p-4 border shadow-sm mb-4 ${challenge.is_completed ? "bg-mint-light border-mint/20" : "bg-white border-gray-100"}`}>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg">{challenge.is_completed ? "✅" : "🎯"}</span>
-              <p className="text-sm font-bold flex-1">今週のチャレンジ</p>
-              {challenge.is_completed && <span className="text-[10px] font-bold text-mint bg-white px-2 py-0.5 rounded-full">達成！</span>}
-            </div>
-            <p className="text-xs text-text-mid mb-2">{challenge.content}</p>
-            {!challenge.is_completed && new Date().getDay() >= 5 && (
-              <ChallengeReport challengeId={challenge.id} onCompleted={() => setChallenge(prev => prev ? { ...prev, is_completed: true } : prev)} />
+        {/* ヒーローカード：今日やること */}
+        <div className="bg-white rounded-2xl p-5 border-2 border-mint/30 shadow-sm mb-4 animate-fade-in">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-xl">✅</span>
+            <h2 className="text-base font-extrabold flex-1">今日やること</h2>
+            {totalTodos > 0 && (
+              <span className="text-xs font-extrabold text-mint">{doneTodos}/{totalTodos}</span>
             )}
           </div>
-        ) : (
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="text-lg">🎯</span>
-              <p className="text-sm font-bold flex-1">今週のチャレンジ</p>
+
+          {!hasMorningPost && totalTodos === 0 ? (
+            /* 朝まだ未投稿 */
+            <Link href="/journal"
+              className="flex items-center gap-3 bg-orange-light rounded-xl p-4 hover:opacity-80 transition">
+              <span className="text-2xl">☀️</span>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-orange">朝ジャーナルで今日を始めよう</p>
+                <p className="text-[10px] text-text-mid">気分と今日の3つを決めるだけ</p>
+              </div>
+              <span className="text-orange">→</span>
+            </Link>
+          ) : totalTodos === 0 ? (
+            <Link href="/today"
+              className="block text-center py-6 bg-mint-light/50 rounded-xl">
+              <p className="text-sm font-bold text-mint">今日のToDoを決めよう ＋</p>
+            </Link>
+          ) : (
+            <>
+              <div className="flex flex-col gap-2 mb-3">
+                {todayTodos.map(t => {
+                  const celebrate = celebrating === t.id;
+                  return (
+                    <div key={t.id}
+                      className={`flex items-center gap-3 p-3 rounded-xl transition ${t.is_done ? "bg-mint-light/50" : "bg-gray-50"}`}>
+                      <button onClick={() => handleToggleTodo(t)}
+                        aria-label={t.is_done ? `${t.title}を未完了にする` : `${t.title}を完了にする`}
+                        className={`w-9 h-9 rounded-full flex items-center justify-center text-base border-2 transition shrink-0 ${t.is_done ? "bg-mint border-mint text-white animate-check-pulse" : "border-gray-300 bg-white"}`}>
+                        {t.is_done ? "✓" : ""}
+                      </button>
+                      <p className={`text-sm font-medium flex-1 break-words ${t.is_done ? "line-through text-text-light" : ""}`}>{t.title}</p>
+                      {celebrate && (
+                        <Image src="/sho.png" alt="Sho" width={36} height={36} className="rounded-full animate-sho-bounce shrink-0" />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {allDone && (
+                <div className="bg-mint-light rounded-xl p-3 flex items-center gap-2 mb-2">
+                  <Image src="/sho.png" alt="Sho" width={28} height={28} className="rounded-full animate-sho-bounce" />
+                  <p className="text-xs font-bold text-mint flex-1">すごい！今日のToDoぜんぶクリアしたね🎉</p>
+                </div>
+              )}
+              <Link href="/today" className="block text-center text-xs text-mint font-bold py-2">
+                すべて見る →
+              </Link>
+            </>
+          )}
+        </div>
+
+        {/* 夜 & 夜ジャーナル未投稿 */}
+        {!isMorning && !hasEveningPost && hasMorningPost && (
+          <Link href="/journal" className="block bg-mint-light rounded-2xl p-4 mb-4 border border-mint/30 hover:opacity-80 transition">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">🌙</span>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-mint">夜ジャーナルで今日を締めくくろう</p>
+                <p className="text-[10px] text-text-mid">朝の目標の振り返りと感謝を書こう</p>
+              </div>
+              <span className="text-mint">→</span>
             </div>
-            <p className="text-xs text-text-light mb-2">今週の目標を設定しよう！</p>
-            <ChallengeForm userId={userId} onCreated={(ch) => setChallenge(ch)} />
-          </div>
+          </Link>
         )}
 
-        {/* Timeline */}
+        {/* 習慣サマリー */}
+        {habitsCompleted.total > 0 && (
+          <Link href="/habits"
+            className="flex items-center gap-3 bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4 hover:border-mint transition">
+            <div className="relative w-12 h-12">
+              <svg viewBox="0 0 36 36" className="w-12 h-12 -rotate-90">
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e5e7eb" strokeWidth="3" />
+                <circle cx="18" cy="18" r="15.9" fill="none" stroke="#6ecbb0" strokeWidth="3"
+                  strokeDasharray={`${(habitsCompleted.done / habitsCompleted.total) * 100}, 100`}
+                  strokeLinecap="round" />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center text-[10px] font-extrabold text-mint">
+                {habitsCompleted.done}/{habitsCompleted.total}
+              </div>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold">🔄 今日の習慣</p>
+              <p className="text-[10px] text-text-light">タップしてチェック</p>
+            </div>
+            <span className="text-text-light">→</span>
+          </Link>
+        )}
+
+        {/* クイックアクセス */}
+        <div className="flex gap-2 mb-5">
+          <Link href="/vision" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-xs font-bold text-text-mid hover:border-mint transition">🎯 ビジョン</Link>
+          <Link href="/anti-vision" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-xs font-bold text-text-mid hover:border-mint transition">🚫 アンチ</Link>
+          <Link href="/growth" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-xs font-bold text-text-mid hover:border-mint transition">📈 成長</Link>
+        </div>
+
+        {/* タイムライン */}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-extrabold">💬 みんなの今日</h3>
+          <Link href="/journal" className="text-xs text-mint font-bold">＋投稿</Link>
+        </div>
         {loading ? (
           <SkeletonTimeline />
         ) : posts.length === 0 ? (
-          <div className="text-center py-12">
-            <Image src="/sho.png" alt="Sho" width={64} height={64} className="rounded-full mx-auto mb-3 animate-sho-float" />
-            <p className="text-lg font-bold mb-1">まだ投稿がありません</p>
-            <p className="text-sm text-text-mid mb-4">最初のジャーナルを書いてみよう！</p>
-            <Link href="/journal" className="inline-block bg-mint text-white font-bold px-6 py-3 rounded-full shadow-lg shadow-mint/30">
-              最初の投稿をする 📝
+          <div className="text-center py-8 bg-white rounded-2xl border border-gray-100">
+            <Image src="/sho.png" alt="Sho" width={48} height={48} className="rounded-full mx-auto mb-2 animate-sho-float" />
+            <p className="text-sm font-bold mb-1">まだ投稿がないよ</p>
+            <p className="text-xs text-text-mid mb-3">最初の一歩になってみる？</p>
+            <Link href="/journal" className="inline-block bg-mint text-white font-bold px-6 py-2.5 rounded-full shadow-md">
+              📝 書いてみる
             </Link>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
-            {posts.map((post) => (
+            {posts.map(post => (
               <PostCard key={post.id} post={post} userId={userId}
                 isAdmin={isAdmin}
                 onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
@@ -237,68 +290,6 @@ export default function HomePage() {
         )}
       </div>
       <BottomNav />
-    </div>
-  );
-}
-
-function ChallengeForm({ userId, onCreated }: { userId: string | null; onCreated: (ch: { id: string; content: string; is_completed: boolean }) => void }) {
-  const [text, setText] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  const handleCreate = async () => {
-    if (!userId || !text.trim()) return;
-    (document.activeElement as HTMLElement)?.blur();
-    setSaving(true);
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + 1);
-    const { data } = await supabase.from("challenges").insert({
-      user_id: userId, content: text.trim(),
-      week_start: weekStart.toISOString().split("T")[0],
-    }).select("id, content, is_completed").single();
-    if (data) onCreated(data);
-    setSaving(false);
-  };
-
-  return (
-    <div className="flex gap-2">
-      <input type="text" value={text} onChange={(e) => setText(e.target.value)}
-        placeholder="例：毎日10分読書する" aria-label="チャレンジ内容"
-        className="flex-1 border border-gray-100 rounded-full px-3 py-1.5 text-xs outline-none focus:border-mint"
-        onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); handleCreate(); } }} />
-      <button onClick={handleCreate} disabled={saving || !text.trim()} aria-label="チャレンジを設定"
-        className="bg-mint text-white rounded-full px-3 py-1.5 text-xs font-bold disabled:opacity-30">
-        {saving ? "..." : "設定"}
-      </button>
-    </div>
-  );
-}
-
-function ChallengeReport({ challengeId, onCompleted }: { challengeId: string; onCompleted: () => void }) {
-  const [result, setResult] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  const handleReport = async () => {
-    if (!result.trim()) return;
-    (document.activeElement as HTMLElement)?.blur();
-    setSaving(true);
-    await supabase.from("challenges").update({ result: result.trim(), is_completed: true }).eq("id", challengeId);
-    onCompleted();
-    setSaving(false);
-  };
-
-  return (
-    <div>
-      <p className="text-[10px] text-mint font-bold mb-1">金曜日！結果を報告しよう</p>
-      <div className="flex gap-2">
-        <input type="text" value={result} onChange={(e) => setResult(e.target.value)}
-          placeholder="チャレンジの結果を書こう" aria-label="チャレンジの結果"
-          className="flex-1 border border-gray-100 rounded-full px-3 py-1.5 text-xs outline-none focus:border-mint"
-          onKeyDown={(e) => { if (e.key === "Enter") { (e.target as HTMLInputElement).blur(); handleReport(); } }} />
-        <button onClick={handleReport} disabled={saving || !result.trim()} aria-label="結果を報告"
-          className="bg-mint text-white rounded-full px-3 py-1.5 text-xs font-bold disabled:opacity-30">
-          {saving ? "..." : "報告"}
-        </button>
-      </div>
     </div>
   );
 }

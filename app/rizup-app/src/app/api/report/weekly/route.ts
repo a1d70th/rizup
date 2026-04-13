@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jsPDF } from "jspdf";
+import { isPremium } from "@/lib/plan";
 
 const moodLabels: Record<number, string> = { 1: "Tsurai", 2: "Futsuu", 3: "Maamaa", 4: "Ii kanji", 5: "Saikou" };
 const dayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -27,10 +28,7 @@ export async function GET(request: NextRequest) {
       .eq("id", user.id).single();
     if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
-    const isPremium = profile.plan === "premium" || profile.plan === "vip";
-    const isTrial = profile.trial_ends_at &&
-      new Date(profile.trial_ends_at).getTime() > Date.now();
-    if (!isPremium && !isTrial) {
+    if (!isPremium({ plan: profile.plan, trial_ends_at: profile.trial_ends_at })) {
       return NextResponse.json({ error: "Premium plan required" }, { status: 403 });
     }
 

@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
@@ -9,19 +10,27 @@ interface Habit {
   id: string;
   title: string;
   icon?: string | null;
+  vision_id?: string | null;
 }
+interface Vision { id: string; title: string; }
 
 const iconOptions = ["📚", "🏃", "🧘", "📝", "🙏", "💪", "🎵", "🍎", "💤", "🚶"];
+const MAX_HABITS = 10;
 
-export default function HabitsPage() {
+function HabitsInner() {
+  const params = useSearchParams();
+  const presetVisionId = params.get("vision_id");
   const [habits, setHabits] = useState<Habit[]>([]);
+  const [visions, setVisions] = useState<Vision[]>([]);
   const [todayLogs, setTodayLogs] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
-  const [showAdd, setShowAdd] = useState(false);
+  const [showAdd, setShowAdd] = useState(!!presetVisionId);
   const [newName, setNewName] = useState("");
   const [newIcon, setNewIcon] = useState("📚");
+  const [newVisionId, setNewVisionId] = useState(presetVisionId || "");
   const [addError, setAddError] = useState("");
+  const [celebrateId, setCelebrateId] = useState<string | null>(null);
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
 
   useEffect(() => {
@@ -29,47 +38,53 @@ export default function HabitsPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       setUserId(user.id);
-      const { data: h, error: hErr } = await supabase.from("habits").select("*").eq("user_id", user.id).order("created_at");
-      if (hErr) console.error("[Habits] Select error:", hErr.message);
+
+      const [{ data: h }, { data: v }] = await Promise.all([
+        supabase.from("habits").select("*").eq("user_id", user.id).is("archived_at", null).order("created_at"),
+        supabase.from("visions").select("id, title").eq("user_id", user.id).order("time_horizon"),
+      ]);
       if (h) setHabits(h);
+      if (v) setVisions(v);
+
       try {
         const { data: logs } = await supabase.from("habit_logs").select("habit_id")
           .eq("user_id", user.id).eq("logged_date", today);
         if (logs) setTodayLogs(new Set(logs.map((l: { habit_id: string }) => l.habit_id)));
-      } catch { /* habit_logs table may not exist yet */ }
+      } catch { /* ignore */ }
       setLoading(false);
     };
     init();
   }, [today]);
 
   const handleAdd = async () => {
-    if (!userId || !newName.trim() || habits.length >= 5) return;
+    if (!userId || !newName.trim() || habits.length >= MAX_HABITS) return;
     (document.activeElement as HTMLElement)?.blur();
     setAddError("");
-    const { data, error } = await supabase.from("habits").insert({
-      user_id: userId,
-      title: newName.trim(),
-    }).select().single();
+    const payload: Record<string, unknown> = {
+      user_id: userId, title: newName.trim(), icon: newIcon,
+    };
+    if (newVisionId) payload.vision_id = newVisionId;
+    const { data, error } = await supabase.from("habits").insert(payload).select().single();
     if (error) {
-      console.error("[Habits] Insert error:", error.message);
       setAddError(`保存できませんでした：${error.message}`);
       return;
     }
     if (data) setHabits(prev => [...prev, data]);
-    setNewName("");
-    setShowAdd(false);
+    setNewName(""); setNewVisionId(""); setShowAdd(false);
   };
 
-  const handleToggle = async (habitId: string) => {
+  const handleToggle = async (h: Habit) => {
     if (!userId) return;
-    const done = todayLogs.has(habitId);
+    const done = todayLogs.has(h.id);
     try {
       if (done) {
-        await supabase.from("habit_logs").delete().match({ habit_id: habitId, logged_date: today });
-        setTodayLogs(prev => { const s = new Set(prev); s.delete(habitId); return s; });
+        await supabase.from("habit_logs").delete().match({ habit_id: h.id, logged_date: today });
+        setTodayLogs(prev => { const s = new Set(prev); s.delete(h.id); return s; });
       } else {
-        await supabase.from("habit_logs").insert({ habit_id: habitId, user_id: userId, logged_date: today });
-        setTodayLogs(prev => new Set(prev).add(habitId));
+        await supabase.from("habit_logs").insert({ habit_id: h.id, user_id: userId, logged_date: today });
+        setTodayLogs(prev => new Set(prev).add(h.id));
+        setCelebrateId(h.id);
+        setTimeout(() => setCelebrateId(null), 700);
       }
     } catch { /* ignore */ }
   };
@@ -93,8 +108,8 @@ export default function HabitsPage() {
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-extrabold">✅ 習慣トラッカー</h2>
-          {habits.length < 5 && (
+          <h2 className="text-lg font-extrabold">🔄 習慣トラッカー</h2>
+          {habits.length < MAX_HABITS && (
             <button onClick={() => setShowAdd(!showAdd)} aria-label="習慣を追加"
               className="bg-mint text-white text-xs font-bold px-4 py-2 rounded-full shadow-md shadow-mint/30">
               {showAdd ? "✕" : "＋ 追加"}
@@ -117,7 +132,7 @@ export default function HabitsPage() {
 
         {showAdd && (
           <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4 animate-fade-in">
-            <p className="text-sm font-bold mb-2">新しい習慣（最大5つ）</p>
+            <p className="text-sm font-bold mb-2">新しい習慣（最大{MAX_HABITS}個）</p>
             <div className="flex gap-1.5 mb-2 flex-wrap">
               {iconOptions.map(ic => (
                 <button key={ic} onClick={() => setNewIcon(ic)}
@@ -126,14 +141,21 @@ export default function HabitsPage() {
                 </button>
               ))}
             </div>
-            <div className="flex gap-2">
-              <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)}
-                placeholder="例：10分読書" aria-label="習慣名"
-                className="flex-1 border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint"
-                onKeyDown={(e) => { if (e.key === "Enter") handleAdd(); }} />
-              <button onClick={handleAdd} disabled={!newName.trim()} aria-label="追加"
-                className="bg-mint text-white font-bold px-4 py-2.5 rounded-xl text-sm disabled:opacity-30">追加</button>
-            </div>
+            <input type="text" value={newName} onChange={e => setNewName(e.target.value)}
+              placeholder="例：10分読書" aria-label="習慣名"
+              className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint mb-2"
+              onKeyDown={e => { if (e.key === "Enter") handleAdd(); }} />
+            {visions.length > 0 && (
+              <select value={newVisionId} onChange={e => setNewVisionId(e.target.value)}
+                className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint bg-white mb-2">
+                <option value="">紐付けるビジョン（任意）</option>
+                {visions.map(v => <option key={v.id} value={v.id}>{v.title}</option>)}
+              </select>
+            )}
+            <button onClick={handleAdd} disabled={!newName.trim()}
+              className="w-full bg-mint text-white font-bold py-2.5 rounded-full text-sm disabled:opacity-30">
+              追加する
+            </button>
             {addError && <p className="text-red-500 text-xs mt-2">{addError}</p>}
           </div>
         )}
@@ -142,24 +164,32 @@ export default function HabitsPage() {
           <div className="text-center py-12">
             <Image src="/sho.png" alt="Sho" width={64} height={64} className="rounded-full mx-auto mb-3 opacity-50" />
             <p className="text-sm font-bold text-text-mid mb-1">まだ習慣がありません</p>
-            <p className="text-xs text-text-light">毎日続けたい習慣を設定しよう！</p>
+            <p className="text-xs text-text-light">毎日続けたい小さな行動を決めよう</p>
           </div>
         ) : (
           <div className="flex flex-col gap-2">
             {habits.map(h => {
               const done = todayLogs.has(h.id);
+              const linkedVision = visions.find(v => v.id === h.vision_id);
+              const celebrate = celebrateId === h.id;
               return (
                 <div key={h.id} className={`bg-white rounded-2xl p-4 border shadow-sm flex items-center gap-3 transition ${done ? "border-mint bg-mint-light/30" : "border-gray-100"}`}>
-                  <button onClick={() => handleToggle(h.id)}
+                  <button onClick={() => handleToggle(h)}
                     aria-label={done ? `${h.title}を未完了にする` : `${h.title}を完了にする`}
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg border-2 transition ${done ? "border-mint bg-mint text-white" : "border-gray-200"}`}>
+                    className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg border-2 transition shrink-0 ${done ? "border-mint bg-mint text-white animate-check-pulse" : "border-gray-200"}`}>
                     {done ? "✓" : (h.icon || "📌")}
                   </button>
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <p className={`text-sm font-bold ${done ? "line-through text-text-light" : ""}`}>{h.title}</p>
+                    {linkedVision && (
+                      <p className="text-[10px] text-mint mt-0.5 truncate">🎯 {linkedVision.title}</p>
+                    )}
                   </div>
+                  {celebrate && (
+                    <Image src="/sho.png" alt="Sho" width={40} height={40} className="rounded-full animate-sho-bounce shrink-0" />
+                  )}
                   <button onClick={() => handleDelete(h.id)} aria-label="削除"
-                    className="text-text-light text-xs hover:text-red-400 p-2">✕</button>
+                    className="text-text-light text-xs hover:text-red-400 p-2 shrink-0">✕</button>
                 </div>
               );
             })}
@@ -168,5 +198,13 @@ export default function HabitsPage() {
       </div>
       <BottomNav />
     </div>
+  );
+}
+
+export default function HabitsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-bg" />}>
+      <HabitsInner />
+    </Suspense>
   );
 }

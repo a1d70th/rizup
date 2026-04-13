@@ -12,7 +12,7 @@ interface UserRow {
 
 const planColors: Record<string, string> = {
   free: "bg-gray-100 text-gray-600", pro: "bg-mint-light text-mint",
-  premium: "bg-orange-light text-orange", vip: "bg-purple-100 text-purple-600",
+  premium: "bg-orange-light text-orange",
 };
 
 export default function AdminUsersPage() {
@@ -54,8 +54,8 @@ export default function AdminUsersPage() {
   };
 
   const changePlan = async (userId: string) => {
-    const plan = prompt("新しいプランを入力 (free / pro / premium / vip)");
-    if (!plan || !["free", "pro", "premium", "vip"].includes(plan)) return;
+    const plan = prompt("新しいプランを入力 (free / pro / premium)");
+    if (!plan || !["free", "pro", "premium"].includes(plan)) return;
     await supabase.from("profiles").update({ plan }).eq("id", userId);
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, plan } : u));
   };

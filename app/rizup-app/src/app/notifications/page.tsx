@@ -14,27 +14,15 @@ interface Notification {
 }
 
 const typeLabels: Record<string, { icon: string; label: string }> = {
-  badge: { icon: "🏅", label: "バッジ獲得" },
   trial_ending: { icon: "⏰", label: "トライアル" },
   growth_letter: { icon: "💌", label: "成長の手紙" },
   comment: { icon: "💬", label: "コメント" },
-  reaction: { icon: "❤️", label: "リアクション" },
-  unreplied: { icon: "💬", label: "未返信コメント" },
-  mvp_announcement: { icon: "👑", label: "月間MVP" },
+  reaction: { icon: "🌱", label: "リアクション" },
   warning: { icon: "⚠️", label: "警告" },
   announcement: { icon: "📢", label: "お知らせ" },
-  vip_message: { icon: "👑", label: "VIP" },
-  sho_weekly: { icon: "🌿", label: "Sho" },
   event: { icon: "🎉", label: "イベント" },
+  sho_morning: { icon: "🌿", label: "Sho" },
 };
-
-const shoMessages = [
-  "おはよう。今日も完璧じゃなくていいから、1つだけ自分のためになることをしよう。",
-  "昨日の自分より、ちょっとだけ前に進めたら、それでいい。あなたのペースで。",
-  "今日も「ここに来た」こと自体が、すでにすごいことだよ。",
-  "比べなくていい。あなたはあなたのままで、十分前に進んでる。",
-  "小さな一歩を積み重ねよう。気づいたら、遠くまで来てるから。",
-];
 
 function SkeletonNotif() {
   return (
@@ -52,7 +40,6 @@ function SkeletonNotif() {
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
-  const [shoInsight] = useState(shoMessages[Math.floor(Math.random() * shoMessages.length)]);
 
   useEffect(() => {
     const init = async () => {
@@ -61,21 +48,18 @@ export default function NotificationsPage() {
         if (!user) { setLoading(false); return; }
 
         const { data } = await supabase.from("notifications")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(30);
+          .select("*").eq("user_id", user.id)
+          .order("created_at", { ascending: false }).limit(30);
 
         if (data) {
           setNotifications(data);
-          // Mark unread as read
           const unread = data.filter(n => !n.is_read).map(n => n.id);
           if (unread.length > 0) {
             await supabase.from("notifications").update({ is_read: true }).in("id", unread);
           }
         }
       } catch (err) {
-        console.error("[Rizup Notifications]", err);
+        console.error("[Notifications]", err);
       }
       setLoading(false);
     };
@@ -88,17 +72,6 @@ export default function NotificationsPage() {
       <div className="max-w-md mx-auto px-4 py-4">
         <h2 className="text-lg font-extrabold mb-4">🔔 通知</h2>
 
-        {/* Sho Insight */}
-        <div className="bg-gradient-to-br from-mint-light to-orange-light rounded-2xl p-4 shadow-sm animate-fade-in mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Image src="/sho.png" alt="Sho" width={28} height={28} className="rounded-full" />
-            <span className="text-xs font-bold text-mint flex-1">今日の Sho Insight</span>
-            <span className="text-[10px] text-text-light">今朝 6:00</span>
-          </div>
-          <p className="text-sm text-text leading-relaxed">{shoInsight}</p>
-        </div>
-
-        {/* Notifications */}
         {loading ? (
           <div className="flex flex-col gap-3">
             <SkeletonNotif />
