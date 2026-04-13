@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import Header from "@/components/Header";
@@ -31,6 +32,7 @@ interface MorningPost {
 }
 
 export default function JournalPage() {
+  const router = useRouter();
   const [mode, setMode] = useState<"morning" | "evening">("morning");
   const [mood, setMood] = useState(3);
   const [content, setContent] = useState("");
@@ -287,6 +289,10 @@ export default function JournalPage() {
       setAiFeedback(feedback);
       showToast("success", `投稿できたよ！${mode === "morning" ? "☀️" : "🌙"} 複利 +1% 積まれた🌱`);
       setPosted(true);
+      // 朝ジャーナル投稿後: 3秒後に今日のToDo画面へ自動遷移
+      if (mode === "morning") {
+        setTimeout(() => router.push("/today"), 3000);
+      }
     }
     setLoading(false);
   };
