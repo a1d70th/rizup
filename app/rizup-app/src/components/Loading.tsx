@@ -12,7 +12,7 @@ export default function Loading({ message, fullscreen = true }: Props) {
     : "flex flex-col items-center justify-center py-8";
   return (
     <div className={wrapperClass} role="status" aria-live="polite">
-      <Image src="/sho.png" alt="Sho" width={56} height={56}
+      <Image src="/sho.png" alt="Rizup" width={56} height={56}
         className="rounded-full animate-sho-float" />
       {message && <p className="text-xs text-text-mid mt-3">{message}</p>}
       <span className="sr-only">読み込み中</span>

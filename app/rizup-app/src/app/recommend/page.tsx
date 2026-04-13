@@ -187,7 +187,7 @@ export default function RecommendPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-bg flex items-center justify-center">
-      <Image src="/sho.png" alt="Sho" width={48} height={48} className="animate-sho-float rounded-full" />
+      <Image src="/sho.png" alt="Rizup" width={48} height={48} className="animate-sho-float rounded-full" />
     </div>
   );
 
@@ -257,7 +257,7 @@ export default function RecommendPage() {
 
         {shoRecs.length > 0 && (
           <>
-            <p className="text-sm font-bold text-mint mb-3">🌿 Sho のおすすめ</p>
+            <p className="text-sm font-bold text-mint mb-3">🌿 Rizup のおすすめ</p>
             {shoRecs.map(r => <Card key={r.id} rec={r} isSho={true} likedIds={likedIds} userId={userId}
               onLike={handleLike} onDelete={handleDelete} onToggleComments={loadComments}
               openComments={openComments} comments={comments[r.id] || []}
@@ -279,7 +279,7 @@ export default function RecommendPage() {
 
         {filtered.length === 0 && (
           <div className="text-center py-12">
-            <Image src="/sho.png" alt="Sho" width={64} height={64} className="rounded-full mx-auto mb-3 opacity-50" />
+            <Image src="/sho.png" alt="Rizup" width={64} height={64} className="rounded-full mx-auto mb-3 opacity-50" />
             <p className="text-sm text-text-light">まだおすすめがありません</p>
             {canPost && <p className="text-xs text-text-light mt-1">最初のおすすめを投稿しよう！</p>}
           </div>
@@ -323,7 +323,7 @@ function Card({ rec, isSho, likedIds, userId, onLike, onDelete, onToggleComments
           )}
           <div className="flex items-center gap-2 mt-1.5">
             <span className={`text-[10px] font-bold ${badgeColor}`}>
-              {cat.emoji} {cat.label} — {isSho ? "Sho のおすすめ" : `${rec.profiles?.name || "ユーザー"}のおすすめ`}
+              {cat.emoji} {cat.label} — {isSho ? "Rizup のおすすめ" : `${rec.profiles?.name || "ユーザー"}のおすすめ`}
             </span>
           </div>
         </div>

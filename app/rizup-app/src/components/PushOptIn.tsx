@@ -76,7 +76,7 @@ export default function PushOptIn() {
         <p className="text-sm font-extrabold flex-1">朝の通知をON</p>
       </div>
       <p className="text-xs text-text-mid leading-relaxed mb-3">
-        毎朝7時、Shoが一声かけます。ジャーナル忘れを防ぎます。
+        毎朝7時、Rizupが一声かけます。ジャーナル忘れを防ぎます。
       </p>
       <button onClick={enable} disabled={loading}
         className="w-full bg-mint text-white font-bold py-2.5 rounded-full text-sm shadow-md disabled:opacity-40">

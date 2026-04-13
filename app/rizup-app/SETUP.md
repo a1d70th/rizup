@@ -123,7 +123,7 @@ Resend の SMTP を使うことで制限を解除できます。
 3. Google アカウントを選択
 4. `/auth/callback` → `/home`（初回は `/onboarding`）にリダイレクトされる
 
-## 7. Claude API（Sho Insight）を有効化
+## 7. Claude API（Rizup Insight）を有効化
 
 1. `https://console.anthropic.com` でAPIキーを取得
 2. Vercel → Environment Variables に追加：
@@ -132,7 +132,7 @@ Resend の SMTP を使うことで制限を解除できます。
 |---|---|
 | `ANTHROPIC_API_KEY` | `sk-ant-api03-...` |
 
-3. Redeploy → ホーム画面の「今日の Sho Insight」がパーソナライズされたメッセージに変わる
+3. Redeploy → ホーム画面の「今日の Rizup Insight」がパーソナライズされたメッセージに変わる
 4. APIキー未設定でもフォールバックメッセージが表示されるので、アプリは動作する
 
 ## 8. Apple ログインを有効化
@@ -235,7 +235,7 @@ Vercel → Environment Variables に追加：
 
 1. アプリにアクセス → 新規登録
 2. メール確認 → オンボーディング（名前・夢・星座・タイプ診断）
-3. ホーム画面 → Sho Insight が表示される
+3. ホーム画面 → Rizup Insight が表示される
 4. ジャーナリング投稿 → タイムラインに表示される
 5. リアクション → カウントが増減する
 6. プロフィール → 投稿数・ストリーク・バッジが表示される

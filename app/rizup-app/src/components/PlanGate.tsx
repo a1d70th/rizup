@@ -9,7 +9,7 @@ const planInfo: Record<string, { name: string; price: string; color: string; fea
     name: "Pro",
     price: "¥780/月",
     color: "text-mint",
-    features: ["AIフィードバック", "Sho Insight", "成長グラフ全指標", "習慣・ビジョン無制限", "アンチビジョン"],
+    features: ["AIフィードバック", "Rizup Insight", "成長グラフ全指標", "習慣・ビジョン無制限", "アンチビジョン"],
   },
   premium: {
     name: "Premium",
@@ -36,7 +36,7 @@ export default function PlanGate({ currentPlan, requiredPlan, trialEndsAt, child
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
-      <Image src="/sho.png" alt="Sho" width={80} height={80} className="rounded-full mb-4 animate-sho-float" />
+      <Image src="/sho.png" alt="Rizup" width={80} height={80} className="rounded-full mb-4 animate-sho-float" />
       <h2 className="text-xl font-extrabold mb-2">この機能は{info.name}プラン限定だよ</h2>
       <p className="text-sm text-text-mid mb-6">7日間無料トライアルで全機能を体験できます</p>
       <div className="bg-mint-light/40 rounded-2xl p-5 max-w-xs w-full mb-6 text-left border border-mint/30">

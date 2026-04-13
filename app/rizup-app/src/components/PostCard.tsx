@@ -238,7 +238,7 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
       {post.ai_feedback && (
         <div className="bg-mint-light rounded-xl p-3 mb-3">
           <div className="flex items-center gap-1.5 mb-1">
-            <Image src="/sho.png" alt="Sho" width={20} height={20} className="rounded-full" />
+            <Image src="/sho.png" alt="Rizup" width={20} height={20} className="rounded-full" />
             <span className="text-xs font-bold text-mint">Rizup より</span>
           </div>
           <p className="text-xs text-text leading-relaxed">{post.ai_feedback}</p>

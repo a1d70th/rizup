@@ -6,10 +6,9 @@ import { supabase } from "@/lib/supabase";
 
 const baseItems = [
   { href: "/home", icon: "🏠", label: "ホーム" },
-  { href: "/today", icon: "✅", label: "今日" },
+  { href: "/journal", icon: "📝", label: "ジャーナル" },
   { href: "/vision", icon: "🎯", label: "ビジョン" },
   { href: "/growth", icon: "📈", label: "成長" },
-  { href: "/profile", icon: "👤", label: "マイページ" },
 ];
 
 export default function BottomNav() {

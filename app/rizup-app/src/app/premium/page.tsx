@@ -63,7 +63,7 @@ export default function PremiumPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-bg flex items-center justify-center">
-      <Image src="/sho.png" alt="Sho" width={48} height={48} className="animate-sho-float rounded-full" />
+      <Image src="/sho.png" alt="Rizup" width={48} height={48} className="animate-sho-float rounded-full" />
     </div>
   );
 

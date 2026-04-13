@@ -105,7 +105,7 @@ export default function RegisterPage() {
   if (success) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
-        <Image src="/sho.png" alt="Sho" width={96} height={96} className="rounded-full mb-4 animate-sho-float" />
+        <Image src="/sho.png" alt="Rizup" width={96} height={96} className="rounded-full mb-4 animate-sho-float" />
         <h1 className="text-2xl font-extrabold mb-2">メールを確認してね</h1>
         <p className="text-text-mid text-sm leading-relaxed max-w-xs mb-4">
           <strong>{email}</strong> に確認メールを送りました。<br />
@@ -125,7 +125,7 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
-      <Image src="/sho.png" alt="Sho" width={72} height={72} className="rounded-full mb-4" />
+      <Image src="/sho.png" alt="Rizup" width={72} height={72} className="rounded-full mb-4" />
       <h1 className="text-2xl font-extrabold mb-1">はじめよう</h1>
       <p className="text-text-mid text-sm mb-8">Rizup に新規登録</p>
 

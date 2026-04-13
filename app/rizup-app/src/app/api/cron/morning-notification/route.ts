@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     const notifications = uniqueUsers.map(uid => ({
       user_id: uid,
       type: "sho_morning",
-      content: `Sho より：${todayMessage}`,
+      content: `Rizup より：${todayMessage}`,
     }));
 
     // Batch insert (max 100 at a time)

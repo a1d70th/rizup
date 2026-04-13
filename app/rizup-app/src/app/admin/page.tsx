@@ -49,7 +49,7 @@ export default function AdminDashboard() {
   if (!authorized) return null;
   if (loading) return (
     <div className="min-h-screen bg-bg flex items-center justify-center">
-      <Image src="/sho.png" alt="Sho" width={48} height={48} className="animate-sho-float rounded-full" />
+      <Image src="/sho.png" alt="Rizup" width={48} height={48} className="animate-sho-float rounded-full" />
     </div>
   );
 
@@ -79,7 +79,7 @@ export default function AdminDashboard() {
     <div className="min-h-screen bg-bg pb-20">
       <div className="bg-white border-b border-gray-100 px-4 py-4">
         <div className="max-w-2xl mx-auto flex items-center gap-3">
-          <Image src="/sho.png" alt="Sho" width={32} height={32} className="rounded-full" />
+          <Image src="/sho.png" alt="Rizup" width={32} height={32} className="rounded-full" />
           <h1 className="text-lg font-extrabold">管理ダッシュボード</h1>
           <Link href="/home" className="ml-auto text-xs text-text-light hover:text-mint">← ホーム</Link>
         </div>

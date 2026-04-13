@@ -19,7 +19,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return this.props.fallback || (
         <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6 text-center">
-          <img src="/sho.png" alt="Sho" width={80} height={80} className="rounded-full mb-4 animate-sho-float" />
+          <img src="/sho.png" alt="Rizup" width={80} height={80} className="rounded-full mb-4 animate-sho-float" />
           <h2 className="text-xl font-extrabold mb-2">一時的に表示できなかったよ</h2>
           <p className="text-sm text-text-mid max-w-xs mb-5">
             ネットワークかサーバーの問題かもしれません。少し待ってもう一度お試しください。

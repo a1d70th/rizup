@@ -53,7 +53,7 @@ export default function AntiVisionPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-bg flex items-center justify-center">
-      <Image src="/sho.png" alt="Sho" width={48} height={48} className="animate-sho-float rounded-full" />
+      <Image src="/sho.png" alt="Rizup" width={48} height={48} className="animate-sho-float rounded-full" />
     </div>
   );
 
@@ -86,7 +86,7 @@ export default function AntiVisionPage() {
         {/* リスト */}
         {items.length === 0 ? (
           <div className="text-center py-12">
-            <Image src="/sho.png" alt="Sho" width={64} height={64} className="rounded-full mx-auto mb-3 opacity-50" />
+            <Image src="/sho.png" alt="Rizup" width={64} height={64} className="rounded-full mx-auto mb-3 opacity-50" />
             <p className="text-sm font-bold text-text-mid mb-1">まだ書かれていません</p>
             <p className="text-xs text-text-light">避けたい未来を言葉にしてみよう</p>
           </div>
@@ -109,7 +109,7 @@ export default function AntiVisionPage() {
 
         {items.length > 0 && (
           <div className="mt-6 bg-gradient-to-br from-mint-light to-orange-light rounded-2xl p-4 border border-mint/20 flex gap-3 items-start">
-            <Image src="/sho.png" alt="Sho" width={32} height={32} className="rounded-full shrink-0 mt-0.5" />
+            <Image src="/sho.png" alt="Rizup" width={32} height={32} className="rounded-full shrink-0 mt-0.5" />
             <p className="text-xs text-text leading-relaxed">
               ここに書いた未来から、あなたを遠ざけるのは毎日の小さな選択。<br />
               今日の <a href="/today" className="text-mint font-bold underline">ToDo</a> と <a href="/habits" className="text-mint font-bold underline">習慣</a> が、その一歩になるよ。

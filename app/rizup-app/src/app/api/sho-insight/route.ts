@@ -43,7 +43,7 @@ ${mbti ? `MBTI：${mbti}` : ""}
           const typeDesc = descData.content?.[0]?.text;
           if (typeDesc) return NextResponse.json({ typeDesc });
         }
-      } catch (e) { console.error("[Sho Insight] TypeDesc error:", e); }
+      } catch (e) { console.error("[Rizup Insight] TypeDesc error:", e); }
       return NextResponse.json({ typeDesc: null });
     }
 
@@ -97,7 +97,7 @@ ${mbti ? `MBTI：${mbti}` : ""}
         }
       }
     } catch (e) {
-      console.error("[Sho Insight] DB fetch error (non-fatal):", e);
+      console.error("[Rizup Insight] DB fetch error (non-fatal):", e);
     }
 
     // Fallback if no API key
@@ -155,7 +155,7 @@ ${mbti ? `MBTI：${mbti}` : ""}
 
     if (!response.ok) {
       const err = await response.text();
-      console.error("[Sho Insight API] Claude error:", err);
+      console.error("[Rizup Insight API] Claude error:", err);
       return NextResponse.json({ insight: `${weekday}の朝。今日も自分のペースで前に進もう。あなたの味方だよ。` });
     }
 
@@ -164,7 +164,7 @@ ${mbti ? `MBTI：${mbti}` : ""}
 
     return NextResponse.json({ insight });
   } catch (err) {
-    console.error("[Sho Insight API] Error:", err);
+    console.error("[Rizup Insight API] Error:", err);
     return NextResponse.json({ insight: "おはよう。今日も一緒にいるよ。あなたの味方だから。" });
   }
 }

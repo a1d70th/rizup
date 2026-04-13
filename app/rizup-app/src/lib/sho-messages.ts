@@ -1,4 +1,4 @@
-// Sho のメッセージライブラリ
+// Rizup のメッセージライブラリ
 // 朝 30 / 習慣達成 20 / ビジョン更新 10 / ToDo完了 15 / 週次3通/月次3通
 
 export const SHO_MORNING_MESSAGES = [

@@ -6,6 +6,9 @@ import BottomNav from "@/components/BottomNav";
 import Image from "next/image";
 import Link from "next/link";
 import { estimateDaysToGoal } from "@/lib/compound";
+import { showToast } from "@/components/Toast";
+
+interface AntiVision { id: string; content: string; created_at: string; }
 
 interface Vision {
   id: string;
@@ -52,6 +55,7 @@ export default function VisionPage() {
   const [formCategory, setFormCategory] = useState("growth");
   const [saving, setSaving] = useState(false);
   const [feedbackLoading, setFeedbackLoading] = useState<string | null>(null);
+  const [tab, setTab] = useState<"vision" | "anti">("vision");
 
   useEffect(() => {
     const init = async () => {
@@ -160,7 +164,7 @@ export default function VisionPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-bg flex items-center justify-center">
-      <Image src="/sho.png" alt="Sho" width={48} height={48} className="animate-sho-float rounded-full" />
+      <Image src="/sho.png" alt="Rizup" width={48} height={48} className="animate-sho-float rounded-full" />
     </div>
   );
 
@@ -168,13 +172,28 @@ export default function VisionPage() {
     <div className="min-h-screen bg-bg pb-20">
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-extrabold">🎯 ビジョン</h2>
           <button onClick={() => setShowForm(!showForm)}
             className="bg-mint text-white text-xs font-bold px-4 py-2 rounded-full shadow-md shadow-mint/30">
             {showForm ? "✕" : "＋ 追加"}
           </button>
         </div>
+        {/* タブ切替：ビジョン / アンチビジョン */}
+        <div className="flex bg-white rounded-2xl p-1 border border-gray-100 mb-4">
+          <button onClick={() => setTab("vision")}
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition ${tab === "vision" ? "bg-mint-light text-mint" : "text-text-light"}`}>
+            🎯 ビジョン（なりたい）
+          </button>
+          <button onClick={() => setTab("anti")}
+            className={`flex-1 py-2 rounded-xl text-xs font-bold transition ${tab === "anti" ? "bg-orange-light text-orange" : "text-text-light"}`}>
+            🚫 アンチ（避けたい）
+          </button>
+        </div>
+        {tab === "anti" && (
+          <AntiVisionPanel userId={userId} />
+        )}
+        {tab === "vision" && <></>}
 
         {visions.length > 0 && (
           <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
@@ -225,13 +244,13 @@ export default function VisionPage() {
           </div>
         )}
 
-        {visions.length === 0 ? (
+        {tab === "vision" && visions.length === 0 ? (
           <div className="text-center py-12">
-            <Image src="/sho.png" alt="Sho" width={64} height={64} className="rounded-full mx-auto mb-3 opacity-50" />
+            <Image src="/sho.png" alt="Rizup" width={64} height={64} className="rounded-full mx-auto mb-3 opacity-50" />
             <p className="text-sm font-bold text-text-mid mb-1">まだ目標がありません</p>
             <p className="text-xs text-text-light">最終ゴールから逆算してみよう</p>
           </div>
-        ) : (
+        ) : tab === "vision" ? (
           grouped.filter(g => g.items.length > 0).map(group => (
             <div key={group.value} className="mb-5">
               <div className="flex items-center gap-2 mb-2">
@@ -286,8 +305,8 @@ export default function VisionPage() {
                       {v.ai_feedback && (
                         <div className="bg-mint-light rounded-xl p-3 mb-2">
                           <div className="flex items-center gap-1 mb-1">
-                            <Image src="/sho.png" alt="Sho" width={16} height={16} className="rounded-full" />
-                            <span className="text-[10px] font-bold text-mint">Sho のアドバイス</span>
+                            <Image src="/sho.png" alt="Rizup" width={16} height={16} className="rounded-full" />
+                            <span className="text-[10px] font-bold text-mint">Rizup のアドバイス</span>
                           </div>
                           <p className="text-xs text-text leading-relaxed">{v.ai_feedback}</p>
                         </div>
@@ -306,9 +325,79 @@ export default function VisionPage() {
               </div>
             </div>
           ))
-        )}
+        ) : null}
       </div>
       <BottomNav />
+    </div>
+  );
+}
+
+/** アンチビジョン一覧（ビジョン画面のタブ内に埋め込み） */
+function AntiVisionPanel({ userId }: { userId: string | null }) {
+  const [items, setItems] = useState<AntiVision[]>([]);
+  const [newContent, setNewContent] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!userId) return;
+    supabase.from("anti_visions")
+      .select("*").eq("user_id", userId).order("created_at", { ascending: true })
+      .then(({ data }) => { if (data) setItems(data); });
+  }, [userId]);
+
+  const handleAdd = async () => {
+    if (!userId || !newContent.trim() || items.length >= 5) return;
+    (document.activeElement as HTMLElement)?.blur();
+    setSaving(true);
+    const { data, error } = await supabase.from("anti_visions")
+      .insert({ user_id: userId, content: newContent.trim() })
+      .select().single();
+    if (error) { showToast("error", error.message); }
+    else if (data) { setItems(prev => [...prev, data]); setNewContent(""); showToast("success", "追加しました"); }
+    setSaving(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("削除しますか？")) return;
+    await supabase.from("anti_visions").delete().eq("id", id);
+    setItems(prev => prev.filter(x => x.id !== id));
+  };
+
+  return (
+    <div className="mb-4 animate-fade-in">
+      <p className="text-xs text-text-mid leading-relaxed mb-3">
+        5年後、絶対こうなりたくない自分。書くことで「今日の一歩」の意味が変わる。
+      </p>
+      {items.length < 5 && (
+        <div className="bg-white rounded-2xl p-4 border border-orange/20 shadow-sm mb-4">
+          <textarea value={newContent} onChange={e => setNewContent(e.target.value)}
+            placeholder="例：自分を信じられないまま、言い訳ばかりしている自分"
+            maxLength={300}
+            className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm resize-none h-20 outline-none focus:border-orange" />
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-[10px] text-text-light">{newContent.length}/300 ・ あと{5 - items.length}個</p>
+            <button onClick={handleAdd} disabled={!newContent.trim() || saving}
+              className="bg-orange text-white font-bold px-5 py-2 rounded-full text-xs shadow-md disabled:opacity-30">
+              {saving ? "..." : "追加"}
+            </button>
+          </div>
+        </div>
+      )}
+      {items.length === 0 ? (
+        <p className="text-center text-xs text-text-light py-4">避けたい未来を1つ書いてみよう</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {items.map((x, i) => (
+            <div key={x.id} className="bg-white rounded-2xl p-4 border border-orange/20 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-full bg-orange-light text-orange font-extrabold flex items-center justify-center text-sm shrink-0">{i + 1}</div>
+                <p className="text-sm text-text leading-relaxed flex-1 whitespace-pre-wrap break-words">{x.content}</p>
+                <button onClick={() => handleDelete(x.id)} className="text-text-light hover:text-red-400 text-xs p-1">✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

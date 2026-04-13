@@ -21,7 +21,7 @@
 - [x] Supabase DB スキーマ設計・作成手順書
 - [x] ログイン・新規登録・Google認証画面
 - [x] オンボーディング 5ステップ（名前→夢→星座+生年月日→5タイプ診断→Xシェア）
-- [x] ホーム（タイムライン + Sho Insight + ストリーク + 強制コメントバナー）
+- [x] ホーム（タイムライン + Rizup Insight + ストリーク + 強制コメントバナー）
 - [x] ジャーナリング（朝/夜モード + 睡眠 + 感謝3種）
 - [x] プロフィール（バッジ + 気分グラフ + 言葉ポジティブ度）
 - [x] 通知画面（5種類）
@@ -40,9 +40,9 @@
 - [x] デモモード完全削除（全ページ）
 - [x] プロフィール：データなし→/onboarding リダイレクト追加
 - [x] 通知画面：リアルデータ（Supabase）に切り替え
-- [x] Sho Insight API エンドポイント作成（/api/sho-insight）
+- [x] Rizup Insight API エンドポイント作成（/api/sho-insight）
 - [x] Claude API 接続（ANTHROPIC_API_KEY 環境変数対応・フォールバック付き）
-- [x] Sho Insight のキャッシュ（localStorage 7日分保存・重複防止）
+- [x] Rizup Insight のキャッシュ（localStorage 7日分保存・重複防止）
 - [x] SETUP.md：Google/Apple認証・Stripe決済・Claude API の手順追記
 - [x] グラフ色分け（気分5段階）+ 凡例追加
 - [x] コメント0件時「最初のコメントを送ろう！」表示

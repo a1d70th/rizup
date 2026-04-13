@@ -80,7 +80,7 @@ export default function NotificationsPage() {
           </div>
         ) : notifications.length === 0 ? (
           <div className="text-center py-12">
-            <Image src="/sho.png" alt="Sho" width={56} height={56} className="rounded-full mx-auto mb-3 opacity-50" />
+            <Image src="/sho.png" alt="Rizup" width={56} height={56} className="rounded-full mx-auto mb-3 opacity-50" />
             <p className="text-sm font-bold text-text-mid mb-1">まだ通知はありません</p>
             <p className="text-xs text-text-light">ジャーナルを投稿すると、ここに通知が届くよ</p>
           </div>

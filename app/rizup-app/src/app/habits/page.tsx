@@ -100,7 +100,7 @@ function HabitsInner() {
 
   if (loading) return (
     <div className="min-h-screen bg-bg flex items-center justify-center">
-      <Image src="/sho.png" alt="Sho" width={48} height={48} className="animate-sho-float rounded-full" />
+      <Image src="/sho.png" alt="Rizup" width={48} height={48} className="animate-sho-float rounded-full" />
     </div>
   );
 
@@ -168,7 +168,7 @@ function HabitsInner() {
 
         {habits.length === 0 ? (
           <div className="text-center py-12">
-            <Image src="/sho.png" alt="Sho" width={64} height={64} className="rounded-full mx-auto mb-3 opacity-50" />
+            <Image src="/sho.png" alt="Rizup" width={64} height={64} className="rounded-full mx-auto mb-3 opacity-50" />
             <p className="text-sm font-bold text-text-mid mb-1">まだ習慣がありません</p>
             <p className="text-xs text-text-light">毎日続けたい小さな行動を決めよう</p>
           </div>
@@ -192,7 +192,7 @@ function HabitsInner() {
                     )}
                   </div>
                   {celebrate && (
-                    <Image src="/sho.png" alt="Sho" width={40} height={40} className="rounded-full animate-sho-bounce shrink-0" />
+                    <Image src="/sho.png" alt="Rizup" width={40} height={40} className="rounded-full animate-sho-bounce shrink-0" />
                   )}
                   <button onClick={() => handleDelete(h.id)} aria-label="削除"
                     className="text-text-light text-xs hover:text-red-400 p-2 shrink-0">✕</button>
