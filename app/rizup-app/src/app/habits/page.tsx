@@ -37,23 +37,30 @@ function HabitsInner() {
 
   useEffect(() => {
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-
-      const [{ data: h }, { data: v }] = await Promise.all([
-        supabase.from("habits").select("*").eq("user_id", user.id).is("archived_at", null).order("created_at"),
-        supabase.from("visions").select("id, title").eq("user_id", user.id).order("time_horizon"),
-      ]);
-      if (h) setHabits(h);
-      if (v) setVisions(v);
-
       try {
-        const { data: logs } = await supabase.from("habit_logs").select("habit_id")
-          .eq("user_id", user.id).eq("logged_date", today);
-        if (logs) setTodayLogs(new Set(logs.map((l: { habit_id: string }) => l.habit_id)));
-      } catch { /* ignore */ }
-      setLoading(false);
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { setLoading(false); return; }
+        setUserId(user.id);
+
+        // habits / visions を個別try/catch（片方失敗でもフリーズしない）
+        try {
+          const { data: h } = await supabase.from("habits").select("*").eq("user_id", user.id).is("archived_at", null).order("created_at");
+          if (h) setHabits(h);
+        } catch { /* ignore */ }
+        try {
+          const { data: v } = await supabase.from("visions").select("id, title").eq("user_id", user.id).order("time_horizon");
+          if (v) setVisions(v);
+        } catch { /* ignore */ }
+        try {
+          const { data: logs } = await supabase.from("habit_logs").select("habit_id")
+            .eq("user_id", user.id).eq("logged_date", today);
+          if (logs) setTodayLogs(new Set(logs.map((l: { habit_id: string }) => l.habit_id)));
+        } catch { /* ignore */ }
+      } catch (e) {
+        console.error("[Habits init]", e);
+      } finally {
+        setLoading(false);
+      }
     };
     init();
   }, [today]);

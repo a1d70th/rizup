@@ -3,25 +3,35 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 
+// 文字 or テキスト判定：英数2文字以上のテキスト（"Sho"等）は絵文字でない=デフォルト🌿
+function isLikelyEmoji(s: string): boolean {
+  // ASCII英数字を含む or 3文字以上 → emoji じゃない
+  if (/[a-zA-Z0-9]/.test(s)) return false;
+  if (s.length > 3) return false;
+  return true;
+}
+
 function Avatar({ url, size = 48 }: { url?: string | null; size?: number }) {
   const [err, setErr] = useState(false);
   const isUrl = url?.startsWith("http") && !err;
+  const trimmed = url && !url.startsWith("http") ? url.trim() : "";
+  const fallbackChar = trimmed && isLikelyEmoji(trimmed) ? trimmed : "🌿";
   return isUrl ? (
     <img
       src={url!}
       alt=""
       width={size}
       height={size}
-      className="rounded-full object-cover bg-mint-light shrink-0 ring-2 ring-white shadow-sm"
+      className="rounded-full object-cover bg-mint-light dark:bg-[#2a2a2a] shrink-0 ring-2 ring-white dark:ring-[#1a1a1a] shadow-sm"
       style={{ width: size, height: size }}
       onError={() => setErr(true)}
     />
   ) : (
     <div
-      className="rounded-full bg-gradient-to-br from-mint-light to-orange-light flex items-center justify-center shrink-0 ring-2 ring-white shadow-sm"
+      className="rounded-full bg-gradient-to-br from-mint-light to-orange-light dark:from-[#2a2a2a] dark:to-[#1f1f1f] flex items-center justify-center shrink-0 ring-2 ring-white dark:ring-[#1a1a1a] shadow-sm"
       style={{ width: size, height: size, fontSize: size * 0.5 }}
     >
-      {url && !url.startsWith("http") ? url : "🌿"}
+      {fallbackChar}
     </div>
   );
 }

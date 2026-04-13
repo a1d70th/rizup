@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
@@ -11,7 +11,7 @@ import { SkeletonTimeline } from "@/components/Skeleton";
 import { findTodayPost } from "@/lib/safe-insert";
 
 type TimelineTab = "all" | "following" | "morning" | "evening";
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 50;
 
 interface PostWithProfile {
   id: string; user_id: string; type: string; content: string;
@@ -38,8 +38,6 @@ export default function HomePage() {
   const [habitsCompleted, setHabitsCompleted] = useState({ done: 0, total: 0 });
   const [hasMorningPost, setHasMorningPost] = useState(false);
   const [hasEveningPost, setHasEveningPost] = useState(false);
-  const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
-  const [trialDismissed, setTrialDismissed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [confettiKey] = useState(0);
 
@@ -50,18 +48,10 @@ export default function HomePage() {
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
   const [newPostsCount, setNewPostsCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const loaderRef = useRef<HTMLDivElement | null>(null);
   const latestSeenAtRef = useRef<string | null>(null);
   const timelineTopRef = useRef<HTMLDivElement | null>(null);
 
   const today = todayJST();
-
-  // トライアルバナー：今日分の閉じた状態を読み込み
-  useEffect(() => {
-    if (typeof window !== "undefined" && localStorage.getItem("trial_dismissed_today") === today) {
-      setTrialDismissed(true);
-    }
-  }, [today]);
 
   useEffect(() => {
     const init = async () => {
@@ -75,10 +65,6 @@ export default function HomePage() {
           if (profile) {
             setStreak(profile.streak || 0);
             if (profile.is_admin) setIsAdmin(true);
-            if (profile.trial_ends_at) {
-              const daysLeft = Math.ceil((new Date(profile.trial_ends_at).getTime() - Date.now()) / 86400000);
-              if (daysLeft > 0) setTrialDaysLeft(daysLeft);
-            }
           }
 
           // 今日のToDo（テーブル未存在でも落ちない）
@@ -150,18 +136,11 @@ export default function HomePage() {
     setHasMore(true);
   }, [tab]);
 
-  // 無限スクロール（依存をref化して IntersectionObserver の再登録ループを防ぐ）
-  const postsRef = useRef<PostWithProfile[]>([]);
-  const fetchingRef = useRef(false);
-  const hasMoreRef = useRef(true);
-  useEffect(() => { postsRef.current = posts; }, [posts]);
-  useEffect(() => { fetchingRef.current = fetchingMore; }, [fetchingMore]);
-  useEffect(() => { hasMoreRef.current = hasMore; }, [hasMore]);
-
-  const fetchMore = useCallback(async () => {
-    if (fetchingRef.current || !hasMoreRef.current || postsRef.current.length === 0) return;
+  // 「もっと見る」ボタン式のロード（IntersectionObserverをやめてシンプルに）
+  const fetchMore = async () => {
+    if (fetchingMore || !hasMore || posts.length === 0) return;
     setFetchingMore(true);
-    const oldest = postsRef.current[postsRef.current.length - 1].created_at;
+    const oldest = posts[posts.length - 1].created_at;
     try {
       const first = await supabase.from("posts")
         .select("*, profiles(name, avatar_url, streak)")
@@ -188,17 +167,7 @@ export default function HomePage() {
       setHasMore(false);
     }
     setFetchingMore(false);
-  }, []);
-
-  useEffect(() => {
-    if (!loaderRef.current) return;
-    const el = loaderRef.current;
-    const io = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) fetchMore();
-    }, { rootMargin: "400px" });
-    io.observe(el);
-    return () => io.disconnect();
-  }, [fetchMore, loading]);
+  };
 
   // 新着ポーリング（60秒ごと）
   useEffect(() => {
@@ -269,14 +238,6 @@ export default function HomePage() {
           </span>
         </Link>
 
-        {trialDaysLeft !== null && trialDaysLeft <= 3 && !trialDismissed && (
-          <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-100 dark:border-[#2a2a2a] rounded-full px-3 py-1 mb-2 text-[11px] font-bold text-text-mid">
-            <span>⏰ トライアル残り{trialDaysLeft}日</span>
-            <button onClick={() => { setTrialDismissed(true); localStorage.setItem("trial_dismissed_today", today); }}
-              aria-label="閉じる"
-              className="ml-auto text-text-light hover:text-text px-1">✕</button>
-          </div>
-        )}
 
         {/* ── タイムライン ────────────────────────────────────────────── */}
         <div ref={timelineTopRef} className="flex items-center justify-between mb-3">
@@ -348,17 +309,13 @@ export default function HomePage() {
                   onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
               ))}
             </div>
-            {/* 無限スクロールセンチネル */}
+            {/* 「もっと見る」ボタン（IntersectionObserverやめてシンプル化） */}
             {hasMore && (
-              <div ref={loaderRef} className="py-6 flex justify-center">
-                {fetchingMore ? (
-                  <div className="flex items-center gap-2 text-xs text-text-light">
-                    <Image src="/icons/icon-192.png" alt="Rizup" width={20} height={20} className="rounded-full animate-sho-float" />
-                    読み込み中…
-                  </div>
-                ) : (
-                  <span className="text-xs text-text-light">↓ スクロールでもっと見る</span>
-                )}
+              <div className="py-5 flex justify-center">
+                <button onClick={fetchMore} disabled={fetchingMore}
+                  className="bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-[#2a2a2a] text-text-mid px-6 py-2.5 rounded-full text-sm font-extrabold shadow-sm active:scale-95 transition disabled:opacity-50">
+                  {fetchingMore ? "読み込み中…" : "↓ もっと見る"}
+                </button>
               </div>
             )}
             {!hasMore && (

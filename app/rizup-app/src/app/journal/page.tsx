@@ -67,49 +67,64 @@ export default function JournalPage() {
   useEffect(() => {
     setMode(new Date().getHours() < 15 ? "morning" : "evening");
     const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      setUserId(user.id);
-      const { data: prof } = await supabase.from("profiles").select("is_suspended").eq("id", user.id).single();
-      if (prof?.is_suspended) setSuspended(true);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        setUserId(user.id);
 
-      // 既存の今日ToDoを取得
-      const { data: todos } = await supabase.from("todos")
-        .select("id, title, vision_id, is_done")
-        .eq("user_id", user.id).eq("due_date", today)
-        .order("created_at");
-      if (todos) setAvailableTodos(todos);
+        // プロフィール取得（テーブル/カラム不在でも落ちない）
+        try {
+          const { data: prof } = await supabase.from("profiles").select("is_suspended").eq("id", user.id).maybeSingle();
+          if (prof?.is_suspended) setSuspended(true);
+        } catch { /* ignore */ }
 
-      // 習慣達成率（夜の複利スコア計算用）
-      const { data: habitsData } = await supabase.from("habits")
-        .select("id").eq("user_id", user.id).is("archived_at", null);
-      if (habitsData && habitsData.length > 0) {
-        const { data: logs } = await supabase.from("habit_logs")
-          .select("habit_id").eq("user_id", user.id).eq("logged_date", today);
-        setHabitDoneRatio((logs?.length || 0) / habitsData.length);
-      }
+        // 今日ToDo
+        let todos: Todo[] | null = null;
+        try {
+          const { data } = await supabase.from("todos")
+            .select("id, title, vision_id, is_done")
+            .eq("user_id", user.id).eq("due_date", today)
+            .order("created_at");
+          todos = data as Todo[] | null;
+          if (todos) setAvailableTodos(todos);
+        } catch { /* ignore */ }
 
-      // 夜モードなら朝投稿を取得（posted_dateに依存しない安全版）
-      const currentHour = new Date().getHours();
-      if (currentHour >= 15) {
-        const morning = await findTodayPost(supabase, user.id, "morning");
-        if (morning) {
-          setMorningPost({
-            id: morning.id,
-            morning_goal: morning.morning_goal || null,
-            mood: morning.mood ?? 3,
-            content: morning.content || "",
-          });
-          // journal_todos で朝に選ばれたToDoを取得（テーブル未存在は無視）
-          try {
-            const { data: jt } = await supabase.from("journal_todos")
-              .select("todo_id").eq("post_id", morning.id);
-            if (jt && jt.length > 0 && todos) {
-              const ids = new Set(jt.map(r => r.todo_id));
-              setMorningTodos(todos.filter(t => ids.has(t.id)).map(t => ({ ...t, done: t.is_done })));
+        // 習慣達成率
+        try {
+          const { data: habitsData } = await supabase.from("habits")
+            .select("id").eq("user_id", user.id).is("archived_at", null);
+          if (habitsData && habitsData.length > 0) {
+            const { data: logs } = await supabase.from("habit_logs")
+              .select("habit_id").eq("user_id", user.id).eq("logged_date", today);
+            setHabitDoneRatio((logs?.length || 0) / habitsData.length);
+          }
+        } catch { /* ignore */ }
+
+        // 夜モード：朝投稿
+        try {
+          const currentHour = new Date().getHours();
+          if (currentHour >= 15) {
+            const morning = await findTodayPost(supabase, user.id, "morning");
+            if (morning) {
+              setMorningPost({
+                id: morning.id,
+                morning_goal: morning.morning_goal || null,
+                mood: morning.mood ?? 3,
+                content: morning.content || "",
+              });
+              try {
+                const { data: jt } = await supabase.from("journal_todos")
+                  .select("todo_id").eq("post_id", morning.id);
+                if (jt && jt.length > 0 && todos) {
+                  const ids = new Set(jt.map((r: { todo_id: string }) => r.todo_id));
+                  setMorningTodos(todos.filter(t => ids.has(t.id)).map(t => ({ ...t, done: t.is_done })));
+                }
+              } catch { /* ignore */ }
             }
-          } catch { /* テーブル未作成時は無視 */ }
-        }
+          }
+        } catch { /* ignore */ }
+      } catch (e) {
+        console.error("[Journal init]", e);
       }
     };
     init();
@@ -220,6 +235,7 @@ export default function JournalPage() {
       if (sleepHours) payload.sleep_hours = parseFloat(sleepHours);
     } else {
       if (bedtime) payload.bedtime = bedtime;
+      if (sleepHours) payload.sleep_hours = parseFloat(sleepHours);
       const gs = gratitudes.filter(g => g.trim());
       if (gs.length > 0) payload.gratitudes = gs;
       if (morningPost) {
@@ -461,7 +477,13 @@ export default function JournalPage() {
             </>
           ) : (
             <>
-              <p className="text-sm font-bold mb-2">🛏️ 今夜は何時に寝る？</p>
+              <p className="text-sm font-bold mb-2">😴 昨夜は何時間寝ましたか？</p>
+              <input type="number" min="0" max="24" step="0.5"
+                value={sleepHours} onChange={e => setSleepHours(e.target.value)}
+                placeholder="例：7"
+                className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint box-border mb-2"
+                style={{ WebkitAppearance: "none" }} />
+              <p className="text-sm font-bold mb-2 mt-2">🛏️ 今夜の予定就寝時刻（任意）</p>
               <input type="time" value={bedtime} onChange={e => setBedtime(e.target.value)}
                 className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint box-border"
                 style={{ WebkitAppearance: "none" }} />
