@@ -110,7 +110,7 @@ export default function SettingsPage() {
 
         <div className="text-center mt-8">
           <Image src="/sho.png" alt="Sho" width={40} height={40} className="rounded-full mx-auto mb-2 opacity-50" />
-          <p className="text-xs text-text-light">Rizup v3.0</p>
+          <p className="text-xs text-text-light">Rizup v3.1</p>
         </div>
       </div>
       <BottomNav />
