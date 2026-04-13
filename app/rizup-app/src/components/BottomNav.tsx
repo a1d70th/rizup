@@ -9,6 +9,7 @@ const baseItems = [
   { href: "/journal", icon: "📝", label: "ジャーナル" },
   { href: "/vision", icon: "🎯", label: "ビジョン" },
   { href: "/growth", icon: "📈", label: "成長" },
+  { href: "/profile", icon: "👤", label: "マイページ" },
 ];
 
 export default function BottomNav() {

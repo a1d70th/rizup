@@ -72,7 +72,7 @@ export default function AdminDashboard() {
     { href: "/admin/users", icon: "👥", label: "ユーザー管理", desc: "一覧・停止・プラン変更" },
     { href: "/admin/posts", icon: "📝", label: "投稿管理", desc: "通報対応・削除" },
     { href: "/admin/notifications", icon: "📣", label: "通知配信", desc: "お知らせ・イベント" },
-    { href: "/admin/content", icon: "📚", label: "レコメンド管理", desc: "Shoのおすすめ" },
+    { href: "/admin/content", icon: "📚", label: "レコメンド管理", desc: "Rizupのおすすめ" },
   ];
 
   return (
