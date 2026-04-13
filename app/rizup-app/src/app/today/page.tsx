@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import Image from "next/image";
+import { safeInsertTodo } from "@/lib/safe-insert";
+import { showToast } from "@/components/Toast";
 
 interface Todo {
   id: string;
@@ -75,8 +77,15 @@ function TodayInner() {
       user_id: userId, title: newTitle.trim(), due_date: today,
     };
     if (newVisionId) payload.vision_id = newVisionId;
-    const { data } = await supabase.from("todos").insert(payload).select().single();
-    if (data) setTodos(prev => [...prev, data]);
+    const { data, error } = await safeInsertTodo<Todo>(supabase, payload);
+    if (error) {
+      showToast("error", error.message);
+      return;
+    }
+    if (data) {
+      setTodos(prev => [...prev, data]);
+      showToast("success", `「${data.title}」を追加🌱`);
+    }
     setNewTitle(""); setNewVisionId(""); setShowAdd(false);
   };
 

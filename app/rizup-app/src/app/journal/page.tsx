@@ -7,6 +7,8 @@ import BottomNav from "@/components/BottomNav";
 import { compressImage } from "@/lib/image-compress";
 import { dailyCompoundScore } from "@/lib/compound";
 import CountUp from "@/components/CountUp";
+import { safeInsertPost, safeInsertTodo, findTodayPost } from "@/lib/safe-insert";
+import { showToast } from "@/components/Toast";
 
 const moodOptions = [
   { value: 1, emoji: "😔", label: "つらい" },
@@ -85,22 +87,26 @@ export default function JournalPage() {
         setHabitDoneRatio((logs?.length || 0) / habitsData.length);
       }
 
-      // 夜モードなら朝投稿を取得
+      // 夜モードなら朝投稿を取得（posted_dateに依存しない安全版）
       const currentHour = new Date().getHours();
       if (currentHour >= 15) {
-        const { data: morning } = await supabase.from("posts")
-          .select("id, morning_goal, mood, content")
-          .eq("user_id", user.id).eq("type", "morning").eq("posted_date", today)
-          .maybeSingle();
+        const morning = await findTodayPost(supabase, user.id, "morning");
         if (morning) {
-          setMorningPost(morning);
-          // journal_todos で朝に選ばれたToDoを取得
-          const { data: jt } = await supabase.from("journal_todos")
-            .select("todo_id").eq("post_id", morning.id);
-          if (jt && jt.length > 0 && todos) {
-            const ids = new Set(jt.map(r => r.todo_id));
-            setMorningTodos(todos.filter(t => ids.has(t.id)).map(t => ({ ...t, done: t.is_done })));
-          }
+          setMorningPost({
+            id: morning.id,
+            morning_goal: morning.morning_goal || null,
+            mood: morning.mood ?? 3,
+            content: morning.content || "",
+          });
+          // journal_todos で朝に選ばれたToDoを取得（テーブル未存在は無視）
+          try {
+            const { data: jt } = await supabase.from("journal_todos")
+              .select("todo_id").eq("post_id", morning.id);
+            if (jt && jt.length > 0 && todos) {
+              const ids = new Set(jt.map(r => r.todo_id));
+              setMorningTodos(todos.filter(t => ids.has(t.id)).map(t => ({ ...t, done: t.is_done })));
+            }
+          } catch { /* テーブル未作成時は無視 */ }
         }
       }
     };
@@ -119,12 +125,17 @@ export default function JournalPage() {
 
   const addNewTodo = async () => {
     if (!userId || !newTodoTitle.trim()) return;
-    const { data } = await supabase.from("todos")
-      .insert({ user_id: userId, title: newTodoTitle.trim(), due_date: today })
-      .select().single();
+    const { data, error } = await safeInsertTodo<Todo>(supabase, {
+      user_id: userId, title: newTodoTitle.trim(), due_date: today,
+    });
+    if (error) {
+      showToast("error", `ToDoを追加できませんでした：${error.message}`);
+      return;
+    }
     if (data) {
       setAvailableTodos(prev => [...prev, data]);
       setSelectedTodoIds(prev => new Set(prev).add(data.id));
+      showToast("success", `「${data.title}」を追加したよ🌱`);
     }
     setNewTodoTitle("");
   };
@@ -224,23 +235,33 @@ export default function JournalPage() {
       payload.compound_score_today = score;
     }
 
-    const { data, error } = await supabase.from("posts").insert(payload).select().single();
+    // 新カラム (morning_goal, sleep_hours, 等) がまだDBに無い場合、
+    // safeInsertPost が core カラムのみで再試行してくれる
+    const { data, error, usedFallback } = await safeInsertPost<{ id: string }>(supabase, payload);
 
     if (error) {
       if (error.code === "23505") {
         setModerationError("今日はもう投稿済みだよ。明日また書いてね！");
+        showToast("info", "今日はもう投稿済みだよ");
       } else {
         setModerationError(`投稿できませんでした：${error.message}`);
+        showToast("error", `投稿に失敗：${error.message}`);
       }
       setLoading(false);
       return;
     }
 
+    if (usedFallback) {
+      showToast("info", "投稿できた（DB更新中のため一部情報は保存されてないかも）");
+    }
+
     if (data) {
-      // 朝モード: journal_todos に保存
+      // 朝モード: journal_todos に保存（テーブル未作成は無視）
       if (mode === "morning" && selectedTodoIds.size > 0) {
-        const rows = Array.from(selectedTodoIds).map(tid => ({ post_id: data.id, todo_id: tid }));
-        await supabase.from("journal_todos").insert(rows);
+        try {
+          const rows = Array.from(selectedTodoIds).map(tid => ({ post_id: data.id, todo_id: tid }));
+          await supabase.from("journal_todos").insert(rows);
+        } catch { /* 未作成は無視 */ }
       }
 
       // AIフィードバック（シンプル版）

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import ToastContainer from "@/components/Toast";
 
 export const metadata: Metadata = {
   title: "Rizup — 毎日1%の複利成長",
@@ -71,6 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="theme-color" content="#0f1512" media="(prefers-color-scheme: dark)" />
       </head>
       <body className="antialiased">
+        <ToastContainer />
         {children}
         <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {
