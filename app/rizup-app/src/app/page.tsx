@@ -10,7 +10,7 @@ export default function LandingPage() {
       </h1>
       <p className="text-text-mid text-sm leading-relaxed mb-8 max-w-xs">
         毎日成長が見える、前向きな人だけが集まるSNS。<br />
-        Sho と一緒に、前に進もう。
+        Rizupと一緒に、前に進もう。
       </p>
       <div className="flex flex-col gap-3 w-full max-w-xs">
         <Link

@@ -285,6 +285,7 @@ export default function JournalPage() {
       fetch("/api/check-progress", { method: "POST" }).catch(() => {});
 
       setAiFeedback(feedback);
+      showToast("success", `投稿できたよ！${mode === "morning" ? "☀️" : "🌙"} 複利 +1% 積まれた🌱`);
       setPosted(true);
     }
     setLoading(false);

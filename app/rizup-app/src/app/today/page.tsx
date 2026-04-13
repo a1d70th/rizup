@@ -172,21 +172,47 @@ function TodayInner() {
           </div>
         )}
 
-        {/* 一覧 */}
+        {/* 一覧（空状態：インラインフォーム常時表示） */}
         {todos.length === 0 ? (
-          <div className="glass-mint rounded-3xl p-6 text-center animate-slide-up shadow-lg shadow-mint/10">
-            <Image src="/sho.png" alt="Rizup" width={96} height={96}
-              className="rounded-full mx-auto mb-4 animate-sho-float drop-shadow-lg" />
-            <p className="text-xl font-extrabold mb-1">今日の3つを決めよう！</p>
-            <p className="text-xs text-text-mid mb-5 leading-relaxed">
-              どんなに小さなことでもOK。<br />
-              「腕立て1回」「本1ページ」でいい。
-            </p>
-            <button onClick={() => setShowAdd(true)} autoFocus={false}
-              className="inline-flex items-center gap-2 bg-mint text-white font-extrabold px-8 py-4 rounded-full shadow-lg shadow-mint/40 hover:scale-105 active:scale-95 transition text-base">
-              <span className="text-xl">＋</span> ToDoを追加する
-            </button>
-            <p className="text-[10px] text-text-light mt-3">3つまで選べるよ</p>
+          <div className="glass-mint rounded-3xl p-6 animate-slide-up shadow-lg shadow-mint/10">
+            <div className="text-center mb-5">
+              <Image src="/sho.png" alt="Rizup" width={96} height={96}
+                className="rounded-full mx-auto mb-3 animate-sho-float drop-shadow-lg" />
+              <p className="text-xl font-extrabold mb-1">今日の3つを決めよう！</p>
+              <p className="text-[13px] text-text-mid leading-relaxed">
+                どんなに小さなことでもOK。<br />
+                「腕立て1回」「本1ページ」でいい。
+              </p>
+            </div>
+            {/* インライン入力（常時表示・即入力可） */}
+            <div className="bg-white rounded-2xl p-4 shadow-sm">
+              <label className="text-xs font-bold text-text-mid block mb-2">今日やること（1つずつ追加）</label>
+              <input
+                type="text"
+                value={newTitle}
+                onChange={e => setNewTitle(e.target.value)}
+                placeholder="例：10分だけ読書する"
+                onKeyDown={e => { if (e.key === "Enter") handleAdd(); }}
+                aria-label="ToDoのタイトル"
+                autoFocus
+                className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-base outline-none focus:border-mint mb-2"
+              />
+              {visions.length > 0 && (
+                <select value={newVisionId} onChange={e => setNewVisionId(e.target.value)}
+                  className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint bg-white mb-2">
+                  <option value="">紐付けるビジョン（任意）</option>
+                  {visions.map(v => <option key={v.id} value={v.id}>{v.title}</option>)}
+                </select>
+              )}
+              <button
+                onClick={handleAdd}
+                disabled={!newTitle.trim()}
+                className="w-full bg-mint text-white font-extrabold py-4 rounded-full shadow-lg shadow-mint/40 disabled:opacity-30 text-base flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-95 transition"
+              >
+                <span className="text-xl">＋</span> 追加する
+              </button>
+            </div>
+            <p className="text-[11px] text-text-light mt-3 text-center">3つまで選べるよ</p>
           </div>
         ) : (
           <div className="flex flex-col gap-2">

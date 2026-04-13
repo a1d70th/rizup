@@ -295,7 +295,7 @@ export function isPremium(p) {
 2. **1タップで記録できる**（チェックボックス・toggle・slider）
 3. **チェックした瞬間にRizupが喜ぶアニメーション**（`animate-sho-bounce`）
 4. **紫・グレー羅列 NG**。ミント＋オレンジの配色を徹底
-5. **空状態 (empty state)** には必ずShoと一言メッセージ
+5. **空状態 (empty state)** には必ずRizupと一言メッセージ
 6. **エラー時** には必ず赤ではなく温かいトーンで Sho の吹き出し
 
 ---
