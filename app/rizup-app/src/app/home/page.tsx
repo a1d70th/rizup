@@ -291,7 +291,7 @@ export default function HomePage() {
                     </button>
                     <p className={`text-sm font-medium flex-1 break-words ${t.is_done ? "line-through text-text-light" : ""}`}>{t.title}</p>
                     {celebrate && (
-                      <Image src="/sho.png" alt="Rizup" width={32} height={32} className="rounded-full animate-sho-bounce shrink-0" />
+                      <Image src="/icons/icon-192.png" alt="Rizup" width={32} height={32} className="rounded-full animate-sho-bounce shrink-0" />
                     )}
                   </div>
                 );
@@ -299,7 +299,7 @@ export default function HomePage() {
             </div>
             {allDone && (
               <div className="glass-mint rounded-2xl p-3 flex items-center gap-2 animate-slide-up">
-                <Image src="/sho.png" alt="Rizup" width={32} height={32} className="rounded-full animate-sho-bounce" />
+                <Image src="/icons/icon-192.png" alt="Rizup" width={32} height={32} className="rounded-full animate-sho-bounce" />
                 <p className="text-xs font-extrabold text-mint flex-1">今日のToDoぜんぶクリア🎉</p>
               </div>
             )}
@@ -338,7 +338,7 @@ export default function HomePage() {
           <SkeletonTimeline />
         ) : posts.length === 0 ? (
           <div className="text-center py-8 bg-white rounded-2xl border border-gray-100">
-            <Image src="/sho.png" alt="Rizup" width={48} height={48} className="rounded-full mx-auto mb-2 animate-sho-float" />
+            <Image src="/icons/icon-192.png" alt="Rizup" width={48} height={48} className="rounded-full mx-auto mb-2 animate-sho-float" />
             <p className="text-sm font-bold mb-1">まだ投稿がないよ</p>
             <p className="text-xs text-text-mid mb-3">最初の一歩になってみる？</p>
             <Link href="/journal" className="inline-block bg-mint text-white font-bold px-6 py-2.5 rounded-full shadow-md">

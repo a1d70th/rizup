@@ -164,7 +164,7 @@ export default function VisionPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-bg flex items-center justify-center">
-      <Image src="/sho.png" alt="Rizup" width={48} height={48} className="animate-sho-float rounded-full" />
+      <Image src="/icons/icon-192.png" alt="Rizup" width={48} height={48} className="animate-sho-float rounded-full" />
     </div>
   );
 
@@ -246,7 +246,7 @@ export default function VisionPage() {
 
         {tab === "vision" && visions.length === 0 ? (
           <div className="text-center py-12">
-            <Image src="/sho.png" alt="Rizup" width={64} height={64} className="rounded-full mx-auto mb-3 opacity-50" />
+            <Image src="/icons/icon-192.png" alt="Rizup" width={64} height={64} className="rounded-full mx-auto mb-3 opacity-50" />
             <p className="text-sm font-bold text-text-mid mb-1">まだ目標がありません</p>
             <p className="text-xs text-text-light">最終ゴールから逆算してみよう</p>
           </div>
@@ -309,7 +309,7 @@ export default function VisionPage() {
                       {v.ai_feedback && (
                         <div className="bg-mint-light rounded-xl p-3 mb-2">
                           <div className="flex items-center gap-1 mb-1">
-                            <Image src="/sho.png" alt="Rizup" width={16} height={16} className="rounded-full" />
+                            <Image src="/icons/icon-192.png" alt="Rizup" width={16} height={16} className="rounded-full" />
                             <span className="text-[10px] font-bold text-mint">Rizup のアドバイス</span>
                           </div>
                           <p className="text-xs text-text leading-relaxed">{v.ai_feedback}</p>

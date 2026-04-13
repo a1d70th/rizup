@@ -108,7 +108,7 @@ export default function GrowthPage() {
 
   if (loading) return (
     <div className="min-h-screen bg-bg flex items-center justify-center">
-      <Image src="/sho.png" alt="Rizup" width={48} height={48} className="animate-sho-float rounded-full" />
+      <Image src="/icons/icon-192.png" alt="Rizup" width={48} height={48} className="animate-sho-float rounded-full" />
     </div>
   );
 

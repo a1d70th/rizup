@@ -57,7 +57,7 @@ export default function OnboardingPage() {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center">
-        <Image src="/sho.png" alt="Rizup" width={64} height={64} className="rounded-full mb-4 animate-sho-float" />
+        <Image src="/icons/icon-192.png" alt="Rizup" width={64} height={64} className="rounded-full mb-4 animate-sho-float" />
 
         {/* Step 1: 名前・アバター・規約 */}
         {step === 1 && (
@@ -138,7 +138,7 @@ export default function OnboardingPage() {
             </p>
             <div className="bg-mint-light rounded-2xl p-4 mb-4 text-left">
               <div className="flex items-center gap-2 mb-2">
-                <Image src="/sho.png" alt="Rizup" width={24} height={24} className="rounded-full" />
+                <Image src="/icons/icon-192.png" alt="Rizup" width={24} height={24} className="rounded-full" />
                 <span className="text-xs font-bold text-mint">Rizup より</span>
               </div>
               <p className="text-xs text-text leading-relaxed">

@@ -300,7 +300,7 @@ export default function JournalPage() {
   if (suspended) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
-        <Image src="/sho.png" alt="Rizup" width={80} height={80} className="rounded-full mb-4" />
+        <Image src="/icons/icon-192.png" alt="Rizup" width={80} height={80} className="rounded-full mb-4" />
         <h2 className="text-xl font-extrabold mb-2">投稿が制限されています</h2>
         <p className="text-sm text-text-mid leading-relaxed mb-6 max-w-xs">
           コミュニティガイドライン違反のため、アカウントが一時停止されました。<br />
@@ -315,7 +315,7 @@ export default function JournalPage() {
   if (crisis) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
-        <Image src="/sho.png" alt="Rizup" width={80} height={80} className="rounded-full mb-4 animate-sho-float" />
+        <Image src="/icons/icon-192.png" alt="Rizup" width={80} height={80} className="rounded-full mb-4 animate-sho-float" />
         <h2 className="text-xl font-extrabold mb-2">あなたの気持ち、受け止めたよ</h2>
         <p className="text-sm text-text-mid leading-relaxed mb-6 max-w-sm">
           一人で抱え込まなくていいからね。<br />
@@ -343,7 +343,7 @@ export default function JournalPage() {
     return (
       <div className="min-h-screen bg-bg flex flex-col items-center justify-center px-6 text-center">
         <div className="relative mb-4">
-          <Image src="/sho.png" alt="Rizup" width={120} height={120} className="rounded-full animate-sho-bounce drop-shadow-xl" />
+          <Image src="/icons/icon-192.png" alt="Rizup" width={120} height={120} className="rounded-full animate-sho-bounce drop-shadow-xl" />
           <div className="absolute -top-2 -right-2 text-3xl animate-pop">🎉</div>
         </div>
         <h2 className="text-2xl font-extrabold mb-1">投稿できたよ！</h2>
@@ -351,7 +351,7 @@ export default function JournalPage() {
         {aiFeedback && (
           <div className="bg-mint-light rounded-2xl p-4 max-w-xs mb-6 text-left">
             <div className="flex items-center gap-1.5 mb-2">
-              <Image src="/sho.png" alt="Rizup" width={20} height={20} className="rounded-full" />
+              <Image src="/icons/icon-192.png" alt="Rizup" width={20} height={20} className="rounded-full" />
               <span className="text-xs font-bold text-mint">Rizup より</span>
             </div>
             <p className="text-sm text-text leading-relaxed">{aiFeedback}</p>
@@ -383,7 +383,7 @@ export default function JournalPage() {
         </div>
 
         <div className="flex items-center gap-3 mb-5">
-          <Image src="/sho.png" alt="Rizup" width={40} height={40} className="rounded-full" />
+          <Image src="/icons/icon-192.png" alt="Rizup" width={40} height={40} className="rounded-full" />
           <div>
             <p className="font-extrabold">{mode === "morning" ? "おはよう！☀️" : "おつかれさま🌙"}</p>
             <p className="text-xs text-text-mid">
@@ -536,7 +536,7 @@ export default function JournalPage() {
 
         {moderationError && (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-3 flex items-start gap-3" role="alert">
-            <Image src="/sho.png" alt="Rizup" width={32} height={32} className="rounded-full shrink-0" />
+            <Image src="/icons/icon-192.png" alt="Rizup" width={32} height={32} className="rounded-full shrink-0" />
             <p className="text-xs text-red-600 leading-relaxed">{moderationError}</p>
           </div>
         )}

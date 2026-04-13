@@ -107,7 +107,7 @@ function TodayInner() {
 
   if (loading) return (
     <div className="min-h-screen bg-bg flex items-center justify-center">
-      <Image src="/sho.png" alt="Rizup" width={48} height={48} className="animate-sho-float rounded-full" />
+      <Image src="/icons/icon-192.png" alt="Rizup" width={48} height={48} className="animate-sho-float rounded-full" />
     </div>
   );
 
@@ -147,7 +147,7 @@ function TodayInner() {
               </p>
             </div>
             {celebrate && (
-              <Image src="/sho.png" alt="Rizup" width={48} height={48} className="rounded-full animate-sho-bounce" />
+              <Image src="/icons/icon-192.png" alt="Rizup" width={48} height={48} className="rounded-full animate-sho-bounce" />
             )}
           </div>
         )}
@@ -177,7 +177,7 @@ function TodayInner() {
         {todos.length === 0 ? (
           <div className="glass-mint rounded-3xl p-6 animate-slide-up shadow-lg shadow-mint/10">
             <div className="text-center mb-5">
-              <Image src="/sho.png" alt="Rizup" width={96} height={96}
+              <Image src="/icons/icon-192.png" alt="Rizup" width={96} height={96}
                 className="rounded-full mx-auto mb-3 animate-sho-float drop-shadow-lg" />
               <p className="text-xl font-extrabold mb-1">今日の3つを決めよう！</p>
               <p className="text-[13px] text-text-mid leading-relaxed">

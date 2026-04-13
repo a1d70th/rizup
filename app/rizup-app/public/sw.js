@@ -1,18 +1,20 @@
-// Rizup Service Worker v3.2
+// Rizup Service Worker v3.5
 // Strategies:
 //  - navigation: network-first with offline fallback
 //  - static assets (fonts/images/css/js): stale-while-revalidate
 //  - API: network-only (no cache to avoid stale user data)
 //  - push notifications: display + focus existing client on click
 
-const CACHE_VERSION = "rizup-v3.2";
+const CACHE_VERSION = "rizup-v3.5";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const OFFLINE_URL = "/offline.html";
 
 const PRECACHE_URLS = [
   "/offline.html",
-  "/sho.png",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+  "/icons/apple-touch-icon.png",
   "/logo.svg",
   "/logo-white.svg",
   "/manifest.json",

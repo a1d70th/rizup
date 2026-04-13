@@ -210,7 +210,7 @@ export default function ProfilePage() {
               </p>
               <p className="text-[10px] text-text-mid mt-1">連続{profile.streak}日の積み上げ</p>
             </div>
-            <Image src="/sho.png" alt="Rizup" width={64} height={64}
+            <Image src="/icons/icon-192.png" alt="Rizup" width={64} height={64}
               className="rounded-full animate-sho-float drop-shadow-md" />
           </div>
           <CompoundBar streak={profile.streak} />

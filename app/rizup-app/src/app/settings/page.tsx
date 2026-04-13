@@ -65,7 +65,7 @@ export default function SettingsPage() {
         {/* 現在のプラン */}
         <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
           <div className="flex items-center gap-2 mb-2">
-            <Image src="/sho.png" alt="Rizup" width={28} height={28} className="rounded-full" />
+            <Image src="/icons/icon-192.png" alt="Rizup" width={28} height={28} className="rounded-full" />
             <p className="text-sm font-bold flex-1">
               現在のプラン：{plan === "premium" ? "Premium" : plan === "pro" ? "Pro" : trialing ? "トライアル中" : "Free"}
             </p>
@@ -114,7 +114,7 @@ export default function SettingsPage() {
         </button>
 
         <div className="text-center mt-8">
-          <Image src="/sho.png" alt="Rizup" width={40} height={40} className="rounded-full mx-auto mb-2 opacity-50" />
+          <Image src="/icons/icon-192.png" alt="Rizup" width={40} height={40} className="rounded-full mx-auto mb-2 opacity-50" />
           <p className="text-xs text-text-light">Rizup v3.1</p>
         </div>
       </div>

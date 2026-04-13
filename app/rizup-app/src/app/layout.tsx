@@ -36,13 +36,13 @@ export const metadata: Metadata = {
     siteName: "Rizup",
     locale: "ja_JP",
     type: "website",
-    images: [{ url: "/sho.png", width: 512, height: 512, alt: "Rizup" }],
+    images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "Rizup" }],
   },
   twitter: {
     card: "summary",
     title: "Rizup — 毎日1%の複利成長",
     description: "朝夜ジャーナリング × ビジョン × 習慣",
-    images: ["/sho.png"],
+    images: ["/icons/icon-512.png"],
   },
   robots: { index: true, follow: true },
   other: {
