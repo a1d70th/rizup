@@ -28,15 +28,20 @@ export default function SettingsPage() {
 
   const handleCheckout = async (targetPlan: "pro" | "premium") => {
     setCheckoutLoading(targetPlan);
-    const res = await fetch("/api/stripe/checkout", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ plan: targetPlan }),
-    });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
-    else alert("決済ページの作成に失敗しました。時間をおいて再度お試しください。");
-    setCheckoutLoading(null);
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: targetPlan }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else alert("決済ページの作成に失敗しました。時間をおいて再度お試しください。");
+    } catch {
+      alert("通信エラー。時間をおいて再度お試しください。");
+    } finally {
+      setCheckoutLoading(null);
+    }
   };
 
   const items = [

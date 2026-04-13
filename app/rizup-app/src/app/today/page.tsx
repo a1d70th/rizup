@@ -130,12 +130,13 @@ function TodayInner() {
 
         {/* 進捗 */}
         {todos.length > 0 && (
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4 flex items-center gap-3">
+          <div className="bg-gradient-to-br from-white to-mint-light/30 rounded-2xl p-4 border border-mint/20 shadow-md shadow-mint/10 mb-4 flex items-center gap-3">
             <div className="relative w-14 h-14">
               <svg viewBox="0 0 36 36" className="w-14 h-14 -rotate-90">
                 <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e5e7eb" strokeWidth="3" />
                 <circle cx="18" cy="18" r="15.9" fill="none" stroke="#6ecbb0" strokeWidth="3"
-                  strokeDasharray={`${pct}, 100`} strokeLinecap="round" />
+                  strokeDasharray={`${pct}, 100`} strokeLinecap="round"
+                  style={{ filter: pct > 0 ? "drop-shadow(0 0 4px rgba(110,203,176,0.6))" : undefined }} />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center text-xs font-extrabold text-mint">{pct}%</div>
             </div>

@@ -280,9 +280,13 @@ export default function VisionPage() {
                           <span className="text-[10px] text-text-light">進捗</span>
                           <span className="text-xs font-extrabold" style={{ color: group.color }}>{prog}%</span>
                         </div>
-                        <div className="w-full bg-gray-100 rounded-full h-2">
-                          <div className="rounded-full h-2 transition-all duration-500"
-                            style={{ width: `${prog}%`, background: group.color }} />
+                        <div className="w-full bg-gray-100 rounded-full h-2 shadow-inner">
+                          <div className="rounded-full h-2 transition-all duration-700"
+                            style={{
+                              width: `${prog}%`,
+                              background: `linear-gradient(90deg, ${group.color}, ${group.color}dd)`,
+                              boxShadow: prog > 0 ? `0 0 12px ${group.color}66` : undefined,
+                            }} />
                         </div>
                       </div>
                       {daysToGoal !== null && daysToGoal > 0 && prog < 100 && (

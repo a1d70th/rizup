@@ -186,9 +186,13 @@ export default function HomePage() {
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
         {/* ── Sho 挨拶 + 次の一歩 ─────────────────────────────────────── */}
-        <div className="glass-mint rounded-3xl p-5 mb-4 animate-slide-up shadow-lg shadow-mint/10">
+        <div className="glass-mint rounded-3xl p-5 mb-4 animate-slide-up relative overflow-hidden border border-mint/20"
+          style={{ boxShadow: "0 20px 40px rgba(110,203,176,0.15)" }}>
+          <div className="absolute -top-8 -right-8 w-32 h-32 bg-gradient-to-br from-mint/15 to-orange/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 w-28 h-28 bg-gradient-to-tr from-orange/10 to-mint/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="relative z-10">
           <div className="flex items-center gap-3 mb-2">
-            <Image src="/sho.png" alt="Rizup" width={44} height={44} className="rounded-full animate-sho-float" />
+            <Image src="/icons/icon-192.png" alt="Rizup" width={44} height={44} className="rounded-full animate-sho-float shadow-lg shadow-mint/30" />
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-bold text-mint tracking-wide">
                 {timeGreeting.emoji} Rizup から
@@ -216,6 +220,7 @@ export default function HomePage() {
           {trialDaysLeft !== null && trialDaysLeft <= 3 && (
             <p className="text-[10px] text-orange mt-2 font-bold text-center">⏰ トライアル残り{trialDaysLeft}日</p>
           )}
+          </div>
         </div>
 
         {/* ── 今日のダッシュボード（4マス） ──────────────────────────── */}
@@ -227,29 +232,29 @@ export default function HomePage() {
             </span>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Link href="/journal" className="bg-bg rounded-2xl p-3 hover:bg-mint-light/50 transition">
-              <p className="text-[10px] text-text-mid mb-1">📝 ジャーナル</p>
+            <Link href="/journal" className="bg-gradient-to-br from-mint-light/60 to-white rounded-2xl p-3 border border-mint/10 hover:scale-[1.03] active:scale-95 transition shadow-sm">
+              <p className="text-[10px] text-text-mid mb-1 font-bold">📝 ジャーナル</p>
               <p className="text-sm font-extrabold flex gap-2">
                 <span className={hasMorningPost ? "text-mint" : "text-text-light"}>☀️{hasMorningPost ? "✅" : "⬜"}</span>
                 <span className={hasEveningPost ? "text-mint" : "text-text-light"}>🌙{hasEveningPost ? "✅" : "⬜"}</span>
               </p>
             </Link>
-            <Link href="/today" className="bg-bg rounded-2xl p-3 hover:bg-mint-light/50 transition">
-              <p className="text-[10px] text-text-mid mb-1">✅ ToDo</p>
+            <Link href="/today" className="bg-gradient-to-br from-mint-light/60 to-white rounded-2xl p-3 border border-mint/10 hover:scale-[1.03] active:scale-95 transition shadow-sm">
+              <p className="text-[10px] text-text-mid mb-1 font-bold">✅ ToDo</p>
               <p className="text-sm font-extrabold text-mint">
                 <CountUp value={doneTodos} />/{totalTodos || "—"}
                 <span className="text-[10px] text-text-light ml-1 font-normal">完了</span>
               </p>
             </Link>
-            <Link href="/habits" className="bg-bg rounded-2xl p-3 hover:bg-mint-light/50 transition">
-              <p className="text-[10px] text-text-mid mb-1">🔄 習慣</p>
+            <Link href="/habits" className="bg-gradient-to-br from-mint-light/60 to-white rounded-2xl p-3 border border-mint/10 hover:scale-[1.03] active:scale-95 transition shadow-sm">
+              <p className="text-[10px] text-text-mid mb-1 font-bold">🔄 習慣</p>
               <p className="text-sm font-extrabold text-mint">
                 <CountUp value={habitsCompleted.done} />/{habitsCompleted.total || "—"}
                 <span className="text-[10px] text-text-light ml-1 font-normal">チェック</span>
               </p>
             </Link>
-            <Link href="/growth" className="bg-bg rounded-2xl p-3 hover:bg-mint-light/50 transition">
-              <p className="text-[10px] text-text-mid mb-1">✨ 複利成長</p>
+            <Link href="/growth" className="bg-gradient-to-br from-orange-light/50 to-white rounded-2xl p-3 border border-orange/10 hover:scale-[1.03] active:scale-95 transition shadow-sm">
+              <p className="text-[10px] text-text-mid mb-1 font-bold">✨ 複利成長</p>
               {compoundScoreToday !== null ? (
                 <p className="text-sm font-extrabold text-orange">
                   <CountUp value={compoundScoreToday} />

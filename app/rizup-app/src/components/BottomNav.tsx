@@ -45,7 +45,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-50"
+      className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-gray-100 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.04)]"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       aria-label="メインナビゲーション"
     >
@@ -58,10 +58,11 @@ export default function BottomNav() {
               href={item.href}
               aria-label={item.label}
               aria-current={active ? "page" : undefined}
-              className={`flex flex-col items-center justify-center gap-0.5 py-2 px-3 text-xs font-medium transition-colors ${active ? "text-mint" : "text-text-light"}`}
+              className={`flex flex-col items-center justify-center gap-0.5 py-2 px-3 text-xs font-medium transition-all active:scale-90 ${active ? "text-mint" : "text-text-light hover:text-text-mid"}`}
             >
-              <span className="text-xl" aria-hidden="true">{item.icon}</span>
-              <span className="text-[10px]">{item.label}</span>
+              <span className={`text-xl transition-transform ${active ? "scale-110" : ""}`} aria-hidden="true">{item.icon}</span>
+              <span className={`text-[10px] ${active ? "font-extrabold" : ""}`}>{item.label}</span>
+              {active && <span className="w-1 h-1 bg-mint rounded-full mt-0.5" />}
             </Link>
           );
         })}

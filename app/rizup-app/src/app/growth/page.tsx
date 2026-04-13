@@ -120,11 +120,14 @@ export default function GrowthPage() {
         <p className="text-xs text-text-light mb-4">毎日の1%が、1年で37倍になる</p>
 
         {/* 複利カード */}
-        <div className="glass-mint rounded-3xl p-5 mb-4 animate-slide-up shadow-lg shadow-mint/10">
+        <div className="glass-mint rounded-3xl p-5 mb-4 animate-slide-up relative overflow-hidden border border-mint/20"
+          style={{ boxShadow: "0 20px 40px rgba(110,203,176,0.18)" }}>
+          <div className="absolute -top-10 -right-10 w-36 h-36 bg-gradient-to-br from-mint/20 to-orange/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10">
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-2xl">✨</span>
+            <span className="text-2xl animate-sho-float inline-block">✨</span>
             <h3 className="text-base font-extrabold flex-1">あなたの複利</h3>
-            <span className="text-[10px] font-bold text-mint bg-white/60 px-2 py-0.5 rounded-full">連続{streak}日</span>
+            <span className="text-[10px] font-bold text-mint bg-white/80 px-2 py-0.5 rounded-full shadow-sm">🔥 連続{streak}日</span>
           </div>
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div className="bg-white/60 rounded-2xl p-3">
@@ -141,6 +144,7 @@ export default function GrowthPage() {
             <div><p className="text-[10px] text-text-mid">30日後</p><p className="text-sm font-extrabold text-mint">+{ideal30}%</p></div>
             <div><p className="text-[10px] text-text-mid">90日後</p><p className="text-sm font-extrabold text-mint">+{ideal90}%</p></div>
             <div><p className="text-[10px] text-text-mid">1年後</p><p className="text-sm font-extrabold text-orange">+{ideal365.toLocaleString()}%</p></div>
+          </div>
           </div>
         </div>
 

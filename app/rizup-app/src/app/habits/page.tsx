@@ -130,19 +130,26 @@ function HabitsInner() {
         </div>
 
         {habits.length > 0 && (
-          <div className="glass-mint rounded-2xl p-4 mb-4 animate-slide-up">
+          <div className="glass-mint rounded-2xl p-4 mb-4 animate-slide-up relative overflow-hidden border border-mint/20"
+            style={{ boxShadow: "0 12px 28px rgba(110,203,176,0.12)" }}>
+            <div className="absolute -top-6 -right-6 w-24 h-24 bg-gradient-to-br from-mint/15 to-orange/5 rounded-full blur-2xl pointer-events-none" />
+            <div className="relative z-10">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-bold">今日の達成</span>
               <span className="text-sm font-extrabold text-mint">{completed}/{habits.length}</span>
             </div>
-            <div className="w-full bg-white/50 rounded-full h-2 mb-2">
-              <div className="bg-mint rounded-full h-2 transition-all duration-500"
-                style={{ width: `${habits.length > 0 ? (completed / habits.length) * 100 : 0}%` }} />
+            <div className="w-full bg-white/50 rounded-full h-2 mb-2 shadow-inner">
+              <div className="bg-gradient-to-r from-mint to-mint/80 rounded-full h-2 transition-all duration-700"
+                style={{
+                  width: `${habits.length > 0 ? (completed / habits.length) * 100 : 0}%`,
+                  boxShadow: completed > 0 ? "0 0 10px rgba(110,203,176,0.6)" : undefined,
+                }} />
             </div>
             <div className="grid grid-cols-3 gap-2 mt-3 text-center bg-white/60 rounded-xl p-2">
-              <div><p className="text-[9px] text-text-mid">30日続けると</p><p className="text-xs font-extrabold text-mint">+{compoundPercent(30)}%</p></div>
-              <div><p className="text-[9px] text-text-mid">90日続けると</p><p className="text-xs font-extrabold text-mint">+{compoundPercent(90)}%</p></div>
-              <div><p className="text-[9px] text-text-mid">1年続けると</p><p className="text-xs font-extrabold text-orange">+{compoundPercent(365).toLocaleString()}%</p></div>
+              <div className="hover:scale-110 transition cursor-default"><p className="text-[9px] text-text-mid">30日続けると</p><p className="text-xs font-extrabold text-mint">+{compoundPercent(30)}%</p></div>
+              <div className="hover:scale-110 transition cursor-default"><p className="text-[9px] text-text-mid">90日続けると</p><p className="text-xs font-extrabold text-mint">+{compoundPercent(90)}%</p></div>
+              <div className="hover:scale-110 transition cursor-default"><p className="text-[9px] text-text-mid">1年続けると</p><p className="text-xs font-extrabold text-orange">+{compoundPercent(365).toLocaleString()}%</p></div>
+            </div>
             </div>
           </div>
         )}

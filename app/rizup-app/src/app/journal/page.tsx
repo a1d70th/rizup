@@ -371,13 +371,13 @@ export default function JournalPage() {
     <div className="min-h-screen bg-bg pb-20">
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
-        <div className="flex bg-white rounded-2xl p-1 border border-gray-100 mb-5">
+        <div className="flex bg-white rounded-2xl p-1 border border-gray-100 mb-5 shadow-sm">
           <button onClick={() => setMode("morning")}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition ${mode === "morning" ? "bg-orange-light text-orange" : "text-text-light"}`}>
+            className={`flex-1 py-3 rounded-xl text-sm font-extrabold transition-all ${mode === "morning" ? "bg-gradient-to-br from-orange-light to-yellow-50 text-orange shadow-md shadow-orange/20 scale-[1.02]" : "text-text-light"}`}>
             ☀️ 朝ジャーナル
           </button>
           <button onClick={() => setMode("evening")}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition ${mode === "evening" ? "bg-mint-light text-mint" : "text-text-light"}`}>
+            className={`flex-1 py-3 rounded-xl text-sm font-extrabold transition-all ${mode === "evening" ? "bg-gradient-to-br from-mint-light to-blue-50 text-mint shadow-md shadow-mint/20 scale-[1.02]" : "text-text-light"}`}>
             🌙 夜ジャーナル
           </button>
         </div>
