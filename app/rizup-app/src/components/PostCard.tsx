@@ -85,14 +85,18 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
   const [reported, setReported] = useState(false);
   const [displayContent, setDisplayContent] = useState(post.content);
   const [expanded, setExpanded] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const isOwner = userId && post.user_id === userId;
   const canDelete = isOwner || isAdmin;
-  const name = post.profiles?.name || "ユーザー";
+  // 旧シードデータの "Sho" / "sho" は "Rizup" 表示に正規化
+  const rawName = (post.profiles?.name || "ユーザー").trim();
+  const name = /^sho$/i.test(rawName) ? "Rizup" : (rawName || "ユーザー");
   const streakDays = post.profiles?.streak ?? 0;
   const time = formatRelativeTime(post.created_at);
   const isMorning = post.type === "morning";
-  const isLong = displayContent.length > 140 || displayContent.split("\n").length > CLAMP_LINES;
+  const safeContent = displayContent || "";
+  const isLong = safeContent.length > 140 || safeContent.split("\n").length > CLAMP_LINES;
 
   useEffect(() => {
     const load = async () => {
@@ -232,7 +236,7 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
     : "bg-mint-light text-mint";
 
   return (
-    <article className="bg-white rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden animate-fade-in">
+    <article className="bg-white dark:bg-[#1a1a1a] rounded-3xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm hover:shadow-md transition-shadow overflow-hidden animate-fade-in">
       {/* Header */}
       <header className="flex items-center gap-3 px-4 pt-4 pb-2">
         <Avatar url={post.profiles?.avatar_url} size={48} />
@@ -342,7 +346,7 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
       ) : (
         <div className="px-4 pt-2 pb-3">
           <p
-            className="text-[15.5px] text-text leading-[1.75] whitespace-pre-wrap break-words"
+            className="text-[15.5px] text-text dark:text-gray-100 leading-[1.75] whitespace-pre-wrap break-words"
             style={
               !expanded && isLong
                 ? {
@@ -354,7 +358,7 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
                 : undefined
             }
           >
-            {displayContent}
+            {safeContent}
           </p>
           {isLong && (
             <button
@@ -379,20 +383,23 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
         </div>
       )}
 
-      {/* AI Feedback */}
+      {/* AI Feedback（デフォルト折りたたみ） */}
       {post.ai_feedback && (
-        <div className="mx-4 mb-3 bg-gradient-to-br from-mint-light to-white rounded-2xl p-3 border border-mint/10">
-          <div className="flex items-center gap-1.5 mb-1">
-            <Image
-              src="/icons/icon-192.png"
-              alt="Rizup"
-              width={22}
-              height={22}
-              className="rounded-full"
-            />
-            <span className="text-[11px] font-extrabold text-mint">Rizup より</span>
-          </div>
-          <p className="text-[13.5px] text-text leading-relaxed">{post.ai_feedback}</p>
+        <div className="mx-4 mb-3">
+          <button
+            onClick={() => setShowFeedback(s => !s)}
+            className="w-full flex items-center gap-1.5 text-[12px] font-extrabold text-mint hover:underline py-1"
+            aria-expanded={showFeedback}
+          >
+            <Image src="/icons/icon-192.png" alt="Rizup" width={18} height={18} className="rounded-full" />
+            <span>Rizup のフィードバックを見る</span>
+            <span className="ml-auto text-[10px]">{showFeedback ? "▲" : "▼"}</span>
+          </button>
+          {showFeedback && (
+            <div className="mt-1.5 bg-gradient-to-br from-mint-light to-white dark:from-[#1f2a26] dark:to-[#1a1a1a] rounded-2xl p-3 border border-mint/10 dark:border-mint/20 animate-fade-in">
+              <p className="text-[13.5px] text-text dark:text-gray-100 leading-relaxed">{post.ai_feedback}</p>
+            </div>
+          )}
         </div>
       )}
 
@@ -415,7 +422,7 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
               } ${animating === r.type ? "animate-pop" : ""}`}
             >
               <span className="text-base">{r.emoji}</span>
-              <span className="hidden xs:inline truncate">{r.label}</span>
+              <span className="truncate">{r.label}</span>
               <span className={reacted ? "" : "text-text-light"}>{counts[r.type] || ""}</span>
             </button>
           );

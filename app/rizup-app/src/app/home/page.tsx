@@ -11,7 +11,7 @@ import { SkeletonTimeline } from "@/components/Skeleton";
 import { findTodayPost } from "@/lib/safe-insert";
 
 type TimelineTab = "all" | "following" | "morning" | "evening";
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 20;
 
 interface PostWithProfile {
   id: string; user_id: string; type: string; content: string;
@@ -39,6 +39,7 @@ export default function HomePage() {
   const [hasMorningPost, setHasMorningPost] = useState(false);
   const [hasEveningPost, setHasEveningPost] = useState(false);
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
+  const [trialDismissed, setTrialDismissed] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [confettiKey] = useState(0);
 
@@ -54,6 +55,13 @@ export default function HomePage() {
   const timelineTopRef = useRef<HTMLDivElement | null>(null);
 
   const today = todayJST();
+
+  // トライアルバナー：今日分の閉じた状態を読み込み
+  useEffect(() => {
+    if (typeof window !== "undefined" && localStorage.getItem("trial_dismissed_today") === today) {
+      setTrialDismissed(true);
+    }
+  }, [today]);
 
   useEffect(() => {
     const init = async () => {
@@ -241,27 +249,33 @@ export default function HomePage() {
       <div className="max-w-md mx-auto px-4 py-2">
         {/* ── 1行ステータスバー（朝夜・ToDo・習慣・🔥） ─────────────── */}
         <Link href="/today"
-          className="flex items-center gap-3 bg-white rounded-2xl border border-gray-100 shadow-sm px-3 py-2 mb-3 active:scale-[0.99] transition">
-          <span className="flex items-center gap-0.5 text-[13px] font-bold">
-            <span className={hasMorningPost ? "text-mint" : "text-text-light"}>{hasMorningPost ? "☀️✅" : "☀️⬜"}</span>
-            <span className={hasEveningPost ? "text-mint" : "text-text-light"}>{hasEveningPost ? "🌙✅" : "🌙⬜"}</span>
+          className="flex items-center gap-2 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm px-3 py-2.5 mb-3 active:scale-[0.99] transition">
+          <span className="flex items-center gap-1 text-[12px] font-extrabold">
+            <span className="text-text-mid">朝</span>
+            <span className={hasMorningPost ? "text-mint" : "text-text-light"}>{hasMorningPost ? "☀️" : "⬜"}</span>
+            <span className="text-text-mid ml-1">夜</span>
+            <span className={hasEveningPost ? "text-mint" : "text-text-light"}>{hasEveningPost ? "🌙" : "⬜"}</span>
           </span>
-          <span className="h-4 w-px bg-gray-200" />
-          <span className="text-[13px] font-bold text-mint">
-            🔄 {habitsCompleted.done}/{habitsCompleted.total || 0}
+          <span className="h-4 w-px bg-gray-200 dark:bg-[#2a2a2a]" />
+          <span className="text-[12px] font-extrabold text-mint">
+            🔄{habitsCompleted.done}/{habitsCompleted.total || 0}
           </span>
-          <span className="h-4 w-px bg-gray-200" />
-          <span className="text-[13px] font-bold text-mint">
-            ✅ {doneTodos}/{totalTodos || 0}
+          <span className="h-4 w-px bg-gray-200 dark:bg-[#2a2a2a]" />
+          <span className="text-[12px] font-extrabold text-mint">
+            ✅{doneTodos}/{totalTodos || 0}
           </span>
-          <span className="h-4 w-px bg-gray-200" />
-          <span className="text-[13px] font-bold text-orange ml-auto">
-            <span className="streak-fire">🔥</span>{streak}日
+          <span className="text-[12px] font-extrabold text-orange ml-auto">
+            <span className="streak-fire">🔥</span>{streak}
           </span>
         </Link>
 
-        {trialDaysLeft !== null && trialDaysLeft <= 3 && (
-          <p className="text-[11px] text-orange mb-2 font-bold text-center">⏰ トライアル残り{trialDaysLeft}日</p>
+        {trialDaysLeft !== null && trialDaysLeft <= 3 && !trialDismissed && (
+          <div className="flex items-center gap-2 bg-gray-50 dark:bg-[#1a1a1a] border border-gray-100 dark:border-[#2a2a2a] rounded-full px-3 py-1 mb-2 text-[11px] font-bold text-text-mid">
+            <span>⏰ トライアル残り{trialDaysLeft}日</span>
+            <button onClick={() => { setTrialDismissed(true); localStorage.setItem("trial_dismissed_today", today); }}
+              aria-label="閉じる"
+              className="ml-auto text-text-light hover:text-text px-1">✕</button>
+          </div>
         )}
 
         {/* ── タイムライン ────────────────────────────────────────────── */}
@@ -347,7 +361,7 @@ export default function HomePage() {
                 )}
               </div>
             )}
-            {!hasMore && filteredPosts.length >= PAGE_SIZE && (
+            {!hasMore && (
               <p className="text-center text-xs text-text-light py-6">ここまでだよ🌿</p>
             )}
           </>

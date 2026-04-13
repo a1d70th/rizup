@@ -7,7 +7,10 @@ export default function Header() {
     <header className="bg-white border-b border-gray-100">
       <div className="flex items-center justify-between px-4 py-3 max-w-md mx-auto">
         <Link href="/home" className="flex items-center" aria-label="ホームへ">
-          <Image src="/logo.svg" alt="Rizup" width={100} height={26} priority />
+          {/* ライト用ロゴ */}
+          <Image src="/logo.svg" alt="Rizup" width={100} height={26} priority className="block dark:hidden" />
+          {/* ダーク用ロゴ */}
+          <Image src="/logo-white.svg" alt="Rizup" width={100} height={26} priority className="hidden dark:block" />
         </Link>
         <Link href="/notifications" className="relative flex items-center justify-center w-11 h-11" aria-label="通知">
           <span className="text-xl">🔔</span>

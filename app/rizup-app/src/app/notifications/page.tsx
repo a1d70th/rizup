@@ -21,7 +21,7 @@ const typeLabels: Record<string, { icon: string; label: string }> = {
   warning: { icon: "⚠️", label: "警告" },
   announcement: { icon: "📢", label: "お知らせ" },
   event: { icon: "🎉", label: "イベント" },
-  sho_morning: { icon: "🌿", label: "Sho" },
+  sho_morning: { icon: "🌿", label: "Rizup" },
 };
 
 function SkeletonNotif() {
