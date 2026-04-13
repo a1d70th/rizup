@@ -6,6 +6,7 @@ import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import Image from "next/image";
 import { compoundPercent } from "@/lib/compound";
+import { showToast } from "@/components/Toast";
 
 interface Habit {
   id: string;
@@ -65,12 +66,22 @@ function HabitsInner() {
       user_id: userId, title: newName.trim(), icon: newIcon,
     };
     if (newVisionId) payload.vision_id = newVisionId;
-    const { data, error } = await supabase.from("habits").insert(payload).select().single();
+    let { data, error } = await supabase.from("habits").insert(payload).select().single();
+    // フォールバック: icon / vision_id カラム未作成時は core のみで再試行
+    if (error && /column|does not exist|schema cache|not find/i.test(error.message)) {
+      const fallback = { user_id: userId, title: newName.trim() };
+      const retry = await supabase.from("habits").insert(fallback).select().single();
+      data = retry.data; error = retry.error;
+    }
     if (error) {
       setAddError(`保存できませんでした：${error.message}`);
+      showToast("error", `習慣を追加できませんでした：${error.message}`);
       return;
     }
-    if (data) setHabits(prev => [...prev, data]);
+    if (data) {
+      setHabits(prev => [...prev, data]);
+      showToast("success", `「${data.title}」を追加🌱`);
+    }
     setNewName(""); setNewVisionId(""); setShowAdd(false);
   };
 
