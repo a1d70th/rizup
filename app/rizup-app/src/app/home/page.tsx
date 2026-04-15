@@ -23,6 +23,26 @@ interface PostWithProfile {
 
 const todayJST = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
 
+function Ring({ pct, color, label, emoji }: { pct: number; color: string; label: string; emoji: string }) {
+  const r = 22; const c = 2 * Math.PI * r;
+  const dash = `${(c * Math.min(pct, 1)).toFixed(1)} ${c.toFixed(1)}`;
+  return (
+    <div className="flex flex-col items-center gap-1" aria-label={`${label} ${Math.round(pct * 100)}%`}>
+      <div className="relative w-14 h-14">
+        <svg viewBox="0 0 56 56" className="w-14 h-14 -rotate-90">
+          <circle cx="28" cy="28" r={r} fill="none" stroke="currentColor"
+            className="text-gray-200 dark:text-[#2a2a2a]" strokeWidth="5" />
+          <circle cx="28" cy="28" r={r} fill="none" stroke={color} strokeWidth="5"
+            strokeLinecap="round" strokeDasharray={dash}
+            style={{ transition: "stroke-dasharray 600ms ease" }} />
+        </svg>
+        <span className="absolute inset-0 flex items-center justify-center text-base">{emoji}</span>
+      </div>
+      <span className="text-[10px] font-bold text-text-mid">{label}</span>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [posts, setPosts] = useState<PostWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +52,7 @@ export default function HomePage() {
   const [morningDone, setMorningDone] = useState(false);
   const [eveningDone, setEveningDone] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [todayQuote, setTodayQuote] = useState<string>("");
   const [refreshing, setRefreshing] = useState(false);
   const [pull, setPull] = useState(0);
   const startY = useRef<number | null>(null);
@@ -71,6 +92,16 @@ export default function HomePage() {
               setHabits({ done: (logs || []).length, total: h.length });
             }
           } catch { /* ignore */ }
+          // 今日のひとこと：最も近い vision の title or description から1文
+          try {
+            const { data: vs } = await supabase.from("visions")
+              .select("title, description, time_horizon").eq("user_id", user.id)
+              .order("time_horizon").limit(5);
+            if (vs && vs.length > 0) {
+              const seed = vs[Math.floor(Date.now() / 86400000) % vs.length];
+              setTodayQuote(seed.description?.split(/[。\n]/)[0]?.trim() || seed.title);
+            }
+          } catch { /* ignore */ }
           fetch("/api/check-progress", { method: "POST" })
             .then(r => r.json()).then(d => { if (d.streak !== undefined) setStreak(d.streak); })
             .catch(() => {});
@@ -98,9 +129,11 @@ export default function HomePage() {
     setPull(0);
   };
 
+  const habitPct = habits.total > 0 ? habits.done / habits.total : 0;
+
   return (
     <div onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEnd}
-      className="min-h-screen bg-bg pb-20">
+      className="min-h-screen bg-bg dark:bg-[#111111] pb-20">
       <Header />
       <div style={{
         transform: pull ? `translateY(${pull}px)` : undefined,
@@ -112,21 +145,31 @@ export default function HomePage() {
           </div>
         )}
         <div className="max-w-md mx-auto px-4 py-2">
-          <div className="flex items-center gap-2 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm px-3 py-2.5 mb-3">
-            <span className="flex items-center gap-1 text-[12px] font-extrabold">
-              <span className="text-text-mid">朝</span>
-              <span className={morningDone ? "text-mint" : "text-text-light"}>{morningDone ? "☀️" : "⬜"}</span>
-              <span className="text-text-mid ml-1">夜</span>
-              <span className={eveningDone ? "text-mint" : "text-text-light"}>{eveningDone ? "🌙" : "⬜"}</span>
-            </span>
-            <span className="h-4 w-px bg-gray-200 dark:bg-[#2a2a2a]" />
-            <span className="text-[12px] font-extrabold text-mint">🔄{habits.done}/{habits.total || 0}</span>
-            <span className="text-[12px] font-extrabold text-orange ml-auto">
-              <span className="streak-fire">🔥</span>{streak}
-            </span>
+          {/* 3リング可視化（朝/夜/習慣）＋ 連続日数 */}
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm px-3 py-3 mb-3">
+            <div className="flex items-center justify-around">
+              <Ring pct={morningDone ? 1 : 0} color="#6ecbb0" label="朝" emoji="☀️" />
+              <Ring pct={eveningDone ? 1 : 0} color="#f4976c" label="夜" emoji="🌙" />
+              <Ring pct={habitPct} color="#5b8def" label="習慣" emoji="🔄" />
+              <div className="flex flex-col items-center gap-1">
+                <div className="w-14 h-14 rounded-full bg-orange-light dark:bg-[#2a1f15] flex items-center justify-center">
+                  <span className="text-orange font-extrabold text-base"><span className="streak-fire">🔥</span>{streak}</span>
+                </div>
+                <span className="text-[10px] font-bold text-text-mid">連続</span>
+              </div>
+            </div>
           </div>
+
+          {/* 今日のひとこと（ビジョン抜粋） */}
+          {todayQuote && (
+            <div className="bg-mint-light dark:bg-[#1a2620] border border-mint/20 rounded-2xl px-3 py-2 mb-3 flex items-start gap-2">
+              <span className="text-base">🎯</span>
+              <p className="text-[12px] font-bold text-mint flex-1 leading-relaxed">{todayQuote}</p>
+            </div>
+          )}
+
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-extrabold">💬 みんなの今日</h3>
+            <h3 className="text-sm font-extrabold dark:text-gray-100">💬 みんなの今日</h3>
             <div className="flex items-center gap-2">
               <button onClick={refresh} disabled={refreshing} aria-label="タイムラインを更新"
                 className="text-xs text-text-mid hover:text-mint transition disabled:opacity-50">
@@ -135,19 +178,20 @@ export default function HomePage() {
               <Link href="/journal" className="text-xs text-mint font-extrabold">＋投稿</Link>
             </div>
           </div>
+
           {loading ? (
             <SkeletonTimeline />
           ) : posts.length === 0 ? (
             <div className="text-center py-10 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a]">
               <Image src="/icons/icon-192.png" alt="Rizup" width={56} height={56} className="rounded-full mx-auto mb-2 animate-sho-float" />
-              <p className="text-sm font-bold mb-1">まだ投稿がないよ</p>
+              <p className="text-sm font-bold mb-1 dark:text-gray-100">まだ投稿がないよ</p>
               <p className="text-xs text-text-mid mb-3">最初の一歩になってみる？</p>
               <Link href="/journal" className="inline-block bg-mint text-white font-bold px-6 py-2.5 rounded-full shadow-md">
                 📝 書いてみる
               </Link>
             </div>
           ) : (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
               {posts.map(p => (
                 <PostCard key={p.id} post={p} userId={userId} isAdmin={isAdmin}
                   onDelete={id => setPosts(prev => prev.filter(x => x.id !== id))} />

@@ -33,6 +33,9 @@ function HabitsInner() {
   const [newVisionId, setNewVisionId] = useState(presetVisionId || "");
   const [addError, setAddError] = useState("");
   const [celebrateId, setCelebrateId] = useState<string | null>(null);
+  const [freezeCount, setFreezeCount] = useState<number>(1);
+  const [freezeUsedAt, setFreezeUsedAt] = useState<string | null>(null);
+  const [freezing, setFreezing] = useState(false);
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
 
   useEffect(() => {
@@ -55,6 +58,15 @@ function HabitsInner() {
           const { data: logs } = await supabase.from("habit_logs").select("habit_id")
             .eq("user_id", user.id).eq("logged_date", today);
           if (logs) setTodayLogs(new Set(logs.map((l: { habit_id: string }) => l.habit_id)));
+        } catch { /* ignore */ }
+        // Streak Freeze 状態（カラム未作成なら無視）
+        try {
+          const { data: prof } = await supabase.from("profiles")
+            .select("streak_freeze_count, streak_freeze_used_at").eq("id", user.id).maybeSingle();
+          if (prof) {
+            setFreezeCount(prof.streak_freeze_count ?? 1);
+            setFreezeUsedAt(prof.streak_freeze_used_at ?? null);
+          }
         } catch { /* ignore */ }
       } catch (e) {
         console.error("[Habits init]", e);
@@ -114,6 +126,25 @@ function HabitsInner() {
     setHabits(prev => prev.filter(h => h.id !== id));
   };
 
+  const handleStreakFreeze = async () => {
+    if (!userId || freezing) return;
+    if (freezeUsedAt === today) { showToast("info", "今日はすでに使用済みです"); return; }
+    if (freezeCount <= 0) { showToast("info", "今月の Streak Freeze は使い切りました"); return; }
+    if (!confirm(`🧊 ストリーク保護を1回使います（残り${freezeCount}回）。よろしいですか？`)) return;
+    setFreezing(true);
+    const { error } = await supabase.from("profiles")
+      .update({ streak_freeze_used_at: today, streak_freeze_count: Math.max(0, freezeCount - 1) })
+      .eq("id", userId);
+    if (error) {
+      showToast("error", "保存できませんでした（DB マイグレ未実行かも）");
+    } else {
+      setFreezeUsedAt(today);
+      setFreezeCount(c => Math.max(0, c - 1));
+      showToast("success", "🧊 今日を保護しました。明日も続けよう🌿");
+    }
+    setFreezing(false);
+  };
+
   const completed = habits.filter(h => todayLogs.has(h.id)).length;
 
   if (loading) return (
@@ -127,7 +158,7 @@ function HabitsInner() {
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-extrabold">🔄 習慣トラッカー</h2>
+          <h2 className="text-lg font-extrabold dark:text-gray-100">🔄 習慣トラッカー</h2>
           {habits.length < MAX_HABITS && (
             <button onClick={() => setShowAdd(!showAdd)} aria-label="習慣を追加"
               className="bg-mint text-white text-xs font-bold px-4 py-2 rounded-full shadow-md shadow-mint/30">
@@ -135,6 +166,22 @@ function HabitsInner() {
             </button>
           )}
         </div>
+
+        {/* Streak Freeze（Duolingo方式・月1回） */}
+        <button
+          onClick={handleStreakFreeze}
+          disabled={freezing || freezeCount <= 0 || freezeUsedAt === today}
+          aria-label="ストリークを守る"
+          className="w-full bg-white dark:bg-[#1a1a1a] border border-blue-200 dark:border-[#2a3a4a] rounded-2xl px-4 py-3 mb-3 flex items-center gap-3 shadow-sm disabled:opacity-50 active:scale-[0.99] transition">
+          <span className="text-2xl">🧊</span>
+          <div className="flex-1 text-left">
+            <p className="text-sm font-extrabold text-blue-500">ストリークを守る</p>
+            <p className="text-[11px] text-text-mid">
+              {freezeUsedAt === today ? "今日は保護済み🧊" : `残り ${freezeCount} 回（月1回まで）`}
+            </p>
+          </div>
+          <span className="text-xs text-blue-500 font-bold">{freezing ? "..." : "使う →"}</span>
+        </button>
 
         {habits.length > 0 && (
           <div className="glass-mint rounded-2xl p-4 mb-4 animate-slide-up relative overflow-hidden border border-mint/20"
@@ -162,7 +209,7 @@ function HabitsInner() {
         )}
 
         {showAdd && (
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4 animate-fade-in">
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] shadow-sm mb-4 animate-fade-in">
             <p className="text-sm font-bold mb-2">新しい習慣（最大{MAX_HABITS}個）</p>
             <div className="flex gap-1.5 mb-2 flex-wrap">
               {iconOptions.map(ic => (

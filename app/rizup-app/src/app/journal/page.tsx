@@ -23,6 +23,21 @@ function todayJST(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
 }
 
+// 朝のプロンプト質問ローテ（曜日ごと・JST）
+const MORNING_PROMPTS = [
+  "来週の自分に一言送るなら？",        // 日
+  "今日の一番大切なことは？",          // 月
+  "今日どんな自分でいたい？",          // 火
+  "今日終わったら何に感謝できそう？",  // 水
+  "今日乗り越えたいことは？",          // 木
+  "今週できたことを一つ挙げるなら？",  // 金
+  "今日誰かに何かしてあげられる？",    // 土
+];
+function morningPromptOfToday(): string {
+  const dow = new Date().getDay(); // 0=日
+  return MORNING_PROMPTS[dow];
+}
+
 interface Todo { id: string; title: string; vision_id: string | null; is_done: boolean; }
 interface MorningPost {
   id: string;
@@ -524,6 +539,14 @@ export default function JournalPage() {
             </>
           )}
         </div>
+
+        {/* 朝モード: 今日の問いかけ（曜日ローテ） */}
+        {mode === "morning" && (
+          <div className="bg-mint-light dark:bg-[#1a2620] rounded-2xl px-4 py-3 border border-mint/20 mb-3">
+            <p className="text-[11px] font-bold text-mint mb-0.5">🌿 今日の問いかけ</p>
+            <p className="text-sm font-extrabold text-text dark:text-gray-100 leading-relaxed">{morningPromptOfToday()}</p>
+          </div>
+        )}
 
         {/* 朝モード: 今日の目標（強調表示） */}
         {mode === "morning" && (

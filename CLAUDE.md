@@ -13,6 +13,17 @@
 
 ## 🎯 現在のステータス
 
+### ✅ 完了（2026-04-15 夜・v4.5 "毎日使いたくなる仕掛け"）
+
+**v4.5（最新）— 引き付け要素の本実装**
+- ホーム3リング可視化（朝/夜/習慣 + 連続）：SVG `<circle>` の `strokeDasharray` で達成率を円弧化。Apple Fitness 方式
+- ホーム「🎯 今日のひとこと」：ビジョンの description/title から1文を日替わりで表示
+- ホーム dark 背景を `bg-bg dark:bg-[#111111]` に統一し、カード間の暗転を解消
+- 朝ジャーナル「🌿 今日の問いかけ」：曜日ごと7種ローテ（月〜日で固定文言）
+- Streak Freeze：`/habits` 上部に🧊保護ボタン。今日の使用＆月内残数を `profiles.streak_freeze_used_at/count` で管理
+- DB マイグレ：`app/rizup-app/supabase-v4.5.sql`（IF NOT EXISTS で安全・既存ユーザに残数1付与）
+- 通知改善案 3件：朝/夜/ストリーク危機の文言を `improvement-proposals-v2.md` に追記
+
 ### ✅ 完了（2026-04-15・v4.4 "引き算" リリース）
 
 **v4.4（今日）— 引き算の法則で再設計**
