@@ -63,6 +63,16 @@ export default function JournalPage() {
   // 昨日の朝目標（"⟳ 昨日と同じ" ボタン用）
   const [lastMorningGoal, setLastMorningGoal] = useState<string>("");
 
+  // 朝1分タイマー（Fabulous 方式）
+  const [timerSec, setTimerSec] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (timerSec == null) return;
+    if (timerSec <= 0) { showToast("success", "1分の自分時間、おつかれさま🌿"); setTimerSec(null); return; }
+    const t = setTimeout(() => setTimerSec(s => (s == null ? null : s - 1)), 1000);
+    return () => clearTimeout(t);
+  }, [timerSec]);
+
   const imageRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -412,12 +422,28 @@ export default function JournalPage() {
 
         <div className="flex items-center gap-3 mb-5">
           <Image src="/icons/icon-192.png" alt="Rizup" width={40} height={40} className="rounded-full" />
-          <div>
+          <div className="flex-1">
             <p className="font-extrabold">{mode === "morning" ? "おはよう！☀️" : "おつかれさま🌙"}</p>
             <p className="text-xs text-text-mid">
               {mode === "morning" ? "今日の気分と、やること3つを決めよう" : "今日の振り返り。朝の目標は達成できた？"}
             </p>
           </div>
+          {mode === "morning" && timerSec == null && (
+            <button
+              onClick={() => setTimerSec(60)}
+              aria-label="1分だけ自分と向き合う"
+              className="text-[11px] font-bold bg-mint-light text-mint border border-mint/30 rounded-full px-3 py-1.5 hover:bg-mint/10 transition shrink-0">
+              ⏱ 1分
+            </button>
+          )}
+          {mode === "morning" && timerSec != null && (
+            <button
+              onClick={() => setTimerSec(null)}
+              aria-label="タイマーを止める"
+              className="text-[11px] font-extrabold bg-mint text-white rounded-full px-3 py-1.5 shrink-0 animate-pop">
+              {timerSec}秒
+            </button>
+          )}
         </div>
 
         {/* 夜モード: 朝の振り返り */}

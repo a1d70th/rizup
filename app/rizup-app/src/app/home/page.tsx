@@ -21,24 +21,20 @@ interface PostWithProfile {
   profiles: { name: string; avatar_url: string | null; streak?: number | null };
 }
 
-function todayJST(): string {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
-}
+const todayJST = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
 
 export default function HomePage() {
   const [posts, setPosts] = useState<PostWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [streak, setStreak] = useState(0);
-  const [habitsCompleted, setHabitsCompleted] = useState({ done: 0, total: 0 });
-  const [hasMorningPost, setHasMorningPost] = useState(false);
-  const [hasEveningPost, setHasEveningPost] = useState(false);
+  const [habits, setHabits] = useState({ done: 0, total: 0 });
+  const [morningDone, setMorningDone] = useState(false);
+  const [eveningDone, setEveningDone] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-
   const [refreshing, setRefreshing] = useState(false);
-  const [pullOffset, setPullOffset] = useState(0);
-  const pullStartYRef = useRef<number | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [pull, setPull] = useState(0);
+  const startY = useRef<number | null>(null);
 
   const fetchPosts = async () => {
     const first = await supabase.from("posts")
@@ -56,129 +52,93 @@ export default function HomePage() {
 
   useEffect(() => {
     const today = todayJST();
-    const init = async () => {
+    (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           setUserId(user.id);
-          const { data: profile } = await supabase.from("profiles")
-            .select("name, streak, is_admin").eq("id", user.id).single();
-          if (profile) {
-            setStreak(profile.streak || 0);
-            if (profile.is_admin) setIsAdmin(true);
-          }
-
-          const morningP = await findTodayPost(supabase, user.id, "morning");
-          setHasMorningPost(!!morningP);
-          const eveningP = await findTodayPost(supabase, user.id, "evening");
-          setHasEveningPost(!!eveningP);
-
+          const { data: p } = await supabase.from("profiles")
+            .select("streak, is_admin").eq("id", user.id).single();
+          if (p) { setStreak(p.streak || 0); if (p.is_admin) setIsAdmin(true); }
+          setMorningDone(!!(await findTodayPost(supabase, user.id, "morning")));
+          setEveningDone(!!(await findTodayPost(supabase, user.id, "evening")));
           try {
-            const { data: allHabits } = await supabase.from("habits")
+            const { data: h } = await supabase.from("habits")
               .select("id").eq("user_id", user.id).is("archived_at", null);
-            if (allHabits) {
+            if (h) {
               const { data: logs } = await supabase.from("habit_logs")
                 .select("habit_id").eq("user_id", user.id).eq("logged_date", today);
-              setHabitsCompleted({ done: (logs || []).length, total: allHabits.length });
+              setHabits({ done: (logs || []).length, total: h.length });
             }
           } catch { /* ignore */ }
-
-          fetch("/api/check-progress", { method: "POST" }).then(r => r.json()).then(d => {
-            if (d.streak !== undefined) setStreak(d.streak);
-          }).catch(() => {});
+          fetch("/api/check-progress", { method: "POST" })
+            .then(r => r.json()).then(d => { if (d.streak !== undefined) setStreak(d.streak); })
+            .catch(() => {});
         }
-
         await fetchPosts();
-      } catch (err) {
-        console.error("[Home]", err);
-      }
+      } catch (e) { console.error("[Home]", e); }
       setLoading(false);
-    };
-    init();
+    })();
   }, []);
 
-  const refreshTimeline = async () => {
-    setRefreshing(true);
-    await fetchPosts();
-    setRefreshing(false);
-  };
+  const refresh = async () => { setRefreshing(true); await fetchPosts(); setRefreshing(false); };
 
-  // Pull-to-refresh (touch)
-  const onTouchStart = (e: React.TouchEvent) => {
-    if (window.scrollY > 0) { pullStartYRef.current = null; return; }
-    pullStartYRef.current = e.touches[0].clientY;
+  const onStart = (e: React.TouchEvent) => {
+    startY.current = window.scrollY > 0 ? null : e.touches[0].clientY;
   };
-  const onTouchMove = (e: React.TouchEvent) => {
-    if (pullStartYRef.current == null) return;
-    const dy = e.touches[0].clientY - pullStartYRef.current;
-    if (dy > 0) setPullOffset(Math.min(dy * 0.5, 80));
+  const onMove = (e: React.TouchEvent) => {
+    if (startY.current == null) return;
+    const dy = e.touches[0].clientY - startY.current;
+    if (dy > 0) setPull(Math.min(dy * 0.5, 80));
   };
-  const onTouchEnd = async () => {
-    const start = pullStartYRef.current;
-    pullStartYRef.current = null;
-    if (start == null) { setPullOffset(0); return; }
-    if (pullOffset > 60) {
-      setPullOffset(40);
-      await refreshTimeline();
-    }
-    setPullOffset(0);
+  const onEnd = async () => {
+    const s = startY.current; startY.current = null;
+    if (s == null) { setPull(0); return; }
+    if (pull > 60) { setPull(40); await refresh(); }
+    setPull(0);
   };
 
   return (
-    <div
-      ref={containerRef}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
-      className="min-h-screen bg-bg pb-20"
-    >
+    <div onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEnd}
+      className="min-h-screen bg-bg pb-20">
       <Header />
-      <div
-        style={{
-          transform: pullOffset ? `translateY(${pullOffset}px)` : undefined,
-          transition: pullStartYRef.current ? "none" : "transform 200ms",
-        }}
-      >
-        {pullOffset > 0 && (
+      <div style={{
+        transform: pull ? `translateY(${pull}px)` : undefined,
+        transition: startY.current ? "none" : "transform 200ms",
+      }}>
+        {pull > 0 && (
           <div className="flex justify-center py-2 text-xs text-text-light">
-            {refreshing ? "更新中…" : pullOffset > 60 ? "離して更新" : "↓ 引っ張って更新"}
+            {refreshing ? "更新中…" : pull > 60 ? "離して更新" : "↓ 引っ張って更新"}
           </div>
         )}
         <div className="max-w-md mx-auto px-4 py-2">
-          {/* ステータスバー（ToDoなし・朝夜・習慣・🔥） */}
           <div className="flex items-center gap-2 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm px-3 py-2.5 mb-3">
             <span className="flex items-center gap-1 text-[12px] font-extrabold">
               <span className="text-text-mid">朝</span>
-              <span className={hasMorningPost ? "text-mint" : "text-text-light"}>{hasMorningPost ? "☀️" : "⬜"}</span>
+              <span className={morningDone ? "text-mint" : "text-text-light"}>{morningDone ? "☀️" : "⬜"}</span>
               <span className="text-text-mid ml-1">夜</span>
-              <span className={hasEveningPost ? "text-mint" : "text-text-light"}>{hasEveningPost ? "🌙" : "⬜"}</span>
+              <span className={eveningDone ? "text-mint" : "text-text-light"}>{eveningDone ? "🌙" : "⬜"}</span>
             </span>
             <span className="h-4 w-px bg-gray-200 dark:bg-[#2a2a2a]" />
-            <span className="text-[12px] font-extrabold text-mint">
-              🔄{habitsCompleted.done}/{habitsCompleted.total || 0}
-            </span>
+            <span className="text-[12px] font-extrabold text-mint">🔄{habits.done}/{habits.total || 0}</span>
             <span className="text-[12px] font-extrabold text-orange ml-auto">
               <span className="streak-fire">🔥</span>{streak}
             </span>
           </div>
-
-          {/* タイムライン */}
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-extrabold">💬 みんなの今日</h3>
             <div className="flex items-center gap-2">
-              <button onClick={refreshTimeline} disabled={refreshing}
-                aria-label="タイムラインを更新"
+              <button onClick={refresh} disabled={refreshing} aria-label="タイムラインを更新"
                 className="text-xs text-text-mid hover:text-mint transition disabled:opacity-50">
                 {refreshing ? "更新中…" : "🔄"}
               </button>
               <Link href="/journal" className="text-xs text-mint font-extrabold">＋投稿</Link>
             </div>
           </div>
-
           {loading ? (
             <SkeletonTimeline />
           ) : posts.length === 0 ? (
-            <div className="text-center py-10 bg-white rounded-2xl border border-gray-100">
+            <div className="text-center py-10 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a]">
               <Image src="/icons/icon-192.png" alt="Rizup" width={56} height={56} className="rounded-full mx-auto mb-2 animate-sho-float" />
               <p className="text-sm font-bold mb-1">まだ投稿がないよ</p>
               <p className="text-xs text-text-mid mb-3">最初の一歩になってみる？</p>
@@ -188,10 +148,9 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="flex flex-col gap-4">
-              {posts.map(post => (
-                <PostCard key={post.id} post={post} userId={userId}
-                  isAdmin={isAdmin}
-                  onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
+              {posts.map(p => (
+                <PostCard key={p.id} post={p} userId={userId} isAdmin={isAdmin}
+                  onDelete={id => setPosts(prev => prev.filter(x => x.id !== id))} />
               ))}
               <p className="text-center text-xs text-text-light py-6">ここまでだよ🌿</p>
             </div>

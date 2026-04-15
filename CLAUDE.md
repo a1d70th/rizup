@@ -13,7 +13,20 @@
 
 ## 🎯 現在のステータス
 
-### ✅ 完了（2026-04-15・v4.3 リリース）
+### ✅ 完了（2026-04-15・v4.4 "引き算" リリース）
+
+**v4.4（今日）— 引き算の法則で再設計**
+- `research/simplicity-research.md`（Kai）：2025年ウェルネスアプリ TOP10 の引き算原則
+- `company/spec-audit.md`（Sora）：現状19ページ/13コンポ/14API 棚卸し
+- `company/spec-v2.md`：コア4動作（朝→習慣→夜→グラフ）の最小仕様
+- `research/improvement-proposals.md` / `improvement-proposals-v2.md`（Kai）：引き付け要素の追加リサーチ＋改善提案
+- コード削除：`/recommend`・`/anti-vision`・`/api/sho-insight`・`Confetti.tsx`
+- middleware から `/recommend` `/anti-vision` の保護を除去
+- プロフィールの「🚫 アンチ」ボタン→「🔄 習慣」に差し替え
+- `home/page.tsx` を 162 行に圧縮（spec-v2 要求の 200 行以内をクリア）
+- ジャーナル：「⟳ 昨日と同じ」ボタン・文字数カウンター・「⏱ 1分」タイマー（Fabulous方式）を追加
+
+### ✅ 完了（2026-04-15 AM・v4.3 リリース）
 
 **v4.3（今日）— 散歩メモ7項目＋ブラウザ確認バグ一括修正＋仕上げ**
 - アイコン刷新：`public/logo-r.svg`（#6ecbb0 下地・白抜きR）→ sharp で 16/32/72/96/128/144/152/167/180/192/384/512/maskable/apple-touch 全サイズ再生成
