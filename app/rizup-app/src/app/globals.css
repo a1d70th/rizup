@@ -113,6 +113,10 @@ body {
 /* Tailwind class overrides to honor dark-mode tokens */
 .bg-bg { background-color: #fafafa !important; }
 .dark .bg-bg { background-color: #111111 !important; }
+
+/* v4.7: スクロール暗転撲滅 — ルート要素の背景を常に固定 */
+html, body, main { background-color: #fafafa; }
+.dark html, .dark body, .dark main { background-color: #111111 !important; }
 .bg-white { background-color: var(--card) !important; }
 .text-text { color: var(--text) !important; }
 .text-text-mid { color: var(--text-mid) !important; }

@@ -24,21 +24,21 @@ interface PostWithProfile {
 const todayJST = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
 
 function Ring({ pct, color, label, emoji }: { pct: number; color: string; label: string; emoji: string }) {
-  const r = 22; const c = 2 * Math.PI * r;
+  const r = 28; const c = 2 * Math.PI * r;
   const dash = `${(c * Math.min(pct, 1)).toFixed(1)} ${c.toFixed(1)}`;
   return (
-    <div className="flex flex-col items-center gap-1" aria-label={`${label} ${Math.round(pct * 100)}%`}>
-      <div className="relative w-14 h-14">
-        <svg viewBox="0 0 56 56" className="w-14 h-14 -rotate-90">
-          <circle cx="28" cy="28" r={r} fill="none" stroke="currentColor"
-            className="text-gray-200 dark:text-[#2a2a2a]" strokeWidth="5" />
-          <circle cx="28" cy="28" r={r} fill="none" stroke={color} strokeWidth="5"
+    <div className="flex flex-col items-center gap-1.5" aria-label={`${label} ${Math.round(pct * 100)}%`}>
+      <div className="relative w-16 h-16">
+        <svg viewBox="0 0 64 64" className="w-16 h-16 -rotate-90">
+          <circle cx="32" cy="32" r={r} fill="none" stroke="currentColor"
+            className="text-gray-200 dark:text-[#2a2a2a]" strokeWidth="6" />
+          <circle cx="32" cy="32" r={r} fill="none" stroke={color} strokeWidth="6"
             strokeLinecap="round" strokeDasharray={dash}
             style={{ transition: "stroke-dasharray 600ms ease" }} />
         </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-base">{emoji}</span>
+        <span className="absolute inset-0 flex items-center justify-center text-xl">{emoji}</span>
       </div>
-      <span className="text-[10px] font-bold text-text-mid">{label}</span>
+      <span className="text-xs font-bold text-text-mid">{label}</span>
     </div>
   );
 }
@@ -146,16 +146,16 @@ export default function HomePage() {
         )}
         <div className="max-w-md mx-auto px-4 py-2">
           {/* 3リング可視化（朝/夜/習慣）＋ 連続日数 */}
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm px-3 py-3 mb-3">
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm px-4 py-5 mb-3">
             <div className="flex items-center justify-around">
               <Ring pct={morningDone ? 1 : 0} color="#6ecbb0" label="朝" emoji="☀️" />
               <Ring pct={eveningDone ? 1 : 0} color="#f4976c" label="夜" emoji="🌙" />
               <Ring pct={habitPct} color="#5b8def" label="習慣" emoji="🔄" />
-              <div className="flex flex-col items-center gap-1">
-                <div className="w-14 h-14 rounded-full bg-orange-light dark:bg-[#2a1f15] flex items-center justify-center">
-                  <span className="text-orange font-extrabold text-base"><span className="streak-fire">🔥</span>{streak}</span>
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="w-16 h-16 rounded-full bg-orange-light dark:bg-[#2a1f15] flex items-center justify-center">
+                  <span className="text-orange font-extrabold text-lg"><span className="streak-fire">🔥</span>{streak}</span>
                 </div>
-                <span className="text-[10px] font-bold text-text-mid">連続</span>
+                <span className="text-xs font-bold text-text-mid">連続</span>
               </div>
             </div>
           </div>
@@ -196,14 +196,14 @@ export default function HomePage() {
       <Link
         href="/journal"
         aria-label="ジャーナルを書く"
-        className="fixed right-5 bottom-24 z-40 w-14 h-14 rounded-full bg-mint text-white shadow-xl shadow-mint/40 flex items-center justify-center text-2xl font-extrabold active:scale-95 transition">
+        className="fixed right-4 bottom-20 z-40 w-14 h-14 rounded-full bg-mint text-white shadow-xl shadow-mint/40 flex items-center justify-center text-2xl font-extrabold active:scale-95 transition">
         ＋
       </Link>
       <button
         onClick={refresh}
         disabled={refreshing}
         aria-label="タイムラインを更新"
-        className="fixed right-5 bottom-44 z-40 w-11 h-11 rounded-full bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-[#2a2a2a] text-text-mid shadow-lg flex items-center justify-center disabled:opacity-50 active:scale-95 transition">
+        className="fixed right-4 bottom-40 z-40 w-11 h-11 rounded-full bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-[#2a2a2a] text-text-mid shadow-lg flex items-center justify-center disabled:opacity-50 active:scale-95 transition">
         {refreshing ? "…" : "🔄"}
       </button>
       <BottomNav />
