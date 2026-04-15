@@ -3,35 +3,35 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 
-// 文字 or テキスト判定：英数2文字以上のテキスト（"Sho"等）は絵文字でない=デフォルト🌿
-function isLikelyEmoji(s: string): boolean {
-  // ASCII英数字を含む or 3文字以上 → emoji じゃない
-  if (/[a-zA-Z0-9]/.test(s)) return false;
-  if (s.length > 3) return false;
-  return true;
+function initialOf(name?: string | null): string {
+  const raw = (name || "").trim();
+  if (!raw || /^sho$/i.test(raw)) return "R"; // 旧シード "Sho" はブランド頭文字に
+  const first = Array.from(raw)[0];
+  return first.toUpperCase();
 }
 
-function Avatar({ url, size = 48 }: { url?: string | null; size?: number }) {
+function Avatar({ url, size = 48, name }: { url?: string | null; size?: number; name?: string | null }) {
   const [err, setErr] = useState(false);
   const isUrl = url?.startsWith("http") && !err;
-  const trimmed = url && !url.startsWith("http") ? url.trim() : "";
-  const fallbackChar = trimmed && isLikelyEmoji(trimmed) ? trimmed : "🌿";
+  const initial = initialOf(name);
   return isUrl ? (
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={url!}
-      alt=""
+      alt={name || ""}
       width={size}
       height={size}
-      className="rounded-full object-cover bg-mint-light dark:bg-[#2a2a2a] shrink-0 ring-2 ring-white dark:ring-[#1a1a1a] shadow-sm"
+      className="rounded-full object-cover bg-mint shrink-0 ring-2 ring-white dark:ring-[#1a1a1a] shadow-sm"
       style={{ width: size, height: size }}
       onError={() => setErr(true)}
     />
   ) : (
     <div
-      className="rounded-full bg-gradient-to-br from-mint-light to-orange-light dark:from-[#2a2a2a] dark:to-[#1f1f1f] flex items-center justify-center shrink-0 ring-2 ring-white dark:ring-[#1a1a1a] shadow-sm"
-      style={{ width: size, height: size, fontSize: size * 0.5 }}
+      className="rounded-full flex items-center justify-center shrink-0 ring-2 ring-white dark:ring-[#1a1a1a] shadow-sm text-white font-extrabold"
+      style={{ width: size, height: size, fontSize: 16, background: "#6ecbb0" }}
+      aria-label={`${name || "ユーザー"}のアバター`}
     >
-      {fallbackChar}
+      {initial}
     </div>
   );
 }
@@ -247,10 +247,10 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
     : "bg-mint-light text-mint";
 
   return (
-    <article className="bg-white dark:bg-[#1a1a1a] rounded-3xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm hover:shadow-md transition-shadow overflow-hidden animate-fade-in">
+    <article className="bg-white dark:bg-[#1a1a1a] overflow-hidden animate-fade-in">
       {/* Header */}
       <header className="flex items-center gap-3 px-4 pt-4 pb-2">
-        <Avatar url={post.profiles?.avatar_url} size={48} />
+        <Avatar url={post.profiles?.avatar_url} size={48} name={rawName} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             {name && <span className="font-extrabold text-base truncate">{name}</span>}

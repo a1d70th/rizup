@@ -81,6 +81,9 @@ export default function JournalPage() {
   // 朝1分タイマー（Fabulous 方式）
   const [timerSec, setTimerSec] = useState<number | null>(null);
 
+  // もっと書く▼（デフォルト折りたたみ・最小2-3タップで投稿）
+  const [showMore, setShowMore] = useState(false);
+
   useEffect(() => {
     if (timerSec == null) return;
     if (timerSec <= 0) { showToast("success", "1分の自分時間、おつかれさま🌿"); setTimerSec(null); return; }
@@ -517,34 +520,27 @@ export default function JournalPage() {
           </div>
         </div>
 
-        {/* 睡眠 */}
-        <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
-          {mode === "morning" ? (
-            <>
-              <p className="text-sm font-bold mb-2">😴 昨夜の睡眠時間</p>
-              <input type="number" min="0" max="24" step="0.5"
-                value={sleepHours} onChange={e => setSleepHours(e.target.value)}
-                placeholder="例：7"
-                className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint box-border"
-                style={{ WebkitAppearance: "none" }} />
-            </>
-          ) : (
-            <>
-              <p className="text-sm font-bold mb-2">😴 昨夜は何時間寝ましたか？</p>
-              <input type="number" min="0" max="24" step="0.5"
-                value={sleepHours} onChange={e => setSleepHours(e.target.value)}
-                placeholder="例：7"
-                className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint box-border"
-                style={{ WebkitAppearance: "none" }} />
-            </>
-          )}
-        </div>
+        {/* 睡眠（朝は折りたたみ / 夜は常時表示） */}
+        {(mode === "evening" || showMore) && (
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
+            <p className="text-sm font-bold mb-2">
+              {mode === "morning" ? "😴 昨夜の睡眠時間" : "😴 昨夜は何時間寝ましたか？"}
+            </p>
+            <input type="number" min="0" max="24" step="0.5"
+              value={sleepHours} onChange={e => setSleepHours(e.target.value)}
+              placeholder="例：7"
+              aria-label="睡眠時間"
+              className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint box-border"
+              style={{ WebkitAppearance: "none" }} />
+          </div>
+        )}
 
-        {/* 朝モード: 今日の問いかけ（曜日ローテ） */}
+        {/* 朝モード: 今日の問いかけ（曜日ローテ・大きめ） */}
         {mode === "morning" && (
-          <div className="bg-mint-light dark:bg-[#1a2620] rounded-2xl px-4 py-3 border border-mint/20 mb-3">
-            <p className="text-[11px] font-bold text-mint mb-0.5">🌿 今日の問いかけ</p>
-            <p className="text-sm font-extrabold text-text dark:text-gray-100 leading-relaxed">{morningPromptOfToday()}</p>
+          <div className="relative bg-gradient-to-br from-mint-light via-white to-mint-light/50 dark:from-[#132824] dark:via-[#1a1a1a] dark:to-[#132824] rounded-3xl px-5 py-4 border border-mint/30 shadow-md shadow-mint/10 mb-3 overflow-hidden">
+            <span className="absolute -top-3 -right-3 text-[64px] opacity-10 select-none">🌿</span>
+            <p className="text-[11px] font-extrabold text-mint mb-1 tracking-wider">🌿 今日の問いかけ</p>
+            <p className="text-base font-extrabold text-text dark:text-gray-100 leading-relaxed">{morningPromptOfToday()}</p>
           </div>
         )}
 
@@ -557,7 +553,7 @@ export default function JournalPage() {
                 <button
                   onClick={() => setMorningGoal(lastMorningGoal)}
                   aria-label="昨日と同じ目標を使う"
-                  className="text-[11px] font-bold text-orange border border-orange/40 rounded-full px-2.5 py-1 hover:bg-orange/10 transition"
+                  className="text-[12px] font-extrabold text-white bg-orange rounded-full px-3 py-1.5 shadow-md shadow-orange/30 hover:opacity-90 active:scale-95 transition"
                 >
                   ⟳ 昨日と同じ
                 </button>
@@ -572,8 +568,8 @@ export default function JournalPage() {
           </div>
         )}
 
-        {/* 朝モード: ToDo選択 */}
-        {mode === "morning" && (
+        {/* 朝モード: ToDo選択（折りたたみ内） */}
+        {mode === "morning" && showMore && (
           <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
             <p className="text-sm font-bold mb-1">✅ 今日やること（3つまで）</p>
             <p className="text-[10px] text-text-light mb-3">選択: {selectedTodoIds.size}/3</p>
@@ -603,7 +599,19 @@ export default function JournalPage() {
           </div>
         )}
 
-        {/* 本文 */}
+        {/* もっと書く▼ トグル（朝は最初から折りたたむ） */}
+        {mode === "morning" && !showMore && (
+          <button
+            type="button"
+            onClick={() => setShowMore(true)}
+            className="w-full py-2 mb-3 text-xs font-extrabold text-mint hover:bg-mint-light dark:hover:bg-[#1f2824] rounded-full transition"
+            aria-label="追加項目を表示">
+            もっと書く ▼（睡眠・ToDo・本文・画像）
+          </button>
+        )}
+
+        {/* 本文（朝モードは showMore 時のみ / 夜モードは常時） */}
+        {(mode === "evening" || showMore) && (
         <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
           <p className="text-sm font-bold mb-2">{mode === "morning" ? "今日の一言（任意）" : "今日の振り返り"}</p>
           <textarea value={content} onChange={e => { setContent(e.target.value); setModerationError(null); }}
@@ -628,6 +636,7 @@ export default function JournalPage() {
             </div>
           )}
         </div>
+        )}
 
         {moderationError && (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-3 flex items-start gap-3" role="alert">
@@ -636,8 +645,19 @@ export default function JournalPage() {
           </div>
         )}
 
-        {/* 夜モード: 今日の複利スコア予測 */}
-        {mode === "evening" && (() => {
+        {/* 夜モード: もっと書く▼ */}
+        {mode === "evening" && !showMore && (
+          <button
+            type="button"
+            onClick={() => setShowMore(true)}
+            className="w-full py-2 mb-3 text-xs font-extrabold text-mint hover:bg-mint-light dark:hover:bg-[#1f2824] rounded-full transition"
+            aria-label="追加項目を表示">
+            もっと書く ▼（感謝・複利スコア・画像）
+          </button>
+        )}
+
+        {/* 夜モード: 今日の複利スコア予測（showMore 時のみ） */}
+        {mode === "evening" && showMore && (() => {
           const todoRate = morningTodos.length === 0 ? 0.5
             : morningTodos.filter(t => t.done).length / morningTodos.length;
           const score = dailyCompoundScore({
@@ -661,7 +681,7 @@ export default function JournalPage() {
           );
         })()}
 
-        {mode === "evening" && (
+        {mode === "evening" && showMore && (
           <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
             <p className="text-sm font-bold mb-3">🙏 今日の感謝</p>
             {["今日ありがたかったこと", "誰かに感謝したいこと", "自分を褒めたいこと"].map((ph, i) => (

@@ -168,17 +168,6 @@ export default function HomePage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-extrabold dark:text-gray-100">💬 みんなの今日</h3>
-            <div className="flex items-center gap-2">
-              <button onClick={refresh} disabled={refreshing} aria-label="タイムラインを更新"
-                className="text-xs text-text-mid hover:text-mint transition disabled:opacity-50">
-                {refreshing ? "更新中…" : "🔄"}
-              </button>
-              <Link href="/journal" className="text-xs text-mint font-extrabold">＋投稿</Link>
-            </div>
-          </div>
-
           {loading ? (
             <SkeletonTimeline />
           ) : posts.length === 0 ? (
@@ -191,7 +180,7 @@ export default function HomePage() {
               </Link>
             </div>
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] overflow-hidden divide-y divide-gray-100 dark:divide-[#2a2a2a]">
               {posts.map(p => (
                 <PostCard key={p.id} post={p} userId={userId} isAdmin={isAdmin}
                   onDelete={id => setPosts(prev => prev.filter(x => x.id !== id))} />
@@ -201,6 +190,20 @@ export default function HomePage() {
           )}
         </div>
       </div>
+      {/* FAB: 新規投稿 */}
+      <Link
+        href="/journal"
+        aria-label="ジャーナルを書く"
+        className="fixed right-5 bottom-24 z-40 w-14 h-14 rounded-full bg-mint text-white shadow-xl shadow-mint/40 flex items-center justify-center text-2xl font-extrabold active:scale-95 transition">
+        ＋
+      </Link>
+      <button
+        onClick={refresh}
+        disabled={refreshing}
+        aria-label="タイムラインを更新"
+        className="fixed right-5 bottom-44 z-40 w-11 h-11 rounded-full bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-[#2a2a2a] text-text-mid shadow-lg flex items-center justify-center disabled:opacity-50 active:scale-95 transition">
+        {refreshing ? "…" : "🔄"}
+      </button>
       <BottomNav />
     </div>
   );
