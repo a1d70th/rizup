@@ -4,14 +4,12 @@ import { supabase } from "@/lib/supabase";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import PostCard from "@/components/PostCard";
-import Confetti from "@/components/Confetti";
 import Image from "next/image";
 import Link from "next/link";
 import { SkeletonTimeline } from "@/components/Skeleton";
 import { findTodayPost } from "@/lib/safe-insert";
 
-type TimelineTab = "all" | "following" | "morning" | "evening";
-const PAGE_SIZE = 50;
+const FETCH_LIMIT = 500;
 
 interface PostWithProfile {
   id: string; user_id: string; type: string; content: string;
@@ -23,8 +21,6 @@ interface PostWithProfile {
   profiles: { name: string; avatar_url: string | null; streak?: number | null };
 }
 
-interface Todo { id: string; title: string; is_done: boolean; vision_id: string | null; }
-
 function todayJST(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
 }
@@ -34,55 +30,49 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [streak, setStreak] = useState(0);
-  const [todayTodos, setTodayTodos] = useState<Todo[]>([]);
   const [habitsCompleted, setHabitsCompleted] = useState({ done: 0, total: 0 });
   const [hasMorningPost, setHasMorningPost] = useState(false);
   const [hasEveningPost, setHasEveningPost] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [confettiKey] = useState(0);
 
-  // Timeline state
-  const [tab, setTab] = useState<TimelineTab>("all");
-  const [hasMore, setHasMore] = useState(true);
-  const [fetchingMore, setFetchingMore] = useState(false);
-  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
-  const [newPostsCount, setNewPostsCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const latestSeenAtRef = useRef<string | null>(null);
-  const timelineTopRef = useRef<HTMLDivElement | null>(null);
+  const [pullOffset, setPullOffset] = useState(0);
+  const pullStartYRef = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const today = todayJST();
+  const fetchPosts = async () => {
+    const first = await supabase.from("posts")
+      .select("*, profiles(name, avatar_url, streak)")
+      .order("created_at", { ascending: false }).limit(FETCH_LIMIT);
+    let data = first.data;
+    if (first.error) {
+      const fb = await supabase.from("posts")
+        .select("*, profiles(name, avatar_url)")
+        .order("created_at", { ascending: false }).limit(FETCH_LIMIT);
+      data = fb.data;
+    }
+    if (data) setPosts(data as PostWithProfile[]);
+  };
 
   useEffect(() => {
+    const today = todayJST();
     const init = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
           setUserId(user.id);
           const { data: profile } = await supabase.from("profiles")
-            .select("name, streak, trial_ends_at, plan, is_admin")
-            .eq("id", user.id).single();
+            .select("name, streak, is_admin").eq("id", user.id).single();
           if (profile) {
             setStreak(profile.streak || 0);
             if (profile.is_admin) setIsAdmin(true);
           }
 
-          // 今日のToDo（テーブル未存在でも落ちない）
-          try {
-            const { data: todos } = await supabase.from("todos")
-              .select("id, title, is_done, vision_id")
-              .eq("user_id", user.id).eq("due_date", today)
-              .order("is_done").order("created_at").limit(5);
-            if (todos) setTodayTodos(todos);
-          } catch { /* ignore */ }
-
-          // 今日の朝夜ジャーナル（posted_date 依存解除）
           const morningP = await findTodayPost(supabase, user.id, "morning");
           setHasMorningPost(!!morningP);
           const eveningP = await findTodayPost(supabase, user.id, "evening");
           setHasEveningPost(!!eveningP);
 
-          // 今日の習慣達成
           try {
             const { data: allHabits } = await supabase.from("habits")
               .select("id").eq("user_id", user.id).is("archived_at", null);
@@ -98,231 +88,115 @@ export default function HomePage() {
           }).catch(() => {});
         }
 
-        // フォロー中IDs
-        if (user) {
-          try {
-            const { data: fol } = await supabase.from("follows")
-              .select("followee_id").eq("follower_id", user.id);
-            if (fol) setFollowingIds(new Set(fol.map((r: { followee_id: string }) => r.followee_id)));
-          } catch { /* ignore */ }
-        }
-
-        // 初回タイムライン（streakカラム未作成でも落ちないフォールバック）
-        const first = await supabase.from("posts")
-          .select("*, profiles(name, avatar_url, streak)")
-          .order("created_at", { ascending: false }).limit(PAGE_SIZE);
-        let data = first.data;
-        if (first.error) {
-          const fb = await supabase.from("posts")
-            .select("*, profiles(name, avatar_url)")
-            .order("created_at", { ascending: false }).limit(PAGE_SIZE);
-          data = fb.data;
-        }
-        if (data) {
-          setPosts(data as PostWithProfile[]);
-          if (data.length < PAGE_SIZE) setHasMore(false);
-          if (data[0]) latestSeenAtRef.current = data[0].created_at;
-        }
+        await fetchPosts();
       } catch (err) {
         console.error("[Home]", err);
       }
       setLoading(false);
     };
     init();
-  }, [today]);
-
-  // タブ切替時にページングリセット（フィルターはクライアント側）
-  useEffect(() => {
-    setHasMore(true);
-  }, [tab]);
-
-  // 「もっと見る」ボタン式のロード（IntersectionObserverをやめてシンプルに）
-  const fetchMore = async () => {
-    if (fetchingMore || !hasMore || posts.length === 0) return;
-    setFetchingMore(true);
-    const oldest = posts[posts.length - 1].created_at;
-    try {
-      const first = await supabase.from("posts")
-        .select("*, profiles(name, avatar_url, streak)")
-        .lt("created_at", oldest)
-        .order("created_at", { ascending: false })
-        .limit(PAGE_SIZE);
-      let data = first.data;
-      if (first.error) {
-        const fb = await supabase.from("posts")
-          .select("*, profiles(name, avatar_url)")
-          .lt("created_at", oldest)
-          .order("created_at", { ascending: false })
-          .limit(PAGE_SIZE);
-        data = fb.data;
-      }
-      if (data && data.length > 0) {
-        setPosts(prev => [...prev, ...(data as PostWithProfile[])]);
-        if (data.length < PAGE_SIZE) setHasMore(false);
-      } else {
-        setHasMore(false);
-      }
-    } catch (err) {
-      console.error("[fetchMore]", err);
-      setHasMore(false);
-    }
-    setFetchingMore(false);
-  };
-
-  // 新着ポーリング（60秒ごと）
-  useEffect(() => {
-    const iv = setInterval(async () => {
-      if (!latestSeenAtRef.current) return;
-      try {
-        const { count } = await supabase.from("posts")
-          .select("id", { count: "exact", head: true })
-          .gt("created_at", latestSeenAtRef.current);
-        if (count && count > 0) setNewPostsCount(count);
-      } catch { /* ignore */ }
-    }, 60000);
-    return () => clearInterval(iv);
   }, []);
 
   const refreshTimeline = async () => {
     setRefreshing(true);
-    try {
-      const { data } = await supabase.from("posts")
-        .select("*, profiles(name, avatar_url, streak)")
-        .order("created_at", { ascending: false }).limit(PAGE_SIZE);
-      if (data) {
-        setPosts(data as PostWithProfile[]);
-        setHasMore(data.length >= PAGE_SIZE);
-        if (data[0]) latestSeenAtRef.current = data[0].created_at;
-      }
-    } catch { /* ignore */ }
-    setNewPostsCount(0);
+    await fetchPosts();
     setRefreshing(false);
-    timelineTopRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const filteredPosts = posts.filter(p => {
-    if (tab === "all") return true;
-    if (tab === "morning") return p.type === "morning";
-    if (tab === "evening") return p.type === "evening";
-    if (tab === "following") return p.user_id === userId || followingIds.has(p.user_id);
-    return true;
-  });
-
-  const doneTodos = todayTodos.filter(t => t.is_done).length;
-  const totalTodos = todayTodos.length;
+  // Pull-to-refresh (touch)
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (window.scrollY > 0) { pullStartYRef.current = null; return; }
+    pullStartYRef.current = e.touches[0].clientY;
+  };
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (pullStartYRef.current == null) return;
+    const dy = e.touches[0].clientY - pullStartYRef.current;
+    if (dy > 0) setPullOffset(Math.min(dy * 0.5, 80));
+  };
+  const onTouchEnd = async () => {
+    const start = pullStartYRef.current;
+    pullStartYRef.current = null;
+    if (start == null) { setPullOffset(0); return; }
+    if (pullOffset > 60) {
+      setPullOffset(40);
+      await refreshTimeline();
+    }
+    setPullOffset(0);
+  };
 
   return (
-    <div className="min-h-screen bg-bg pb-20">
-      <Confetti trigger={confettiKey} />
+    <div
+      ref={containerRef}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      className="min-h-screen bg-bg pb-20"
+    >
       <Header />
-      <div className="max-w-md mx-auto px-4 py-2">
-        {/* ── 1行ステータスバー（朝夜・ToDo・習慣・🔥） ─────────────── */}
-        <Link href="/today"
-          className="flex items-center gap-2 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm px-3 py-2.5 mb-3 active:scale-[0.99] transition">
-          <span className="flex items-center gap-1 text-[12px] font-extrabold">
-            <span className="text-text-mid">朝</span>
-            <span className={hasMorningPost ? "text-mint" : "text-text-light"}>{hasMorningPost ? "☀️" : "⬜"}</span>
-            <span className="text-text-mid ml-1">夜</span>
-            <span className={hasEveningPost ? "text-mint" : "text-text-light"}>{hasEveningPost ? "🌙" : "⬜"}</span>
-          </span>
-          <span className="h-4 w-px bg-gray-200 dark:bg-[#2a2a2a]" />
-          <span className="text-[12px] font-extrabold text-mint">
-            🔄{habitsCompleted.done}/{habitsCompleted.total || 0}
-          </span>
-          <span className="h-4 w-px bg-gray-200 dark:bg-[#2a2a2a]" />
-          <span className="text-[12px] font-extrabold text-mint">
-            ✅{doneTodos}/{totalTodos || 0}
-          </span>
-          <span className="text-[12px] font-extrabold text-orange ml-auto">
-            <span className="streak-fire">🔥</span>{streak}
-          </span>
-        </Link>
-
-
-        {/* ── タイムライン ────────────────────────────────────────────── */}
-        <div ref={timelineTopRef} className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-extrabold">💬 みんなの今日</h3>
-          <div className="flex items-center gap-2">
-            <button onClick={refreshTimeline} disabled={refreshing}
-              aria-label="タイムラインを更新"
-              className="text-xs text-text-mid hover:text-mint transition disabled:opacity-50">
-              {refreshing ? "更新中…" : "🔄"}
-            </button>
-            <Link href="/journal" className="text-xs text-mint font-extrabold">＋投稿</Link>
+      <div
+        style={{
+          transform: pullOffset ? `translateY(${pullOffset}px)` : undefined,
+          transition: pullStartYRef.current ? "none" : "transform 200ms",
+        }}
+      >
+        {pullOffset > 0 && (
+          <div className="flex justify-center py-2 text-xs text-text-light">
+            {refreshing ? "更新中…" : pullOffset > 60 ? "離して更新" : "↓ 引っ張って更新"}
           </div>
-        </div>
-
-        {/* タブフィルター */}
-        <div className="flex bg-white rounded-2xl p-1 border border-gray-100 mb-3 shadow-sm overflow-x-auto no-scrollbar">
-          {([
-            { key: "all", label: "全員", emoji: "🌿" },
-            { key: "following", label: "フォロー中", emoji: "🫂" },
-            { key: "morning", label: "朝", emoji: "☀️" },
-            { key: "evening", label: "夜", emoji: "🌙" },
-          ] as const).map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)}
-              className={`flex-1 min-w-fit px-3 py-2 rounded-xl text-[12px] font-extrabold transition-all whitespace-nowrap ${
-                tab === t.key ? "bg-gradient-to-br from-mint-light to-white text-mint shadow-sm scale-[1.02]" : "text-text-light"
-              }`}>
-              {t.emoji} {t.label}
-            </button>
-          ))}
-        </div>
-
-        {/* 新着通知バナー */}
-        {newPostsCount > 0 && (
-          <button onClick={refreshTimeline}
-            className="w-full bg-mint text-white text-[13px] font-extrabold py-2.5 rounded-full shadow-lg shadow-mint/30 mb-3 animate-slide-up hover:bg-mint/90 transition">
-            ⬆ 新しい投稿が {newPostsCount} 件あります
-          </button>
         )}
+        <div className="max-w-md mx-auto px-4 py-2">
+          {/* ステータスバー（ToDoなし・朝夜・習慣・🔥） */}
+          <div className="flex items-center gap-2 bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm px-3 py-2.5 mb-3">
+            <span className="flex items-center gap-1 text-[12px] font-extrabold">
+              <span className="text-text-mid">朝</span>
+              <span className={hasMorningPost ? "text-mint" : "text-text-light"}>{hasMorningPost ? "☀️" : "⬜"}</span>
+              <span className="text-text-mid ml-1">夜</span>
+              <span className={hasEveningPost ? "text-mint" : "text-text-light"}>{hasEveningPost ? "🌙" : "⬜"}</span>
+            </span>
+            <span className="h-4 w-px bg-gray-200 dark:bg-[#2a2a2a]" />
+            <span className="text-[12px] font-extrabold text-mint">
+              🔄{habitsCompleted.done}/{habitsCompleted.total || 0}
+            </span>
+            <span className="text-[12px] font-extrabold text-orange ml-auto">
+              <span className="streak-fire">🔥</span>{streak}
+            </span>
+          </div>
 
-        {loading ? (
-          <SkeletonTimeline />
-        ) : filteredPosts.length === 0 ? (
-          <div className="text-center py-10 bg-white rounded-2xl border border-gray-100">
-            <Image src="/icons/icon-192.png" alt="Rizup" width={56} height={56} className="rounded-full mx-auto mb-2 animate-sho-float" />
-            <p className="text-sm font-bold mb-1">
-              {tab === "following" ? "フォロー中のユーザーの投稿はまだ" :
-               tab === "morning" ? "朝の投稿はまだ" :
-               tab === "evening" ? "夜の投稿はまだ" : "まだ投稿がないよ"}
-            </p>
-            <p className="text-xs text-text-mid mb-3">
-              {tab === "all" ? "最初の一歩になってみる？" : "全員タブで色んな投稿を見てみよう"}
-            </p>
-            {tab === "all" ? (
+          {/* タイムライン */}
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-extrabold">💬 みんなの今日</h3>
+            <div className="flex items-center gap-2">
+              <button onClick={refreshTimeline} disabled={refreshing}
+                aria-label="タイムラインを更新"
+                className="text-xs text-text-mid hover:text-mint transition disabled:opacity-50">
+                {refreshing ? "更新中…" : "🔄"}
+              </button>
+              <Link href="/journal" className="text-xs text-mint font-extrabold">＋投稿</Link>
+            </div>
+          </div>
+
+          {loading ? (
+            <SkeletonTimeline />
+          ) : posts.length === 0 ? (
+            <div className="text-center py-10 bg-white rounded-2xl border border-gray-100">
+              <Image src="/icons/icon-192.png" alt="Rizup" width={56} height={56} className="rounded-full mx-auto mb-2 animate-sho-float" />
+              <p className="text-sm font-bold mb-1">まだ投稿がないよ</p>
+              <p className="text-xs text-text-mid mb-3">最初の一歩になってみる？</p>
               <Link href="/journal" className="inline-block bg-mint text-white font-bold px-6 py-2.5 rounded-full shadow-md">
                 📝 書いてみる
               </Link>
-            ) : (
-              <button onClick={() => setTab("all")} className="inline-block bg-mint text-white font-bold px-6 py-2.5 rounded-full shadow-md">
-                全員を見る
-              </button>
-            )}
-          </div>
-        ) : (
-          <>
+            </div>
+          ) : (
             <div className="flex flex-col gap-4">
-              {filteredPosts.map(post => (
+              {posts.map(post => (
                 <PostCard key={post.id} post={post} userId={userId}
                   isAdmin={isAdmin}
                   onDelete={(id) => setPosts(prev => prev.filter(p => p.id !== id))} />
               ))}
-            </div>
-            {/* 「もっと見る」ボタン（IntersectionObserverやめてシンプル化） */}
-            {hasMore && (
-              <div className="py-5 flex justify-center">
-                <button onClick={fetchMore} disabled={fetchingMore}
-                  className="bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-[#2a2a2a] text-text-mid px-6 py-2.5 rounded-full text-sm font-extrabold shadow-sm active:scale-95 transition disabled:opacity-50">
-                  {fetchingMore ? "読み込み中…" : "↓ もっと見る"}
-                </button>
-              </div>
-            )}
-            {!hasMore && (
               <p className="text-center text-xs text-text-light py-6">ここまでだよ🌿</p>
-            )}
-          </>
-        )}
+            </div>
+          )}
+        </div>
       </div>
       <BottomNav />
     </div>

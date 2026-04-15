@@ -38,7 +38,6 @@ export default function JournalPage() {
   const [content, setContent] = useState("");
   const [gratitudes, setGratitudes] = useState(["", "", ""]);
   const [sleepHours, setSleepHours] = useState("");
-  const [bedtime, setBedtime] = useState("");
   const [morningGoal, setMorningGoal] = useState("");
   const [loading, setLoading] = useState(false);
   const [aiFeedback, setAiFeedback] = useState<string | null>(null);
@@ -234,7 +233,6 @@ export default function JournalPage() {
       if (morningGoal.trim()) payload.morning_goal = morningGoal.trim();
       if (sleepHours) payload.sleep_hours = parseFloat(sleepHours);
     } else {
-      if (bedtime) payload.bedtime = bedtime;
       if (sleepHours) payload.sleep_hours = parseFloat(sleepHours);
       const gs = gratitudes.filter(g => g.trim());
       if (gs.length > 0) payload.gratitudes = gs;
@@ -305,9 +303,9 @@ export default function JournalPage() {
       setAiFeedback(feedback);
       showToast("success", `投稿できたよ！${mode === "morning" ? "☀️" : "🌙"} 複利 +1% 積まれた🌱`);
       setPosted(true);
-      // 朝ジャーナル投稿後: 3秒後に今日のToDo画面へ自動遷移
+      // 朝ジャーナル投稿後: 3秒後にホームへ遷移
       if (mode === "morning") {
-        setTimeout(() => router.push("/today"), 3000);
+        setTimeout(() => router.push("/home"), 3000);
       }
     }
     setLoading(false);
@@ -375,9 +373,6 @@ export default function JournalPage() {
         )}
         <div className="flex gap-3">
           <a href="/home" className="bg-mint text-white font-bold px-6 py-3 rounded-full shadow-lg shadow-mint/30">ホームへ</a>
-          {mode === "morning" && (
-            <a href="/today" className="border-2 border-mint text-mint font-bold px-6 py-3 rounded-full">今日のToDo</a>
-          )}
         </div>
       </div>
     );
@@ -481,10 +476,6 @@ export default function JournalPage() {
               <input type="number" min="0" max="24" step="0.5"
                 value={sleepHours} onChange={e => setSleepHours(e.target.value)}
                 placeholder="例：7"
-                className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint box-border mb-2"
-                style={{ WebkitAppearance: "none" }} />
-              <p className="text-sm font-bold mb-2 mt-2">🛏️ 今夜の予定就寝時刻（任意）</p>
-              <input type="time" value={bedtime} onChange={e => setBedtime(e.target.value)}
                 className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint box-border"
                 style={{ WebkitAppearance: "none" }} />
             </>

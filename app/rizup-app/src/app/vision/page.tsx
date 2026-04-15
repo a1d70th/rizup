@@ -262,7 +262,6 @@ export default function VisionPage() {
                 {group.items.map(v => {
                   const prog = autoProgress[v.id] ?? v.progress;
                   const linkedHabits = habits.filter(h => h.vision_id === v.id).length;
-                  const linkedTodos = todos.filter(t => t.vision_id === v.id).length;
                   // 達成予測：直近7日の進捗推定
                   const weeklyGain = prog > 0 ? Math.min(prog, 7) : 0;
                   const daysToGoal = estimateDaysToGoal({ currentProgress: prog, recentWeeklyGainPct: weeklyGain });
@@ -298,12 +297,8 @@ export default function VisionPage() {
                       {/* 逆算導線 */}
                       <div className="flex gap-2 mb-2">
                         <Link href={`/habits?vision_id=${v.id}`}
-                          className="flex-1 bg-mint-light text-mint text-[10px] font-bold text-center py-1.5 rounded-full">
+                          className="w-full bg-mint-light text-mint text-[10px] font-bold text-center py-1.5 rounded-full">
                           ＋習慣 {linkedHabits > 0 && `(${linkedHabits})`}
-                        </Link>
-                        <Link href={`/today?vision_id=${v.id}`}
-                          className="flex-1 bg-orange-light text-orange text-[10px] font-bold text-center py-1.5 rounded-full">
-                          ＋ToDo {linkedTodos > 0 && `(${linkedTodos})`}
                         </Link>
                       </div>
                       {v.ai_feedback && (

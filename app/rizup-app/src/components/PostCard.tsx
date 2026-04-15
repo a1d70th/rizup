@@ -99,9 +99,10 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
 
   const isOwner = userId && post.user_id === userId;
   const canDelete = isOwner || isAdmin;
-  // 旧シードデータの "Sho" / "sho" は "Rizup" 表示に正規化
+  // 旧シードデータの "Sho" / "sho" はアバター下の名前を非表示に
   const rawName = (post.profiles?.name || "ユーザー").trim();
-  const name = /^sho$/i.test(rawName) ? "Rizup" : (rawName || "ユーザー");
+  const isShoSeed = /^sho$/i.test(rawName);
+  const name = isShoSeed ? "" : (rawName || "ユーザー");
   const streakDays = post.profiles?.streak ?? 0;
   const time = formatRelativeTime(post.created_at);
   const isMorning = post.type === "morning";
@@ -252,7 +253,7 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
         <Avatar url={post.profiles?.avatar_url} size={48} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-extrabold text-base truncate">{name}</span>
+            {name && <span className="font-extrabold text-base truncate">{name}</span>}
             {streakDays > 0 && (
               <span className="text-[11px] font-bold text-orange bg-orange-light rounded-full px-2 py-0.5">
                 🔥 {streakDays}日
