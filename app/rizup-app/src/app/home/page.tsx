@@ -180,12 +180,14 @@ export default function HomePage() {
               </Link>
             </div>
           ) : (
-            <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] overflow-hidden divide-y divide-gray-100 dark:divide-[#2a2a2a]">
+            <div className="flex flex-col gap-0 bg-[#fafafa] dark:bg-[#111111]">
               {posts.map(p => (
-                <PostCard key={p.id} post={p} userId={userId} isAdmin={isAdmin}
-                  onDelete={id => setPosts(prev => prev.filter(x => x.id !== id))} />
+                <div key={p.id} className="bg-[#fafafa] dark:bg-[#111111] border-b border-gray-100 dark:border-[#2a2a2a]">
+                  <PostCard post={p} userId={userId} isAdmin={isAdmin}
+                    onDelete={id => setPosts(prev => prev.filter(x => x.id !== id))} />
+                </div>
               ))}
-              <p className="text-center text-xs text-text-light py-6">ここまでだよ🌿</p>
+              <p className="text-center text-xs text-text-light py-6 bg-[#fafafa] dark:bg-[#111111]">ここまでだよ🌿</p>
             </div>
           )}
         </div>
