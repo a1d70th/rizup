@@ -60,6 +60,9 @@ export default function JournalPage() {
   const [morningTodos, setMorningTodos] = useState<(Todo & { done: boolean })[]>([]);
   const [habitDoneRatio, setHabitDoneRatio] = useState(0);
 
+  // 昨日の朝目標（"⟳ 昨日と同じ" ボタン用）
+  const [lastMorningGoal, setLastMorningGoal] = useState<string>("");
+
   const imageRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -97,6 +100,20 @@ export default function JournalPage() {
               .select("habit_id").eq("user_id", user.id).eq("logged_date", today);
             setHabitDoneRatio((logs?.length || 0) / habitsData.length);
           }
+        } catch { /* ignore */ }
+
+        // 昨日の朝目標（今日まだ未投稿時のみ再利用提案用）
+        try {
+          const yest = new Date();
+          yest.setDate(yest.getDate() - 1);
+          const yestJST = yest.toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
+          const { data: yp } = await supabase.from("posts")
+            .select("morning_goal, created_at")
+            .eq("user_id", user.id).eq("type", "morning")
+            .gte("created_at", `${yestJST}T00:00:00+09:00`)
+            .lt("created_at", `${yestJST}T23:59:59+09:00`)
+            .order("created_at", { ascending: false }).limit(1).maybeSingle();
+          if (yp?.morning_goal) setLastMorningGoal(yp.morning_goal);
         } catch { /* ignore */ }
 
         // 夜モード：朝投稿
@@ -485,12 +502,24 @@ export default function JournalPage() {
         {/* 朝モード: 今日の目標（強調表示） */}
         {mode === "morning" && (
           <div className="bg-gradient-to-br from-orange-light to-yellow-50 dark:from-[#2a1f15] dark:to-[#1f1a10] rounded-3xl p-5 border-2 border-orange/40 shadow-lg shadow-orange/10 mb-3">
-            <p className="text-base font-extrabold mb-1 text-orange">🎯 今日の一言目標</p>
-            <p className="text-[11px] text-text-mid mb-3">1日1つ、小さくてもOK</p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-base font-extrabold text-orange">🎯 今日の一言目標</p>
+              {lastMorningGoal && morningGoal === "" && (
+                <button
+                  onClick={() => setMorningGoal(lastMorningGoal)}
+                  aria-label="昨日と同じ目標を使う"
+                  className="text-[11px] font-bold text-orange border border-orange/40 rounded-full px-2.5 py-1 hover:bg-orange/10 transition"
+                >
+                  ⟳ 昨日と同じ
+                </button>
+              )}
+            </div>
+            <p className="text-[11px] text-text-mid mb-3">1日1つ、小さくてもOK（50字前後がちょうどいい）</p>
             <input type="text" value={morningGoal} onChange={e => setMorningGoal(e.target.value)}
               placeholder="例：10分だけ読書する" maxLength={100}
               aria-label="今日の目標"
               className="w-full border-2 border-orange/30 bg-white dark:bg-[#1a1a1a] rounded-xl px-4 py-3 text-base font-bold outline-none focus:border-orange" />
+            <p className="text-[10px] text-text-light mt-1 text-right">{morningGoal.length}/100</p>
           </div>
         )}
 

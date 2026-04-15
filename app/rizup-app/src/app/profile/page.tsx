@@ -220,9 +220,9 @@ export default function ProfilePage() {
 
         {/* Actions */}
         <div className="flex gap-2 mb-4">
-          <Link href="/vision" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">🎯 ビジョン</Link>
-          <Link href="/anti-vision" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">🚫 アンチ</Link>
-          <Link href="/settings" className="flex-1 bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">⚙️ 設定</Link>
+          <Link href="/vision" className="flex-1 bg-white dark:bg-[#1a1a1a] rounded-2xl p-3 border border-gray-100 dark:border-[#2a2a2a] shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">🎯 ビジョン</Link>
+          <Link href="/habits" className="flex-1 bg-white dark:bg-[#1a1a1a] rounded-2xl p-3 border border-gray-100 dark:border-[#2a2a2a] shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">🔄 習慣</Link>
+          <Link href="/settings" className="flex-1 bg-white dark:bg-[#1a1a1a] rounded-2xl p-3 border border-gray-100 dark:border-[#2a2a2a] shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">⚙️ 設定</Link>
         </div>
 
         <h3 className="text-sm font-bold mb-3">📝 投稿履歴</h3>
