@@ -1,7 +1,7 @@
-# Rizup HQ — AI引継ぎファイル（v4.0 / ホーム刷新+ダーク+PWA確定）
+# Rizup HQ — AI引継ぎファイル（v4.3 / 散歩メモ7項目＋仕上げ）
 
 > 新しいチャットを開いたらまずこのファイルを読んで即作業開始。確認不要。
-> **最終更新：2026-04-13 深夜（v4.0 リリース・コミット f8582aa）**
+> **最終更新：2026-04-15 夜（v4.3 リリース）**
 
 ---
 
@@ -13,7 +13,25 @@
 
 ## 🎯 現在のステータス
 
-### ✅ 完了（2026-04-13・v3.2 → v4.0 まで一気通貫）
+### ✅ 完了（2026-04-15・v4.3 リリース）
+
+**v4.3（今日）— 散歩メモ7項目＋ブラウザ確認バグ一括修正＋仕上げ**
+- アイコン刷新：`public/logo-r.svg`（#6ecbb0 下地・白抜きR）→ sharp で 16/32/72/96/128/144/152/167/180/192/384/512/maskable/apple-touch 全サイズ再生成
+- /today ページ撤去：middleware・朝ジャーナル遷移・BottomNav・vision導線を整理（5タブ固定：ホーム/ジャーナル/ビジョン/成長/マイページ）
+- ホーム：Confetti削除、pull-to-refresh（touch）、タイムラインタブ撤去、IntersectionObserver廃止し500件一括表示、トライアル/ToDo表示撤去
+- アンチビジョン：手動追加を撤去し `/api/anti-vision/generate`（Claude Haiku 4.5）で自動生成。ビジョン空なら「先にビジョンを設定してください」導線
+- 夜ジャーナル：「今夜の予定就寝時刻」撤去→「昨夜は何時間寝ましたか？」単独
+- PostCard：旧シード "Sho" 名を非表示化
+- ジャーナル：useEffect 依存を `[]` に、`today` を effect 内に移動してフリーズ根絶。朝「今日の目標」をオレンジ強調カードに。投稿ボタンを `fixed bottom-16` で常時押下可能に
+- ビジョン：タブ内アンチビジョンも自動生成に統一
+- 成長グラフ：カード・チャートに `dark:` クラス追加、SVG線を3pxに強化、ドットに白リング
+- 全画面：Header／各フォームに `dark:bg-[#1a1a1a]` / `dark:border-[#2a2a2a]` 追加
+- A11y：主要ボタンに aria-label／chart に role="img" aria-label 追加
+- Service Worker：v4.3 にバンプ、PRECACHE に /home /journal /vision /growth /profile 追加、push icon を /icons/icon-192.png に
+- offline.html：`/sho.png` → `/icons/icon-192.png` 参照に統一
+- Recommend / journal のモデレーション警告文言："Sho" → "Rizup"
+
+### ✅ 過去の完了（2026-04-13・v3.2 → v4.0 まで一気通貫）
 
 **v3.2 → v3.5 → v3.5.1 → v4.0 のアプリ進化**
 - v3.2: 朝夜ジャーナル / ビジョン4階層 / アンチビジョン / 今日のToDo / 習慣 / 複利スコア / Stripe / 3stepオンボーディング
@@ -123,4 +141,4 @@
 
 ---
 
-*最終更新：2026-04-13 深夜 / Rizup v4.0 (commit f8582aa) / 児玉翔平*
+*最終更新：2026-04-15 夜 / Rizup v4.3 / 児玉翔平*

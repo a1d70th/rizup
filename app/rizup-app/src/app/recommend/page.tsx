@@ -168,7 +168,7 @@ export default function RecommendPage() {
       });
       const modData = await modRes.json();
       if (!modData.safe) {
-        alert(`Sho「前向きな言葉に書き直してね。${modData.reason || ""}」`);
+        alert(`Rizup「前向きな言葉に書き直してね。${modData.reason || ""}」`);
         return;
       }
     } catch { /* 通信失敗時は通す */ }

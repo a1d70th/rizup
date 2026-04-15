@@ -149,9 +149,11 @@ export default function GrowthPage() {
         </div>
 
         {/* 期間切替 */}
-        <div className="flex bg-white rounded-2xl p-1 border border-gray-100 mb-4">
+        <div className="flex bg-white dark:bg-[#1a1a1a] rounded-2xl p-1 border border-gray-100 dark:border-[#2a2a2a] mb-4">
           {(["30d", "90d", "all"] as const).map(r => (
             <button key={r} onClick={() => setRange(r)}
+              aria-label={`${r === "30d" ? "過去30日" : r === "90d" ? "過去90日" : "全期間"}を表示`}
+              aria-pressed={range === r}
               className={`flex-1 py-2 rounded-xl text-xs font-bold transition ${range === r ? "bg-mint-light text-mint" : "text-text-light"}`}>
               {r === "30d" ? "30日" : r === "90d" ? "90日" : "全期間"}
             </button>
@@ -209,8 +211,8 @@ export default function GrowthPage() {
 
 function StatCard({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl p-3 border border-gray-100 shadow-sm text-center">
-      <div className="text-base font-extrabold text-text">{value}</div>
+    <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-3 border border-gray-100 dark:border-[#2a2a2a] shadow-sm text-center">
+      <div className="text-base font-extrabold text-text dark:text-gray-100">{value}</div>
       <div className="text-[10px] text-text-light mt-0.5">{label}</div>
     </div>
   );
@@ -232,16 +234,16 @@ function ChartCard({ title, avg, color, data, domainMax }: {
     : "";
 
   return (
-    <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-3">
+    <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] shadow-sm mb-3">
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-bold">{title}</h3>
+        <h3 className="text-sm font-bold dark:text-gray-100">{title}</h3>
         <span className="text-xs font-extrabold" style={{ color }}>{avg}</span>
       </div>
       {hasData ? (
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-20">
-          <path d={path} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-20" role="img" aria-label={`${title}の推移`}>
+          <path d={path} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           {valid.map((p, i) => (
-            <circle key={i} cx={xOf(p.x)} cy={yOf(p.v as number)} r="2.5" fill={color} />
+            <circle key={i} cx={xOf(p.x)} cy={yOf(p.v as number)} r="3" fill={color} stroke="#ffffff" strokeWidth="1" />
           ))}
         </svg>
       ) : (
@@ -271,11 +273,11 @@ function CompoundCurve({ streak, habitAchievement, days }: { streak: number; hab
   const nowY = yOf(Math.pow(1 + 0.01 * habitAchievement, Math.min(streak, days)));
 
   return (
-    <div className="bg-white/70 rounded-2xl p-3">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-24">
-        <path d={idealPath} fill="none" stroke="#f4976c" strokeWidth="2" strokeDasharray="4 4" strokeLinecap="round" />
-        <path d={actualPath} fill="none" stroke="#6ecbb0" strokeWidth="2.5" strokeLinecap="round" />
-        <circle cx={nowX} cy={nowY} r="4" fill="#6ecbb0" stroke="#fff" strokeWidth="2" />
+    <div className="bg-white/70 dark:bg-[#1a1a1a]/70 rounded-2xl p-3">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-24" role="img" aria-label="複利曲線 理想 vs 実績">
+        <path d={idealPath} fill="none" stroke="#f4976c" strokeWidth="2.5" strokeDasharray="4 4" strokeLinecap="round" />
+        <path d={actualPath} fill="none" stroke="#6ecbb0" strokeWidth="3" strokeLinecap="round" />
+        <circle cx={nowX} cy={nowY} r="5" fill="#6ecbb0" stroke="#ffffff" strokeWidth="2" />
       </svg>
       <div className="flex items-center gap-3 mt-1">
         <div className="flex items-center gap-1"><div className="w-3 h-0.5 bg-orange rounded-full" style={{borderTop:"2px dashed #f4976c"}} /><span className="text-[9px] text-text-light">理想1%/日</span></div>

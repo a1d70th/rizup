@@ -61,9 +61,9 @@ export default function JournalPage() {
   const [habitDoneRatio, setHabitDoneRatio] = useState(0);
 
   const imageRef = useRef<HTMLInputElement>(null);
-  const today = todayJST();
 
   useEffect(() => {
+    const today = todayJST();
     setMode(new Date().getHours() < 15 ? "morning" : "evening");
     const init = async () => {
       try {
@@ -127,7 +127,7 @@ export default function JournalPage() {
       }
     };
     init();
-  }, [today]);
+  }, []);
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -142,7 +142,7 @@ export default function JournalPage() {
   const addNewTodo = async () => {
     if (!userId || !newTodoTitle.trim()) return;
     const { data, error } = await safeInsertTodo<Todo>(supabase, {
-      user_id: userId, title: newTodoTitle.trim(), due_date: today,
+      user_id: userId, title: newTodoTitle.trim(), due_date: todayJST(),
     });
     if (error) {
       showToast("error", `ToDoを追加できませんでした：${error.message}`);
@@ -205,7 +205,7 @@ export default function JournalPage() {
           setSuspended(true);
           setModerationError("アカウントが一時停止されました。");
         } else {
-          setModerationError(`Sho「この内容はそのまま送れないよ。${modData.reason || "前向きな言葉で書き直してね"}」（警告 ${newCount}/3）`);
+          setModerationError(`Rizup「この内容はそのまま送れないよ。${modData.reason || "前向きな言葉で書き直してね"}」（警告 ${newCount}/3）`);
         }
         setLoading(false);
         return;
@@ -446,7 +446,7 @@ export default function JournalPage() {
         )}
 
         {/* 気分 */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-3">
+        <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
           <p className="text-sm font-bold mb-3">今の気分は？</p>
           <div className="flex justify-between">
             {moodOptions.map(m => (
@@ -460,7 +460,7 @@ export default function JournalPage() {
         </div>
 
         {/* 睡眠 */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-3">
+        <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
           {mode === "morning" ? (
             <>
               <p className="text-sm font-bold mb-2">😴 昨夜の睡眠時間</p>
@@ -482,19 +482,21 @@ export default function JournalPage() {
           )}
         </div>
 
-        {/* 朝モード: 今日の目標 */}
+        {/* 朝モード: 今日の目標（強調表示） */}
         {mode === "morning" && (
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-3">
-            <p className="text-sm font-bold mb-2">🎯 今日の一言目標</p>
+          <div className="bg-gradient-to-br from-orange-light to-yellow-50 dark:from-[#2a1f15] dark:to-[#1f1a10] rounded-3xl p-5 border-2 border-orange/40 shadow-lg shadow-orange/10 mb-3">
+            <p className="text-base font-extrabold mb-1 text-orange">🎯 今日の一言目標</p>
+            <p className="text-[11px] text-text-mid mb-3">1日1つ、小さくてもOK</p>
             <input type="text" value={morningGoal} onChange={e => setMorningGoal(e.target.value)}
               placeholder="例：10分だけ読書する" maxLength={100}
-              className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint" />
+              aria-label="今日の目標"
+              className="w-full border-2 border-orange/30 bg-white dark:bg-[#1a1a1a] rounded-xl px-4 py-3 text-base font-bold outline-none focus:border-orange" />
           </div>
         )}
 
         {/* 朝モード: ToDo選択 */}
         {mode === "morning" && (
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-3">
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
             <p className="text-sm font-bold mb-1">✅ 今日やること（3つまで）</p>
             <p className="text-[10px] text-text-light mb-3">選択: {selectedTodoIds.size}/3</p>
             <div className="flex flex-col gap-1.5 mb-2">
@@ -524,7 +526,7 @@ export default function JournalPage() {
         )}
 
         {/* 本文 */}
-        <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-3">
+        <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
           <p className="text-sm font-bold mb-2">{mode === "morning" ? "今日の一言（任意）" : "今日の振り返り"}</p>
           <textarea value={content} onChange={e => { setContent(e.target.value); setModerationError(null); }}
             placeholder={mode === "morning" ? "例：ちょっと不安だけど、やってみる" : "例：散歩したら気分が軽くなった"}
@@ -540,8 +542,10 @@ export default function JournalPage() {
           <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
           {imagePreview && (
             <div className="relative mt-2">
-              <img src={imagePreview} alt="preview" className="w-full max-h-48 object-cover rounded-xl" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imagePreview} alt="添付プレビュー" className="w-full max-h-48 object-cover rounded-xl" />
               <button onClick={() => { setImageFile(null); setImagePreview(null); }}
+                aria-label="画像を削除"
                 className="absolute top-2 right-2 bg-black/50 text-white w-6 h-6 rounded-full text-xs flex items-center justify-center">✕</button>
             </div>
           )}
@@ -580,7 +584,7 @@ export default function JournalPage() {
         })()}
 
         {mode === "evening" && (
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 mb-3">
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
             <p className="text-sm font-bold mb-3">🙏 今日の感謝</p>
             {["今日ありがたかったこと", "誰かに感謝したいこと", "自分を褒めたいこと"].map((ph, i) => (
               <input key={i} type="text" value={gratitudes[i]}
@@ -591,13 +595,25 @@ export default function JournalPage() {
           </div>
         )}
 
-        <button onClick={handlePost}
-          disabled={loading || (mode === "morning" ? (!morningGoal.trim() && !content.trim()) : !content.trim())}
-          aria-label="ジャーナルを投稿"
-          className="w-full bg-mint text-white font-bold py-4 rounded-full shadow-lg shadow-mint/30 disabled:opacity-30 text-base">
-          {loading ? "投稿中..." : mode === "morning" ? "☀️ 朝ジャーナルを投稿" : "🌙 夜ジャーナルを投稿"}
-        </button>
+        {/* スペーサー: 固定ボタンの裏に隠れないよう */}
+        <div aria-hidden="true" className="h-20" />
       </div>
+
+      {/* 固定投稿ボタン：スクロールせず常に押せる */}
+      <div
+        className="fixed left-0 right-0 bottom-16 z-40 px-4 pointer-events-none"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        <div className="max-w-md mx-auto pointer-events-auto">
+          <button onClick={handlePost}
+            disabled={loading || (mode === "morning" ? (!morningGoal.trim() && !content.trim()) : !content.trim())}
+            aria-label="ジャーナルを投稿"
+            className="w-full bg-mint text-white font-bold py-4 rounded-full shadow-xl shadow-mint/40 disabled:opacity-40 text-base backdrop-blur-md">
+            {loading ? "投稿中..." : mode === "morning" ? "☀️ 朝ジャーナルを投稿" : "🌙 夜ジャーナルを投稿"}
+          </button>
+        </div>
+      </div>
+
       <BottomNav />
     </div>
   );

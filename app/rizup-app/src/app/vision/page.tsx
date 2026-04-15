@@ -191,12 +191,12 @@ export default function VisionPage() {
           </button>
         </div>
         {tab === "anti" && (
-          <AntiVisionPanel userId={userId} />
+          <AntiVisionPanel userId={userId} visions={visions} />
         )}
         {tab === "vision" && <></>}
 
         {visions.length > 0 && (
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4">
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] shadow-sm mb-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-bold">全体の進捗</span>
               <span className="text-sm font-extrabold text-mint">{overall}%</span>
@@ -210,7 +210,7 @@ export default function VisionPage() {
         )}
 
         {showForm && (
-          <div className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm mb-4 animate-fade-in">
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] shadow-sm mb-4 animate-fade-in">
             <label className="text-xs font-bold text-text-mid block mb-2">いつまでの目標？</label>
             <div className="grid grid-cols-2 gap-1.5 mb-3">
               {horizons.map(h => (
@@ -266,7 +266,7 @@ export default function VisionPage() {
                   const weeklyGain = prog > 0 ? Math.min(prog, 7) : 0;
                   const daysToGoal = estimateDaysToGoal({ currentProgress: prog, recentWeeklyGainPct: weeklyGain });
                   return (
-                    <div key={v.id} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm animate-fade-in">
+                    <div key={v.id} className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] shadow-sm animate-fade-in">
                       <div className="flex items-start gap-2 mb-2">
                         <span className="text-base mt-0.5">{getCatEmoji(v.category)}</span>
                         <div className="flex-1 min-w-0">
@@ -331,11 +331,10 @@ export default function VisionPage() {
   );
 }
 
-/** アンチビジョン一覧（ビジョン画面のタブ内に埋め込み） */
-function AntiVisionPanel({ userId }: { userId: string | null }) {
+/** アンチビジョン一覧（ビジョン画面のタブ内に埋め込み・自動生成） */
+function AntiVisionPanel({ userId, visions }: { userId: string | null; visions: Vision[] }) {
   const [items, setItems] = useState<AntiVision[]>([]);
-  const [newContent, setNewContent] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -344,54 +343,65 @@ function AntiVisionPanel({ userId }: { userId: string | null }) {
       .then(({ data }) => { if (data) setItems(data); });
   }, [userId]);
 
-  const handleAdd = async () => {
-    if (!userId || !newContent.trim() || items.length >= 5) return;
-    (document.activeElement as HTMLElement)?.blur();
-    setSaving(true);
-    const { data, error } = await supabase.from("anti_visions")
-      .insert({ user_id: userId, content: newContent.trim() })
-      .select().single();
-    if (error) { showToast("error", error.message); }
-    else if (data) { setItems(prev => [...prev, data]); setNewContent(""); showToast("success", "追加しました"); }
-    setSaving(false);
+  const handleGenerate = async () => {
+    if (!userId || visions.length === 0) return;
+    setGenerating(true);
+    try {
+      const res = await fetch("/api/anti-vision/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          visions: visions.map(v => ({ title: v.title, category: v.category, time_horizon: v.time_horizon })),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !Array.isArray(data.items)) {
+        showToast("error", "生成に失敗しました");
+        setGenerating(false);
+        return;
+      }
+      await supabase.from("anti_visions").delete().eq("user_id", userId);
+      const rows = data.items.slice(0, 5).map((content: string) => ({ user_id: userId, content }));
+      const { data: inserted } = await supabase.from("anti_visions").insert(rows).select();
+      if (inserted) setItems(inserted);
+      showToast("success", "アンチビジョンを生成したよ🌿");
+    } catch {
+      showToast("error", "通信エラー");
+    }
+    setGenerating(false);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("削除しますか？")) return;
-    await supabase.from("anti_visions").delete().eq("id", id);
-    setItems(prev => prev.filter(x => x.id !== id));
-  };
+  if (visions.length === 0) {
+    return (
+      <div className="mb-4 bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 border border-gray-100 dark:border-[#2a2a2a] shadow-sm text-center animate-fade-in">
+        <Image src="/icons/icon-192.png" alt="Rizup" width={56} height={56} className="rounded-full mx-auto mb-3 opacity-60" />
+        <p className="text-sm font-bold mb-2">先にビジョンを設定してください</p>
+        <p className="text-xs text-text-light mb-4">ビジョンの裏返しがアンチビジョンになります。</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mb-4 animate-fade-in">
       <p className="text-xs text-text-mid leading-relaxed mb-3">
-        5年後、絶対こうなりたくない自分。書くことで「今日の一歩」の意味が変わる。
+        5年後、絶対こうなりたくない自分。ビジョンから自動で生成されるよ。
       </p>
-      {items.length < 5 && (
-        <div className="bg-white rounded-2xl p-4 border border-orange/20 shadow-sm mb-4">
-          <textarea value={newContent} onChange={e => setNewContent(e.target.value)}
-            placeholder="例：自分を信じられないまま、言い訳ばかりしている自分"
-            maxLength={300}
-            className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm resize-none h-20 outline-none focus:border-orange" />
-          <div className="flex items-center justify-between mt-2">
-            <p className="text-[10px] text-text-light">{newContent.length}/300 ・ あと{5 - items.length}個</p>
-            <button onClick={handleAdd} disabled={!newContent.trim() || saving}
-              className="bg-orange text-white font-bold px-5 py-2 rounded-full text-xs shadow-md disabled:opacity-30">
-              {saving ? "..." : "追加"}
-            </button>
-          </div>
-        </div>
-      )}
+      <button
+        onClick={handleGenerate}
+        disabled={generating}
+        aria-label="アンチビジョンを自動生成"
+        className="w-full bg-orange text-white font-bold py-3 rounded-full shadow-md shadow-orange/30 disabled:opacity-50 mb-4">
+        {generating ? "生成中…" : items.length > 0 ? "🔄 再生成する" : "✨ AIで自動生成する"}
+      </button>
       {items.length === 0 ? (
-        <p className="text-center text-xs text-text-light py-4">避けたい未来を1つ書いてみよう</p>
+        <p className="text-center text-xs text-text-light py-4">上のボタンからAIで自動生成してみよう</p>
       ) : (
         <div className="flex flex-col gap-2">
           {items.map((x, i) => (
-            <div key={x.id} className="bg-white rounded-2xl p-4 border border-orange/20 shadow-sm">
+            <div key={x.id} className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-orange/20 shadow-sm">
               <div className="flex items-start gap-3">
                 <div className="w-8 h-8 rounded-full bg-orange-light text-orange font-extrabold flex items-center justify-center text-sm shrink-0">{i + 1}</div>
-                <p className="text-sm text-text leading-relaxed flex-1 whitespace-pre-wrap break-words">{x.content}</p>
-                <button onClick={() => handleDelete(x.id)} className="text-text-light hover:text-red-400 text-xs p-1">✕</button>
+                <p className="text-sm text-text dark:text-gray-100 leading-relaxed flex-1 whitespace-pre-wrap break-words">{x.content}</p>
               </div>
             </div>
           ))}

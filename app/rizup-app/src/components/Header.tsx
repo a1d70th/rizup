@@ -4,7 +4,7 @@ import Link from "next/link";
 
 export default function Header() {
   return (
-    <header className="bg-white border-b border-gray-100">
+    <header className="bg-white dark:bg-[#1a1a1a] border-b border-gray-100 dark:border-[#2a2a2a]">
       <div className="flex items-center justify-between px-4 py-3 max-w-md mx-auto">
         <Link href="/home" className="flex items-center" aria-label="ホームへ">
           {/* ライト用ロゴ */}

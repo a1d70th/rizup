@@ -144,7 +144,8 @@ export default function ProfilePage() {
         <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm text-center mb-4">
           <div className="relative w-20 h-20 mx-auto mb-3">
             {isUrl ? (
-              <img src={profile.avatar_url!} alt="Avatar" className="w-20 h-20 rounded-full object-cover border-[3px] border-mint" />
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profile.avatar_url!} alt={`${profile.name}のアバター`} className="w-20 h-20 rounded-full object-cover border-[3px] border-mint" />
             ) : (
               <div className="w-20 h-20 rounded-full bg-mint-light flex items-center justify-center text-3xl border-[3px] border-mint">
                 {profile.avatar_url || "🌿"}
