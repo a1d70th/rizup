@@ -132,8 +132,8 @@ export default function HomePage() {
   const habitPct = habits.total > 0 ? habits.done / habits.total : 0;
 
   return (
-    <div onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEnd}
-      className="min-h-screen bg-bg dark:bg-[#111111] pb-20">
+    <main onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEnd}
+      className="min-h-screen bg-[#fafafa] dark:bg-[#111111] pb-20">
       <Header />
       <div style={{
         transform: pull ? `translateY(${pull}px)` : undefined,
@@ -207,6 +207,6 @@ export default function HomePage() {
         {refreshing ? "…" : "🔄"}
       </button>
       <BottomNav />
-    </div>
+    </main>
   );
 }

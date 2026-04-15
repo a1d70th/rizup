@@ -13,6 +13,15 @@
 
 ## 🎯 現在のステータス
 
+### ✅ 完了（2026-04-15 深夜・v4.8 "最終品質仕上げ"）
+
+**v4.8（最新）**
+- ホーム最外タグを `<div>` → `<main>` に昇格し `bg-[#fafafa] dark:bg-[#111111]` 明示
+- PostCard `<article>` を `bg-white dark:bg-[#1c1c1e] border-b border-gray-100 dark:border-[#2a2a2a]` に統一（spec 準拠）
+- globals.css に `html.dark` / `html.dark body` の明示ルール追加（iOS Safari のバウンススクロール対策）
+- `research/buzz-posts-week2.md`（Kai）：バズパターン5分類 + Rizup 版 5投稿
+- Week2 用 threads-week2.md は v4.7 で Rei が作成済
+
 ### ✅ 完了（2026-04-15 深夜・v4.7 "スクロール撲滅+UX最終"）
 
 **v4.7（最新）**

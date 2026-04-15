@@ -247,7 +247,7 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
     : "bg-mint-light text-mint";
 
   return (
-    <article className="bg-white dark:bg-[#1a1a1a] overflow-hidden animate-fade-in mb-0 p-0">
+    <article className="bg-white dark:bg-[#1c1c1e] border-b border-gray-100 dark:border-[#2a2a2a] overflow-hidden animate-fade-in mb-0 p-0">
       {/* Header */}
       <header className="flex items-center gap-3 px-4 pt-4 pb-2">
         <Avatar url={post.profiles?.avatar_url} size={48} name={rawName} />

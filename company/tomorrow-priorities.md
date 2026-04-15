@@ -4,7 +4,7 @@
 
 ---
 
-## 🥇 #1 — スマホでMeta認証→Threads全自動化（15分・最重要）
+## 🥇 #1（v4.8確定）— スマホでMeta認証→Threads全自動化（15分・最重要）
 
 1. Meta for Developers にログイン → アプリ作成 → Threads API 権限追加
 2. アクセストークンを発行
