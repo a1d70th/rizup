@@ -9,6 +9,7 @@ interface Props {
   animal?: AnimalKind | null;
   lastWritten?: Date | null;
   size?: number; // default 140
+  mood?: 'good' | 'bad' | 'neutral';
 }
 
 // Stage と表情の判定
@@ -102,20 +103,25 @@ export default function MyCharacter({
   animal = "rabbit",
   lastWritten = null,
   size = 140,
+  mood = 'neutral',
 }: Props) {
   const [showBubble, setShowBubble] = useState(false);
   const stage = stageOf(streak);
   const palette = PALETTE[animal || "rabbit"];
   const tod = useMemo(() => timeOfDay(), []);
   const wrote = wroteToday(lastWritten);
+  const isHappy = mood === 'good' || (mood === 'neutral' && wrote);
+  const isSad = mood === 'bad';
   const charName = name || "相棒";
 
   const tapMsg = useMemo(() => timeMessage(charName, tod), [charName, tod]);
-  const baseMsg = wrote
-    ? `今日もありがとう、${charName}がジャンプしてるよ✨`
-    : lastWritten
-      ? `おかえり、${charName}は${charName === "相棒" ? "ずっと" : ""}待ってたよ🌿`
-      : STAGE_MESSAGES[stage];
+  const baseMsg = isSad
+    ? `そばにいるよ。${charName}はずっと一緒だよ🌿`
+    : isHappy
+      ? `今日もありがとう、${charName}がジャンプしてるよ✨`
+      : lastWritten
+        ? `おかえり、${charName}は待ってたよ🌿`
+        : STAGE_MESSAGES[stage];
 
   return (
     <div className="flex flex-col items-center" style={{ width: size + 40 }}>
@@ -123,7 +129,7 @@ export default function MyCharacter({
         type="button"
         aria-label={`${charName}をタップして話す`}
         onClick={() => setShowBubble(s => !s)}
-        className={`relative focus:outline-none ${wrote ? "animate-sho-bounce" : "animate-sho-float"}`}
+        className={`relative focus:outline-none ${isHappy ? "animate-sho-bounce" : isSad ? "animate-sho-float" : wrote ? "animate-sho-bounce" : "animate-sho-float"}`}
       >
         {stage === 1 ? (
           <EggSvg size={size} palette={palette} />
@@ -132,7 +138,8 @@ export default function MyCharacter({
             size={size}
             animal={animal || "rabbit"}
             palette={palette}
-            happy={wrote}
+            isHappy={isHappy}
+            isSad={isSad}
             stage={stage}
           />
         )}
@@ -181,24 +188,28 @@ function AnimalSvg({
   size,
   animal,
   palette,
-  happy,
+  isHappy,
+  isSad,
   stage,
 }: {
   size: number;
   animal: AnimalKind;
   palette: { body: string; belly: string; accent: string; cheek: string };
-  happy: boolean;
+  isHappy: boolean;
+  isSad: boolean;
   stage: number;
 }) {
   // stage に応じてサイズを少し変える（2=小、3=中、4+=大）
   const scale = stage === 2 ? 0.85 : stage === 3 ? 0.92 : 1;
-  const eyeY = happy ? 42 : 44;
-  const mouth = happy
+  const eyeY = isHappy ? 42 : 44;
+  const mouth = isHappy
     ? <path d="M 45 58 Q 50 64 55 58" stroke={palette.accent} strokeWidth="2" fill="none" strokeLinecap="round" />
-    : <path d="M 46 58 Q 50 61 54 58" stroke={palette.accent} strokeWidth="1.8" fill="none" strokeLinecap="round" />;
+    : isSad
+      ? <path d="M 46 57 Q 50 59 54 57" stroke={palette.accent} strokeWidth="1.5" fill="none" strokeLinecap="round" />
+      : <path d="M 46 58 Q 50 61 54 58" stroke={palette.accent} strokeWidth="1.8" fill="none" strokeLinecap="round" />;
 
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" style={{ transform: `scale(${scale})` }}>
+    <svg width={size} height={size} viewBox="0 0 100 100" style={{ transform: `scale(${scale})${isHappy ? ' translateY(-2px)' : isSad ? ' rotate(2deg)' : ''}` }}>
       <defs>
         <radialGradient id={`body-${animal}`} cx="50%" cy="60%" r="55%">
           <stop offset="0%" stopColor={palette.belly} />
@@ -259,10 +270,17 @@ function AnimalSvg({
       )}
 
       {/* Eyes */}
-      {happy ? (
+      {isHappy ? (
         <>
           <path d={`M 38 ${eyeY - 1} Q 42 ${eyeY + 3} 46 ${eyeY - 1}`} stroke={palette.accent} strokeWidth="2.2" fill="none" strokeLinecap="round" />
           <path d={`M 54 ${eyeY - 1} Q 58 ${eyeY + 3} 62 ${eyeY - 1}`} stroke={palette.accent} strokeWidth="2.2" fill="none" strokeLinecap="round" />
+        </>
+      ) : isSad ? (
+        <>
+          <circle cx="42" cy={eyeY} r="3" fill={palette.accent} />
+          <circle cx="58" cy={eyeY} r="3" fill={palette.accent} />
+          <circle cx="43" cy={eyeY - 1} r="1.2" fill="#ffffff" />
+          <circle cx="59" cy={eyeY - 1} r="1.2" fill="#ffffff" />
         </>
       ) : (
         <>

@@ -12,11 +12,8 @@ import { safeInsertPost, safeInsertTodo, findTodayPost } from "@/lib/safe-insert
 import { showToast } from "@/components/Toast";
 
 const moodOptions = [
-  { value: 1, emoji: "😔", label: "つらい" },
-  { value: 2, emoji: "😐", label: "ふつう" },
-  { value: 3, emoji: "🙂", label: "まあまあ" },
-  { value: 4, emoji: "😊", label: "いい感じ" },
-  { value: 5, emoji: "🤩", label: "最高！" },
+  { value: 4, emoji: "😊", label: "いい感じ", color: "bg-mint-light border-mint text-mint" },
+  { value: 2, emoji: "😔", label: "しんどい", color: "bg-[#1a2030] border-[#2a3a50] text-[#8aa0c0]" },
 ];
 
 function todayJST(): string {
@@ -49,7 +46,7 @@ interface MorningPost {
 export default function JournalPage() {
   const router = useRouter();
   const [mode, setMode] = useState<"morning" | "evening">("morning");
-  const [mood, setMood] = useState(3);
+  const [mood, setMood] = useState(0);
   const [content, setContent] = useState("");
   const [gratitudes, setGratitudes] = useState(["", "", ""]);
   const [sleepHours, setSleepHours] = useState("");
@@ -60,6 +57,7 @@ export default function JournalPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [moderationError, setModerationError] = useState<string | null>(null);
+  const [moodOnly, setMoodOnly] = useState(false);
   const [crisis, setCrisis] = useState(false);
   const [suspended, setSuspended] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -83,6 +81,13 @@ export default function JournalPage() {
 
   // もっと書く▼（デフォルト折りたたみ・最小2-3タップで投稿）
   const [showMore, setShowMore] = useState(false);
+
+  // 「書かなくていい」ボタン: moodだけ記録して投稿
+  useEffect(() => {
+    if (!moodOnly) return;
+    handlePost();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moodOnly]);
 
   useEffect(() => {
     if (timerSec == null) return;
@@ -422,7 +427,7 @@ export default function JournalPage() {
           <Image src="/icons/icon-192.png" alt="Rizup" width={120} height={120} className="rounded-full animate-sho-bounce drop-shadow-xl" />
           <div className="absolute -top-2 -right-2 text-3xl animate-pop">🎉</div>
         </div>
-        <h2 className="text-2xl font-extrabold mb-1">投稿できたよ！</h2>
+        <h2 className="text-2xl font-extrabold mb-1">{moodOnly ? "来てくれただけで十分だよ" : "投稿できたよ！"}</h2>
         <p className="text-xs text-text-mid mb-4">今日の積み上げ +1🌱</p>
         {aiFeedback && (
           <div className="bg-mint-light rounded-2xl p-4 max-w-xs mb-6 text-left">
@@ -460,7 +465,7 @@ export default function JournalPage() {
           <div className="flex-1">
             <p className="font-extrabold">{mode === "morning" ? "おはよう！☀️" : "おつかれさま🌙"}</p>
             <p className="text-xs text-text-mid">
-              {mode === "morning" ? "今日の気分と、やること3つを決めよう" : "今日の振り返り。朝の目標は達成できた？"}
+              {mode === "morning" ? "今日の気分を教えてね" : "今日の振り返り。朝の目標は達成できた？"}
             </p>
           </div>
           {mode === "morning" && timerSec == null && (
@@ -523,22 +528,44 @@ export default function JournalPage() {
           </div>
         )}
 
-        {/* 気分 */}
-        <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
-          <p className="text-sm font-bold mb-3">今の気分は？</p>
-          <div className="flex justify-between">
+        {/* 気分（二択） */}
+        <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 border border-gray-100 dark:border-[#2a2a2a] mb-3">
+          <p className="text-sm font-bold mb-4 text-center">今の気分は？</p>
+          <div className="flex gap-3 justify-center">
             {moodOptions.map(m => (
               <button key={m.value} onClick={() => setMood(m.value)}
-                className={`flex flex-col items-center gap-1 transition ${mood === m.value ? "scale-110" : "opacity-50"}`}>
-                <span className={`text-3xl p-2 rounded-full ${mood === m.value ? "bg-mint-light" : ""}`}>{m.emoji}</span>
-                <span className="text-[10px] text-text-light">{m.label}</span>
+                className={`flex flex-col items-center gap-2 px-8 py-5 rounded-2xl border-2 transition-all ${
+                  mood === m.value ? m.color + " scale-105 shadow-md" : "bg-gray-50 dark:bg-[#222] border-gray-200 dark:border-[#333] opacity-60"
+                }`}>
+                <span className="text-4xl">{m.emoji}</span>
+                <span className="text-sm font-bold">{m.label}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* 睡眠（朝は折りたたみ / 夜は常時表示） */}
-        {(mode === "evening" || showMore) && (
+        {/* 気分選択後の分岐メッセージ */}
+        {mood === 4 && (
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
+            <p className="text-sm font-bold mb-2">今日のひとこと書く？（書かなくてもOK）</p>
+            <textarea value={content} onChange={e => { setContent(e.target.value); setModerationError(null); }}
+              placeholder="例：散歩が気持ちよかった"
+              className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm resize-none h-20 outline-none focus:border-mint"
+              maxLength={500} />
+          </div>
+        )}
+        {mood === 2 && (
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
+            <p className="text-sm font-bold mb-2">少し話す？（無理しなくていいよ）</p>
+            <textarea value={content} onChange={e => { setContent(e.target.value); setModerationError(null); }}
+              placeholder="何でもいいよ。聞いてるよ"
+              className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm resize-none h-20 outline-none focus:border-mint"
+              maxLength={500} />
+          </div>
+        )}
+
+        {/* 睡眠（もっと書く内のみ） */}
+        {showMore && (
           <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
             <p className="text-sm font-bold mb-2">
               {mode === "morning" ? "😴 昨夜の睡眠時間" : "😴 昨夜は何時間寝ましたか？"}
@@ -561,8 +588,8 @@ export default function JournalPage() {
           </div>
         )}
 
-        {/* 朝モード: 今日の目標（強調表示） */}
-        {mode === "morning" && (
+        {/* 朝モード: 今日の目標（もっと書く内） */}
+        {mode === "morning" && showMore && (
           <div className="bg-gradient-to-br from-orange-light to-yellow-50 dark:from-[#2a1f15] dark:to-[#1f1a10] rounded-3xl p-5 border-2 border-orange/40 shadow-lg shadow-orange/10 mb-3">
             <div className="flex items-center justify-between mb-1">
               <p className="text-base font-extrabold text-orange">🎯 今日の一言目標</p>
@@ -623,25 +650,28 @@ export default function JournalPage() {
             onClick={() => setShowMore(true)}
             className="w-full py-2 mb-3 text-xs font-extrabold text-mint hover:bg-mint-light dark:hover:bg-[#1f2824] rounded-full transition"
             aria-label="追加項目を表示">
-            もっと書く ▼（睡眠・ToDo・本文・画像）
+            もっと書く ▼（目標・睡眠・ToDo・画像）
           </button>
         )}
 
-        {/* 本文（朝モードは showMore 時のみ / 夜モードは常時） */}
-        {(mode === "evening" || showMore) && (
+        {/* 夜モード: 本文（常時表示） */}
+        {mode === "evening" && (
         <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
-          <p className="text-sm font-bold mb-2">{mode === "morning" ? "今日の一言（任意）" : "今日の振り返り"}</p>
+          <p className="text-sm font-bold mb-2">今日の振り返り</p>
           <textarea value={content} onChange={e => { setContent(e.target.value); setModerationError(null); }}
-            placeholder={mode === "morning" ? "例：ちょっと不安だけど、やってみる" : "例：散歩したら気分が軽くなった"}
+            placeholder="例：散歩したら気分が軽くなった"
             className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm resize-none h-24 outline-none focus:border-mint"
             maxLength={500} />
-          <div className="flex items-center justify-between mt-1">
-            <button onClick={() => imageRef.current?.click()} type="button"
-              className="flex items-center gap-1 text-xs text-text-light hover:text-mint transition">
-              📷 画像を追加
-            </button>
-            <p className="text-xs text-text-light">{content.length}/500</p>
-          </div>
+        </div>
+        )}
+
+        {/* 画像添付（もっと書く内のみ） */}
+        {showMore && (
+        <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
+          <button onClick={() => imageRef.current?.click()} type="button"
+            className="flex items-center gap-1 text-sm text-text-light hover:text-mint transition">
+            📷 画像を追加
+          </button>
           <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
           {imagePreview && (
             <div className="relative mt-2">
@@ -711,7 +741,7 @@ export default function JournalPage() {
         )}
 
         {/* スペーサー: 固定ボタンの裏に隠れないよう */}
-        <div aria-hidden="true" className="h-20" />
+        <div aria-hidden="true" className="h-28" />
       </div>
 
       {/* 固定投稿ボタン：スクロールせず常に押せる */}
@@ -719,12 +749,17 @@ export default function JournalPage() {
         className="fixed left-0 right-0 bottom-16 z-40 px-4 pointer-events-none"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
-        <div className="max-w-md mx-auto pointer-events-auto">
+        <div className="max-w-md mx-auto pointer-events-auto flex flex-col gap-2">
           <button onClick={handlePost}
-            disabled={loading || (mode === "morning" ? (!morningGoal.trim() && !content.trim()) : !content.trim())}
+            disabled={loading || mood === 0}
             aria-label="ジャーナルを投稿"
-            className="w-full bg-mint text-white font-bold py-4 rounded-full shadow-xl shadow-mint/40 disabled:opacity-40 text-base backdrop-blur-md">
+            className="w-full bg-mint text-white font-bold py-4 rounded-full shadow-xl shadow-mint/40 disabled:opacity-40 text-base">
             {loading ? "投稿中..." : mode === "morning" ? "☀️ 朝のひとことを送る" : "🌙 夜のふりかえりを送る"}
+          </button>
+          <button onClick={() => { setContent(""); setMorningGoal(""); setMoodOnly(true); }}
+            disabled={loading || mood === 0}
+            className="w-full text-text-light text-sm py-2 disabled:opacity-40">
+            書かなくていい（気分だけ記録）
           </button>
         </div>
       </div>

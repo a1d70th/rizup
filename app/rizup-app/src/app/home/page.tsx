@@ -52,6 +52,7 @@ export default function HomePage() {
   const [habits, setHabits] = useState({ done: 0, total: 0 });
   const [morningDone, setMorningDone] = useState(false);
   const [eveningDone, setEveningDone] = useState(false);
+  const [morningMood, setMorningMood] = useState<number>(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [todayQuote, setTodayQuote] = useState<string>("");
   const [refreshing, setRefreshing] = useState(false);
@@ -110,7 +111,9 @@ export default function HomePage() {
               .order("created_at", { ascending: false }).limit(1).maybeSingle();
             if (lp?.created_at) setLastWritten(new Date(lp.created_at));
           } catch { /* ignore */ }
-          setMorningDone(!!(await findTodayPost(supabase, user.id, "morning")));
+          const morningPost = await findTodayPost(supabase, user.id, "morning");
+          setMorningDone(!!morningPost);
+          if (morningPost?.mood) setMorningMood(morningPost.mood);
           setEveningDone(!!(await findTodayPost(supabase, user.id, "evening")));
           try {
             const { data: h } = await supabase.from("habits")
@@ -193,7 +196,7 @@ export default function HomePage() {
           {/* 3リング可視化（朝/夜/毎日のこと）＋ 連続日数 */}
           <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm px-4 py-5 mb-3">
             <div className="flex items-center justify-around">
-              <Ring pct={morningDone ? 1 : 0} color="#6ecbb0" label="朝" emoji="☀️" />
+              <Ring pct={morningDone ? 1 : 0} color="#6ecbb0" label="朝" emoji={morningDone ? (morningMood >= 4 ? "😊" : morningMood > 0 ? "😔" : "☀️") : "☀️"} />
               <Ring pct={eveningDone ? 1 : 0} color="#f4976c" label="夜" emoji="🌙" />
               <Ring pct={habitPct} color="#5b8def" label="毎日のこと" emoji="🔄" />
               <div className="flex flex-col items-center gap-1.5">
