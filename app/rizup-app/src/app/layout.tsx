@@ -4,8 +4,8 @@ import ToastContainer from "@/components/Toast";
 import ErrorBoundary from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
-  title: "Rizup — 毎日1%の複利成長",
-  description: "朝夜ジャーナリング × ビジョン × 習慣。毎日の1%が1年で37倍になる自己成長アプリ。",
+  title: "Rizup — 書くたびに村が育つ。",
+  description: "朝のひとこと、夜のふりかえり、毎日のこと。書くたびにあなたの村が育っていく。",
   applicationName: "Rizup",
   manifest: "/manifest.json",
   appleWebApp: {
@@ -30,8 +30,8 @@ export const metadata: Metadata = {
   },
   formatDetection: { telephone: false, email: false, address: false },
   openGraph: {
-    title: "Rizup — 毎日1%の複利成長",
-    description: "朝夜ジャーナリング × ビジョン × 習慣。昨日より今日を1%好きになる。",
+    title: "Rizup — 書くたびに村が育つ。",
+    description: "朝のひとこと、夜のふりかえり、毎日のこと。書くたびにあなたの村が育っていく。",
     url: "https://rizup-app.vercel.app",
     siteName: "Rizup",
     locale: "ja_JP",
@@ -40,8 +40,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary",
-    title: "Rizup — 毎日1%の複利成長",
-    description: "朝夜ジャーナリング × ビジョン × 習慣",
+    title: "Rizup — 書くたびに村が育つ。",
+    description: "朝のひとこと・夜のふりかえり・毎日のこと",
     images: ["/icons/icon-512.png"],
   },
   robots: { index: true, follow: true },

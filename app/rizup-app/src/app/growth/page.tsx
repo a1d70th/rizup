@@ -26,6 +26,14 @@ function rangeStart(r: Range): Date | null {
   return d;
 }
 
+interface WeeklyReport {
+  mood_trend: string;
+  frequent_words: string[];
+  strengths: string[];
+  next_week: string;
+  cached?: boolean;
+}
+
 export default function GrowthPage() {
   const [range, setRange] = useState<Range>("30d");
   const [posts, setPosts] = useState<PostRow[]>([]);
@@ -35,11 +43,15 @@ export default function GrowthPage() {
   const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
   const [habitAchievement, setHabitAchievement] = useState(0); // 0〜1
   const [loading, setLoading] = useState(true);
+  const [report, setReport] = useState<WeeklyReport | null>(null);
+  const [reportLoading, setReportLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
+      setUserId(user.id);
       const { data: p } = await supabase.from("profiles")
         .select("streak, plan, trial_ends_at").eq("id", user.id).single();
       if (p) { setStreak(p.streak || 0); setPlan(p.plan || "free"); setTrialEndsAt(p.trial_ends_at); }
@@ -106,6 +118,21 @@ export default function GrowthPage() {
 
   const premium = isPremium({ plan, trial_ends_at: trialEndsAt });
 
+  const loadReport = async () => {
+    if (!userId || reportLoading) return;
+    setReportLoading(true);
+    try {
+      const res = await fetch("/api/weekly-report", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      const data = await res.json();
+      setReport(data);
+    } catch { /* ignore */ }
+    setReportLoading(false);
+  };
+
   if (loading) return (
     <div className="min-h-screen bg-bg flex items-center justify-center">
       <Image src="/icons/icon-192.png" alt="Rizup" width={48} height={48} className="animate-sho-float rounded-full" />
@@ -117,7 +144,7 @@ export default function GrowthPage() {
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
         <h2 className="text-2xl font-extrabold mb-1">📈 成長グラフ</h2>
-        <p className="text-xs text-text-light mb-4">毎日の1%が、1年で37倍になる</p>
+        <p className="text-xs text-text-light mb-4">毎日の1歩が、1年で大きな変化になる</p>
 
         {/* 複利カード */}
         <div className="glass-mint rounded-3xl p-5 mb-4 animate-slide-up relative overflow-hidden border border-mint/20"
@@ -126,7 +153,7 @@ export default function GrowthPage() {
           <div className="relative z-10">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-2xl animate-sho-float inline-block">✨</span>
-            <h3 className="text-base font-extrabold flex-1">あなたの複利</h3>
+            <h3 className="text-base font-extrabold flex-1">あなたの小さな積み重ね</h3>
             <span className="text-[10px] font-bold text-mint bg-white/80 px-2 py-0.5 rounded-full shadow-sm">🔥 連続{streak}日</span>
           </div>
           <div className="grid grid-cols-2 gap-3 mb-3">
@@ -164,6 +191,54 @@ export default function GrowthPage() {
           <StatCard label="連続" value={<><span className="streak-fire">🔥</span> <CountUp value={streak} /></>} />
           <StatCard label="総投稿" value={<CountUp value={totalPosts} />} />
           <StatCard label="期間" value={`${posts.length}件`} />
+        </div>
+
+        {/* 今週のあなた（自己レポート） */}
+        <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-mint/30 dark:border-[#2a3a34] shadow-sm mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-extrabold dark:text-gray-100">🌿 今週のあなた</h3>
+            <button onClick={loadReport} disabled={reportLoading}
+              className="text-[11px] font-bold text-mint border border-mint rounded-full px-3 py-1 disabled:opacity-50">
+              {reportLoading ? "分析中..." : report ? "更新" : "分析する"}
+            </button>
+          </div>
+          {!report ? (
+            <p className="text-[12px] text-text-mid leading-relaxed">
+              過去7日の投稿から、気分傾向・よく使った言葉・強みをやさしくまとめるよ。<br />
+              右上の「分析する」を押して試してみて。
+            </p>
+          ) : (
+            <div className="space-y-3 text-[13px] leading-relaxed dark:text-gray-100">
+              <div>
+                <p className="text-[10px] font-extrabold text-mint mb-1">今週の気分傾向</p>
+                <p>{report.mood_trend}</p>
+              </div>
+              {report.frequent_words?.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-extrabold text-mint mb-1">よく使った言葉</p>
+                  <div className="flex flex-wrap gap-1">
+                    {report.frequent_words.map((w, i) => (
+                      <span key={i} className="bg-mint-light dark:bg-[#162621] text-mint text-[11px] font-bold rounded-full px-2.5 py-0.5">{w}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {report.strengths?.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-extrabold text-orange mb-1">今週見えた強み</p>
+                  <div className="flex flex-wrap gap-1">
+                    {report.strengths.map((s, i) => (
+                      <span key={i} className="bg-orange-light text-orange text-[11px] font-bold rounded-full px-2.5 py-0.5">✨ {s}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div>
+                <p className="text-[10px] font-extrabold text-mint mb-1">来週のあなたへ</p>
+                <p>{report.next_week}</p>
+              </div>
+            </div>
+          )}
         </div>
 
         <ChartCard title="🌤 気分" avg={avgMood ? `${avgMood}/5` : "—"} color="#6ecbb0"
@@ -280,7 +355,7 @@ function CompoundCurve({ streak, habitAchievement, days }: { streak: number; hab
         <circle cx={nowX} cy={nowY} r="5" fill="#6ecbb0" stroke="#ffffff" strokeWidth="2" />
       </svg>
       <div className="flex items-center gap-3 mt-1">
-        <div className="flex items-center gap-1"><div className="w-3 h-0.5 bg-orange rounded-full" style={{borderTop:"2px dashed #f4976c"}} /><span className="text-[9px] text-text-light">理想1%/日</span></div>
+        <div className="flex items-center gap-1"><div className="w-3 h-0.5 bg-orange rounded-full" style={{borderTop:"2px dashed #f4976c"}} /><span className="text-[9px] text-text-light">理想の1歩/日</span></div>
         <div className="flex items-center gap-1"><div className="w-3 h-0.5 bg-mint rounded-full" /><span className="text-[9px] text-text-light">あなたの実績</span></div>
       </div>
     </div>

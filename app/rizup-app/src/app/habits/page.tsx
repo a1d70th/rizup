@@ -94,7 +94,7 @@ function HabitsInner() {
     }
     if (error) {
       setAddError(`保存できませんでした：${error.message}`);
-      showToast("error", `習慣を追加できませんでした：${error.message}`);
+      showToast("error", `毎日のことを追加できませんでした：${error.message}`);
       return;
     }
     if (data) {
@@ -121,7 +121,7 @@ function HabitsInner() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("この習慣を削除しますか？")) return;
+    if (!confirm("この毎日のことを削除しますか？")) return;
     await supabase.from("habits").delete().eq("id", id);
     setHabits(prev => prev.filter(h => h.id !== id));
   };
@@ -158,9 +158,9 @@ function HabitsInner() {
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-extrabold dark:text-gray-100">🔄 習慣トラッカー</h2>
+          <h2 className="text-lg font-extrabold dark:text-gray-100">🔄 毎日のこと</h2>
           {habits.length < MAX_HABITS && (
-            <button onClick={() => setShowAdd(!showAdd)} aria-label="習慣を追加"
+            <button onClick={() => setShowAdd(!showAdd)} aria-label="毎日のことを追加"
               className="bg-mint text-white text-xs font-bold px-4 py-2 rounded-full shadow-md shadow-mint/30">
               {showAdd ? "✕" : "＋ 追加"}
             </button>
@@ -210,7 +210,7 @@ function HabitsInner() {
 
         {showAdd && (
           <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] shadow-sm mb-4 animate-fade-in">
-            <p className="text-sm font-bold mb-2">新しい習慣（最大{MAX_HABITS}個）</p>
+            <p className="text-sm font-bold mb-2">新しい毎日のこと（最大{MAX_HABITS}個）</p>
             <div className="flex gap-1.5 mb-2 flex-wrap">
               {iconOptions.map(ic => (
                 <button key={ic} onClick={() => setNewIcon(ic)}
@@ -220,13 +220,13 @@ function HabitsInner() {
               ))}
             </div>
             <input type="text" value={newName} onChange={e => setNewName(e.target.value)}
-              placeholder="例：10分読書" aria-label="習慣名"
+              placeholder="例：10分読書" aria-label="毎日のことの名前"
               className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint mb-2"
               onKeyDown={e => { if (e.key === "Enter") handleAdd(); }} />
             {visions.length > 0 && (
               <select value={newVisionId} onChange={e => setNewVisionId(e.target.value)}
                 className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint bg-white mb-2">
-                <option value="">紐付けるビジョン（任意）</option>
+                <option value="">紐付けるなりたい自分（任意）</option>
                 {visions.map(v => <option key={v.id} value={v.id}>{v.title}</option>)}
               </select>
             )}
@@ -241,8 +241,8 @@ function HabitsInner() {
         {habits.length === 0 ? (
           <div className="text-center py-12">
             <Image src="/icons/icon-192.png" alt="Rizup" width={64} height={64} className="rounded-full mx-auto mb-3 opacity-50" />
-            <p className="text-sm font-bold text-text-mid mb-1">まだ習慣がありません</p>
-            <p className="text-xs text-text-light">毎日続けたい小さな行動を決めよう</p>
+            <p className="text-sm font-bold text-text-mid mb-1">まだ毎日のことがありません</p>
+            <p className="text-xs text-text-light">毎日続けたい小さなことを決めよう</p>
           </div>
         ) : (
           <div className="flex flex-col gap-2">

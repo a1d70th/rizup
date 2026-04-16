@@ -96,6 +96,9 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
   const [displayContent, setDisplayContent] = useState(post.content);
   const [expanded, setExpanded] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [showStrengthGift, setShowStrengthGift] = useState(false);
+  const [strengthText, setStrengthText] = useState("");
+  const [strengthSent, setStrengthSent] = useState(false);
 
   const isOwner = userId && post.user_id === userId;
   const canDelete = isOwner || isAdmin;
@@ -220,6 +223,28 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
       return;
     }
     onDelete?.(post.id);
+  };
+
+  const handleSendStrength = async () => {
+    if (!userId || !strengthText.trim() || !post.user_id) return;
+    try {
+      await supabase.from("strength_gifts").insert({
+        from_id: userId,
+        to_id: post.user_id,
+        body: strengthText.trim(),
+        source_post_id: post.id,
+      });
+      try {
+        await supabase.from("notifications").insert({
+          user_id: post.user_id,
+          type: "strength",
+          content: `✨ あなたの強みを見つけてくれた人がいるよ`,
+        });
+      } catch { /* ignore */ }
+      setStrengthSent(true);
+      setShowStrengthGift(false);
+      setStrengthText("");
+    } catch { /* ignore - likely migration not applied */ }
   };
 
   const handleReport = async () => {
@@ -450,6 +475,16 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
           <span className="text-base">💬</span>
           {comments.length > 0 ? `${comments.length}件` : "コメント"}
         </button>
+        {userId && !isOwner && !strengthSent && (
+          <button
+            onClick={() => setShowStrengthGift(s => !s)}
+            aria-label="強みを発見した"
+            className="text-xs text-orange hover:text-orange/80 transition font-bold"
+          >
+            ✨ 強みを発見
+          </button>
+        )}
+        {strengthSent && <span className="text-xs text-orange ml-1">✨ 贈った</span>}
         {userId && !isOwner && (
           reported ? (
             <span className="text-xs text-text-light ml-auto">✅ 通報済み</span>
@@ -463,6 +498,32 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
           )
         )}
       </div>
+
+      {/* 強み贈与フォーム */}
+      {showStrengthGift && (
+        <div className="mx-4 mb-3 border border-orange/30 rounded-xl p-3 bg-orange-light/30 dark:bg-[#2a1f15]">
+          <p className="text-xs font-bold text-orange mb-2">✨ {name || "この人"}のここが素敵だと思った</p>
+          <textarea
+            value={strengthText}
+            onChange={e => setStrengthText(e.target.value)}
+            maxLength={200}
+            placeholder="例：続ける力がすごい"
+            className="w-full border border-orange/30 rounded-lg px-3 py-2 text-xs outline-none resize-none h-16 mb-2 bg-white dark:bg-[#1a1a1a]"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={handleSendStrength}
+              disabled={!strengthText.trim()}
+              className="bg-orange text-white text-xs font-extrabold px-4 py-1.5 rounded-full disabled:opacity-40"
+            >
+              贈る
+            </button>
+            <button onClick={() => setShowStrengthGift(false)} className="text-xs text-text-light px-4 py-1.5">
+              キャンセル
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Report form */}
       {showReport && (

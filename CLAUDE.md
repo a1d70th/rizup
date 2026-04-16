@@ -1,7 +1,7 @@
-# Rizup HQ — AI引継ぎファイル（v4.3 / 散歩メモ7項目＋仕上げ）
+# Rizup HQ — AI引継ぎファイル（v5.0 / 村コンセプト大刷新）
 
 > 新しいチャットを開いたらまずこのファイルを読んで即作業開始。確認不要。
-> **最終更新：2026-04-15 夜（v4.3 リリース）**
+> **最終更新：2026-04-16（v5.0 リリース）**
 
 ---
 
@@ -12,6 +12,35 @@
 ---
 
 ## 🎯 現在のステータス
+
+### ✅ 完了（2026-04-16・v5.0 "村コンセプト大刷新"）
+
+**v5.0（最新）— 村で育つ自己理解アプリへ**
+- **PHASE 1 UI バグ**：home/PostCard 背景色統一は既に v4.8 で適用済み、習慣チェックも正常動作を確認
+- **PHASE 2 言葉の刷新**：複利→小さな積み重ね、ビジョン→なりたい自分、習慣→毎日のこと、朝/夜ジャーナル→朝のひとこと/夜のふりかえり、アンチビジョン→避けたい未来、複利スコア→今日の積み上げ
+  - layout.tsx の title/OG を「Rizup — 書くたびに村が育つ。」に
+  - home / journal / habits / vision / profile / growth / settings / sho-messages / cron / PlanGate 全て UI テキスト置換
+- **PHASE 3 動物キャラ育成（Finch TTP）**：`src/components/MyCharacter.tsx` 新規
+  - 5動物（うさぎ/たぬき/ねこ/りす/ふくろう）× 7段階（卵→赤ちゃん→子供→大人→村人→村長→伝説）
+  - SVG で描画・ミント系カラーパレット・時間帯別メッセージ（朝/昼/夜/深夜）
+  - `/character-setup` 新規：動物選択→名前入力の2ステップ
+  - プロフィール DB と localStorage 両方に保存（未マイグレ環境でも動作）
+  - ホームに大きく表示（130px）、タップで時間帯メッセージ
+- **PHASE 4 自己理解システム**：
+  - `/api/weekly-report` 新規（Claude Haiku 4.5）：過去7日を分析し「気分傾向/よく使った言葉/強み/来週のあなたへ」を JSON 返却、24h キャッシュ
+  - `/api/strength-detect` 新規：投稿本文から強み（6〜12字の動詞＋力）を抽出
+  - growth ページに「今週のあなた」セクション追加
+  - journal 投稿後に強み抽出 → トースト表示 ＆ profile.strengths に保存
+- **PHASE 5 森の村**：
+  - `supabase-v5.sql` 新規（IF NOT EXISTS 安全）：profiles に character_animal/name/strengths/weekly_report 追加、friends/journal_transformations/strength_gifts テーブル新規（RLS 付き）
+  - `/village` 新規：自分の家（中央・大）＋仲間の家（上限5人、Pro/Premium 7人）・季節背景（桜/ひまわり/紅葉/雪/星空）・アクション3種（わかる🌱/強みを贈る✨/変身🎭）
+  - BottomNav を 🏠📝🎯📈👤 → 🏠📝🏘️📈👤（ビジョン→村）。ビジョン導線は profile 経由
+  - middleware に /village /character-setup を protectedPaths に追加
+- **PHASE 6 強みを見つけ合う**：
+  - PostCard に「✨ 強みを発見」ボタン。フォームから strength_gifts に保存
+  - profile に「💪 みんなが見つけてくれた私の強み」セクション追加
+- ビルド成功（/village 4.99kB, /character-setup 2.33kB, 新 API route 4本）
+- 型チェック・ESLint パス（warnings のみ）
 
 ### ✅ 完了（2026-04-15 深夜・v4.8 "最終品質仕上げ"）
 
@@ -108,7 +137,8 @@
 - 投稿ストック：56本（Rei が threads-week1.md にフック追記済）
 
 ### 🔴 未完了（翔平さん操作必要）
-1. **Supabase SQL 実行**：`app/rizup-app/supabase-final-fix.sql`（全テーブル整合）+ `social-automation/supabase-seed-recommendations.sql`（おすすめ11件）
+1. **Supabase SQL 実行（最優先）**：`app/rizup-app/supabase-v5.sql`（v5 村コンセプト用・profiles カラム追加＋friends/journal_transformations/strength_gifts テーブル新規）
+   - 次に `app/rizup-app/supabase-final-fix.sql`（全テーブル整合）+ `social-automation/supabase-seed-recommendations.sql`
 2. **PWA実機テスト**：iPhone Safari → ホーム画面追加 → 正方形ミントアイコンで起動確認
 3. **ダーク切替テスト**：設定 → テーマ → ダーク → 背景 #111111 確認
 4. **Stripe本番設定**：商品作成・Webhook登録・Vercel環境変数

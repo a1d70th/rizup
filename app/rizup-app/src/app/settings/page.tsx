@@ -97,7 +97,7 @@ export default function SettingsPage() {
         <div className="space-y-3 mb-4">
           <PlanCard
             name="Pro" price="¥780/月" color="mint"
-            features={["AIフィードバック", "Rizup Insight", "成長グラフ全指標", "ビジョン・習慣無制限", "アンチビジョン"]}
+            features={["AIフィードバック", "Rizup Insight", "成長グラフ全指標", "なりたい自分・毎日のこと無制限", "避けたい未来"]}
             isCurrent={currentRank >= 1 && plan === "pro"}
             canUpgrade={currentRank < 1}
             loading={checkoutLoading === "pro"}

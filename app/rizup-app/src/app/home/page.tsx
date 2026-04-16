@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import PostCard from "@/components/PostCard";
+import MyCharacter, { AnimalKind } from "@/components/MyCharacter";
 import Image from "next/image";
 import Link from "next/link";
 import { SkeletonTimeline } from "@/components/Skeleton";
@@ -56,6 +57,9 @@ export default function HomePage() {
   const [refreshing, setRefreshing] = useState(false);
   const [pull, setPull] = useState(0);
   const startY = useRef<number | null>(null);
+  const [charAnimal, setCharAnimal] = useState<AnimalKind | null>(null);
+  const [charName, setCharName] = useState<string>("");
+  const [lastWritten, setLastWritten] = useState<Date | null>(null);
 
   const fetchPosts = async () => {
     const first = await supabase.from("posts")
@@ -79,8 +83,33 @@ export default function HomePage() {
         if (user) {
           setUserId(user.id);
           const { data: p } = await supabase.from("profiles")
-            .select("streak, is_admin").eq("id", user.id).single();
-          if (p) { setStreak(p.streak || 0); if (p.is_admin) setIsAdmin(true); }
+            .select("streak, is_admin, character_animal, character_name").eq("id", user.id).single();
+          let animalLocal: AnimalKind | null = null;
+          let nameLocal = "";
+          if (p) {
+            setStreak(p.streak || 0);
+            if (p.is_admin) setIsAdmin(true);
+            if (p.character_animal) { animalLocal = p.character_animal as AnimalKind; }
+            if (p.character_name) { nameLocal = p.character_name; }
+          }
+          // fallback to localStorage if profile columns not yet migrated
+          if (typeof window !== "undefined") {
+            try {
+              const la = localStorage.getItem("rizup_character_animal") as AnimalKind | null;
+              const ln = localStorage.getItem("rizup_character_name");
+              if (la && !animalLocal) animalLocal = la;
+              if (ln && !nameLocal) nameLocal = ln;
+            } catch { /* ignore */ }
+          }
+          if (animalLocal) setCharAnimal(animalLocal);
+          if (nameLocal) setCharName(nameLocal);
+          // 最新の投稿日（lastWritten）
+          try {
+            const { data: lp } = await supabase.from("posts")
+              .select("created_at").eq("user_id", user.id)
+              .order("created_at", { ascending: false }).limit(1).maybeSingle();
+            if (lp?.created_at) setLastWritten(new Date(lp.created_at));
+          } catch { /* ignore */ }
           setMorningDone(!!(await findTodayPost(supabase, user.id, "morning")));
           setEveningDone(!!(await findTodayPost(supabase, user.id, "evening")));
           try {
@@ -145,12 +174,28 @@ export default function HomePage() {
           </div>
         )}
         <div className="max-w-md mx-auto px-4 py-2">
-          {/* 3リング可視化（朝/夜/習慣）＋ 連続日数 */}
+          {/* My Character：村の住人・毎日の相棒 */}
+          <div className="bg-gradient-to-b from-mint-light/50 to-white dark:from-[#162621] dark:to-[#1a1a1a] rounded-2xl border border-mint/20 dark:border-[#2a3a34] shadow-sm px-4 py-5 mb-3 flex flex-col items-center">
+            <MyCharacter
+              streak={streak}
+              name={charName}
+              animal={charAnimal || "rabbit"}
+              lastWritten={lastWritten}
+              size={130}
+            />
+            {!charAnimal && (
+              <Link href="/character-setup" className="mt-2 text-[11px] font-bold text-mint border border-mint rounded-full px-3 py-1 hover:bg-mint-light transition">
+                🌱 相棒を選ぶ
+              </Link>
+            )}
+          </div>
+
+          {/* 3リング可視化（朝/夜/毎日のこと）＋ 連続日数 */}
           <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm px-4 py-5 mb-3">
             <div className="flex items-center justify-around">
               <Ring pct={morningDone ? 1 : 0} color="#6ecbb0" label="朝" emoji="☀️" />
               <Ring pct={eveningDone ? 1 : 0} color="#f4976c" label="夜" emoji="🌙" />
-              <Ring pct={habitPct} color="#5b8def" label="習慣" emoji="🔄" />
+              <Ring pct={habitPct} color="#5b8def" label="毎日のこと" emoji="🔄" />
               <div className="flex flex-col items-center gap-1.5">
                 <div className="w-16 h-16 rounded-full bg-orange-light dark:bg-[#2a1f15] flex items-center justify-center">
                   <span className="text-orange font-extrabold text-lg"><span className="streak-fire">🔥</span>{streak}</span>

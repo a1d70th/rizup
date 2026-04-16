@@ -145,7 +145,7 @@ export default function VisionPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("この目標を削除しますか？")) return;
+    if (!confirm("このなりたい自分を削除しますか？")) return;
     await supabase.from("visions").delete().eq("id", id);
     setVisions(prev => prev.filter(v => v.id !== id));
   };
@@ -173,7 +173,7 @@ export default function VisionPage() {
       <Header />
       <div className="max-w-md mx-auto px-4 py-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-extrabold">🎯 ビジョン</h2>
+          <h2 className="text-lg font-extrabold">🎯 なりたい自分</h2>
           <button onClick={() => setShowForm(!showForm)}
             className="bg-mint text-white text-xs font-bold px-4 py-2 rounded-full shadow-md shadow-mint/30">
             {showForm ? "✕" : "＋ 追加"}
@@ -183,11 +183,11 @@ export default function VisionPage() {
         <div className="flex bg-white rounded-2xl p-1 border border-gray-100 mb-4">
           <button onClick={() => setTab("vision")}
             className={`flex-1 py-2 rounded-xl text-xs font-bold transition ${tab === "vision" ? "bg-mint-light text-mint" : "text-text-light"}`}>
-            🎯 ビジョン（なりたい）
+            🌱 なりたい自分
           </button>
           <button onClick={() => setTab("anti")}
             className={`flex-1 py-2 rounded-xl text-xs font-bold transition ${tab === "anti" ? "bg-orange-light text-orange" : "text-text-light"}`}>
-            🚫 アンチ（避けたい）
+            🚫 避けたい未来
           </button>
         </div>
         {tab === "anti" && (
@@ -205,7 +205,7 @@ export default function VisionPage() {
               <div className="rounded-full h-3 transition-all"
                 style={{ width: `${overall}%`, background: "linear-gradient(90deg, #6ecbb0, #f4976c)" }} />
             </div>
-            <p className="text-[10px] text-text-light mt-2">習慣とToDoの達成率から自動計算</p>
+            <p className="text-[10px] text-text-light mt-2">毎日のこととToDoの達成率から自動計算</p>
           </div>
         )}
 
@@ -247,7 +247,7 @@ export default function VisionPage() {
         {tab === "vision" && visions.length === 0 ? (
           <div className="text-center py-12">
             <Image src="/icons/icon-192.png" alt="Rizup" width={64} height={64} className="rounded-full mx-auto mb-3 opacity-50" />
-            <p className="text-sm font-bold text-text-mid mb-1">まだ目標がありません</p>
+            <p className="text-sm font-bold text-text-mid mb-1">まだなりたい自分がありません</p>
             <p className="text-xs text-text-light">最終ゴールから逆算してみよう</p>
           </div>
         ) : tab === "vision" ? (
@@ -298,7 +298,7 @@ export default function VisionPage() {
                       <div className="flex gap-2 mb-2">
                         <Link href={`/habits?vision_id=${v.id}`}
                           className="w-full bg-mint-light text-mint text-[10px] font-bold text-center py-1.5 rounded-full">
-                          ＋習慣 {linkedHabits > 0 && `(${linkedHabits})`}
+                          ＋毎日のこと {linkedHabits > 0 && `(${linkedHabits})`}
                         </Link>
                       </div>
                       {v.ai_feedback && (
@@ -364,7 +364,7 @@ function AntiVisionPanel({ userId, visions }: { userId: string | null; visions: 
       const rows = data.items.slice(0, 5).map((content: string) => ({ user_id: userId, content }));
       const { data: inserted } = await supabase.from("anti_visions").insert(rows).select();
       if (inserted) setItems(inserted);
-      showToast("success", "アンチビジョンを生成したよ🌿");
+      showToast("success", "避けたい未来を生成したよ🌿");
     } catch {
       showToast("error", "通信エラー");
     }
@@ -375,8 +375,8 @@ function AntiVisionPanel({ userId, visions }: { userId: string | null; visions: 
     return (
       <div className="mb-4 bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 border border-gray-100 dark:border-[#2a2a2a] shadow-sm text-center animate-fade-in">
         <Image src="/icons/icon-192.png" alt="Rizup" width={56} height={56} className="rounded-full mx-auto mb-3 opacity-60" />
-        <p className="text-sm font-bold mb-2">先にビジョンを設定してください</p>
-        <p className="text-xs text-text-light mb-4">ビジョンの裏返しがアンチビジョンになります。</p>
+        <p className="text-sm font-bold mb-2">先になりたい自分を設定してください</p>
+        <p className="text-xs text-text-light mb-4">なりたい自分の裏返しが避けたい未来になります。</p>
       </div>
     );
   }
@@ -384,12 +384,12 @@ function AntiVisionPanel({ userId, visions }: { userId: string | null; visions: 
   return (
     <div className="mb-4 animate-fade-in">
       <p className="text-xs text-text-mid leading-relaxed mb-3">
-        5年後、絶対こうなりたくない自分。ビジョンから自動で生成されるよ。
+        5年後、絶対こうなりたくない自分。なりたい自分から自動で生成されるよ。
       </p>
       <button
         onClick={handleGenerate}
         disabled={generating}
-        aria-label="アンチビジョンを自動生成"
+        aria-label="避けたい未来を自動生成"
         className="w-full bg-orange text-white font-bold py-3 rounded-full shadow-md shadow-orange/30 disabled:opacity-50 mb-4">
         {generating ? "生成中…" : items.length > 0 ? "🔄 再生成する" : "✨ AIで自動生成する"}
       </button>

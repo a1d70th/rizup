@@ -345,8 +345,25 @@ export default function JournalPage() {
       }).catch(() => {});
       fetch("/api/check-progress", { method: "POST" }).catch(() => {});
 
+      // 強み抽出（非同期・失敗してもUXに影響しない）
+      fetch("/api/strength-detect", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: allText, mood }),
+      }).then(r => r.json()).then(async (res) => {
+        if (res?.strength) {
+          showToast("info", `今日の投稿から「${res.strength}」という強みが見えます✨`);
+          try {
+            const { data: prof } = await supabase.from("profiles")
+              .select("strengths").eq("id", userId).maybeSingle();
+            const current = Array.isArray(prof?.strengths) ? prof.strengths : [];
+            const next = [...current.filter((s: string) => s !== res.strength), res.strength].slice(-12);
+            await supabase.from("profiles").update({ strengths: next }).eq("id", userId);
+          } catch { /* ignore */ }
+        }
+      }).catch(() => {});
+
       setAiFeedback(feedback);
-      showToast("success", `投稿できたよ！${mode === "morning" ? "☀️" : "🌙"} 複利 +1% 積まれた🌱`);
+      showToast("success", `投稿できたよ！${mode === "morning" ? "☀️" : "🌙"} 今日の積み上げ +1🌱`);
       setPosted(true);
       // 朝ジャーナル投稿後: 3秒後にホームへ遷移
       if (mode === "morning") {
@@ -406,7 +423,7 @@ export default function JournalPage() {
           <div className="absolute -top-2 -right-2 text-3xl animate-pop">🎉</div>
         </div>
         <h2 className="text-2xl font-extrabold mb-1">投稿できたよ！</h2>
-        <p className="text-xs text-text-mid mb-4">複利が+1%積まれた 🌱</p>
+        <p className="text-xs text-text-mid mb-4">今日の積み上げ +1🌱</p>
         {aiFeedback && (
           <div className="bg-mint-light rounded-2xl p-4 max-w-xs mb-6 text-left">
             <div className="flex items-center gap-1.5 mb-2">
@@ -430,11 +447,11 @@ export default function JournalPage() {
         <div className="flex bg-white rounded-2xl p-1 border border-gray-100 mb-5 shadow-sm">
           <button onClick={() => setMode("morning")}
             className={`flex-1 py-3 rounded-xl text-sm font-extrabold transition-all ${mode === "morning" ? "bg-gradient-to-br from-orange-light to-yellow-50 text-orange shadow-md shadow-orange/20 scale-[1.02]" : "text-text-light"}`}>
-            ☀️ 朝ジャーナル
+            ☀️ 朝のひとこと
           </button>
           <button onClick={() => setMode("evening")}
             className={`flex-1 py-3 rounded-xl text-sm font-extrabold transition-all ${mode === "evening" ? "bg-gradient-to-br from-mint-light to-blue-50 text-mint shadow-md shadow-mint/20 scale-[1.02]" : "text-text-light"}`}>
-            🌙 夜ジャーナル
+            🌙 夜のふりかえり
           </button>
         </div>
 
@@ -652,7 +669,7 @@ export default function JournalPage() {
             onClick={() => setShowMore(true)}
             className="w-full py-2 mb-3 text-xs font-extrabold text-mint hover:bg-mint-light dark:hover:bg-[#1f2824] rounded-full transition"
             aria-label="追加項目を表示">
-            もっと書く ▼（感謝・複利スコア・画像）
+            もっと書く ▼（感謝・今日の積み上げ・画像）
           </button>
         )}
 
@@ -669,14 +686,14 @@ export default function JournalPage() {
             <div className="glass-mint rounded-2xl p-4 mb-3">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-xl">✨</span>
-                <p className="text-sm font-extrabold flex-1">今日の複利スコア</p>
+                <p className="text-sm font-extrabold flex-1">今日の積み上げ</p>
                 <span className="text-2xl font-extrabold text-mint"><CountUp value={score} />/100</span>
               </div>
               <div className="w-full bg-white/60 rounded-full h-2 mb-2">
                 <div className="bg-gradient-to-r from-mint to-orange rounded-full h-2 transition-all duration-700"
                   style={{ width: `${score}%` }} />
               </div>
-              <p className="text-[10px] text-text-mid">ToDo達成 × 習慣 × 気分から算出。この積み重ねが明日のあなたを作る。</p>
+              <p className="text-[10px] text-text-mid">ToDo達成 × 毎日のこと × 気分から算出。この積み重ねが明日のあなたを作る。</p>
             </div>
           );
         })()}
@@ -707,7 +724,7 @@ export default function JournalPage() {
             disabled={loading || (mode === "morning" ? (!morningGoal.trim() && !content.trim()) : !content.trim())}
             aria-label="ジャーナルを投稿"
             className="w-full bg-mint text-white font-bold py-4 rounded-full shadow-xl shadow-mint/40 disabled:opacity-40 text-base backdrop-blur-md">
-            {loading ? "投稿中..." : mode === "morning" ? "☀️ 朝ジャーナルを投稿" : "🌙 夜ジャーナルを投稿"}
+            {loading ? "投稿中..." : mode === "morning" ? "☀️ 朝のひとことを送る" : "🌙 夜のふりかえりを送る"}
           </button>
         </div>
       </div>

@@ -22,6 +22,14 @@ interface ProfileData {
   birthday?: string;
   is_admin?: boolean;
   mbti?: string;
+  strengths?: string[];
+}
+
+interface StrengthGift {
+  id: string;
+  body: string;
+  created_at: string;
+  from_profile?: { name: string } | null;
 }
 
 export default function ProfilePage() {
@@ -40,6 +48,7 @@ export default function ProfilePage() {
   const [quizIndex, setQuizIndex] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState<string[]>([]);
   const [quizResult, setQuizResult] = useState<RizupType | null>(null);
+  const [strengthGifts, setStrengthGifts] = useState<StrengthGift[]>([]);
 
   useEffect(() => {
     const init = async () => {
@@ -63,6 +72,16 @@ export default function ProfilePage() {
             .in("post_id", userPosts.map(p => p.id));
           setTotalReactions(rxCount || 0);
         }
+
+        // strength_gifts: 他人から受け取った強み
+        try {
+          const { data: gifts } = await supabase.from("strength_gifts")
+            .select("id, body, created_at")
+            .eq("to_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(20);
+          if (gifts) setStrengthGifts(gifts as StrengthGift[]);
+        } catch { /* 未マイグレなら無視 */ }
       } catch (err) {
         console.error("[Profile]", err);
       }
@@ -205,7 +224,7 @@ export default function ProfilePage() {
           className="block glass-mint rounded-3xl p-5 mb-4 shadow-lg shadow-mint/10 hover:shadow-xl transition animate-slide-up">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <p className="text-[11px] font-bold text-mint mb-1">✨ 今の複利成長</p>
+              <p className="text-[11px] font-bold text-mint mb-1">✨ 今の小さな積み重ね</p>
               <p className="text-3xl font-extrabold text-text leading-none">
                 +<CountUp value={compoundPercent(profile.streak)} suffix="%" />
               </p>
@@ -220,10 +239,35 @@ export default function ProfilePage() {
 
         {/* Actions */}
         <div className="flex gap-2 mb-4">
-          <Link href="/vision" className="flex-1 bg-white dark:bg-[#1a1a1a] rounded-2xl p-3 border border-gray-100 dark:border-[#2a2a2a] shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">🎯 ビジョン</Link>
-          <Link href="/habits" className="flex-1 bg-white dark:bg-[#1a1a1a] rounded-2xl p-3 border border-gray-100 dark:border-[#2a2a2a] shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">🔄 習慣</Link>
+          <Link href="/vision" className="flex-1 bg-white dark:bg-[#1a1a1a] rounded-2xl p-3 border border-gray-100 dark:border-[#2a2a2a] shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">🌱 なりたい自分</Link>
+          <Link href="/habits" className="flex-1 bg-white dark:bg-[#1a1a1a] rounded-2xl p-3 border border-gray-100 dark:border-[#2a2a2a] shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">🔄 毎日のこと</Link>
           <Link href="/settings" className="flex-1 bg-white dark:bg-[#1a1a1a] rounded-2xl p-3 border border-gray-100 dark:border-[#2a2a2a] shadow-sm text-center text-sm font-bold text-text-mid hover:border-mint transition">⚙️ 設定</Link>
         </div>
+
+        {/* みんなが見つけてくれた私の強み */}
+        {(strengthGifts.length > 0 || (profile.strengths && profile.strengths.length > 0)) && (
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-orange/30 shadow-sm mb-4">
+            <h3 className="text-sm font-extrabold mb-2 dark:text-gray-100">💪 みんなが見つけてくれた私の強み</h3>
+            {profile.strengths && profile.strengths.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {profile.strengths.map((s, i) => (
+                  <span key={i} className="bg-mint-light text-mint text-[11px] font-bold rounded-full px-2.5 py-1">
+                    ✨ {s}
+                  </span>
+                ))}
+              </div>
+            )}
+            {strengthGifts.length > 0 && (
+              <div className="space-y-2">
+                {strengthGifts.map(g => (
+                  <div key={g.id} className="bg-orange-light/50 dark:bg-[#2a1f15] rounded-xl px-3 py-2">
+                    <p className="text-[13px] text-text dark:text-gray-100 leading-relaxed">🌸 {g.body}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         <h3 className="text-sm font-bold mb-3">📝 投稿履歴</h3>
         {posts.length === 0 ? (
@@ -252,7 +296,7 @@ export default function ProfilePage() {
             </div>
             <div className="space-y-3">
               <Field label="名前"><input type="text" value={editForm.name} onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} className="fld" /></Field>
-              <Field label="夢・目標"><input type="text" value={editForm.dream} onChange={e => setEditForm(f => ({ ...f, dream: e.target.value }))} className="fld" /></Field>
+              <Field label="なりたい自分"><input type="text" value={editForm.dream} onChange={e => setEditForm(f => ({ ...f, dream: e.target.value }))} className="fld" /></Field>
               <Field label="星座">
                 <select value={editForm.zodiac} onChange={e => setEditForm(f => ({ ...f, zodiac: e.target.value }))} className="fld bg-white">
                   <option value="">選択してください</option>
