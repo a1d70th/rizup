@@ -107,17 +107,23 @@ function HabitsInner() {
   const handleToggle = async (h: Habit) => {
     if (!userId) return;
     const done = todayLogs.has(h.id);
-    try {
-      if (done) {
-        await supabase.from("habit_logs").delete().match({ habit_id: h.id, logged_date: today });
-        setTodayLogs(prev => { const s = new Set(prev); s.delete(h.id); return s; });
-      } else {
-        await supabase.from("habit_logs").insert({ habit_id: h.id, user_id: userId, logged_date: today });
-        setTodayLogs(prev => new Set(prev).add(h.id));
-        setCelebrateId(h.id);
-        setTimeout(() => setCelebrateId(null), 700);
+    if (done) {
+      const { error } = await supabase.from("habit_logs").delete().match({ habit_id: h.id, logged_date: today });
+      if (error) {
+        showToast("error", "チェック解除に失敗しました");
+        return;
       }
-    } catch { /* ignore */ }
+      setTodayLogs(prev => { const s = new Set(prev); s.delete(h.id); return s; });
+    } else {
+      const { error } = await supabase.from("habit_logs").insert({ habit_id: h.id, user_id: userId, logged_date: today });
+      if (error) {
+        showToast("error", "チェックの保存に失敗しました");
+        return;
+      }
+      setTodayLogs(prev => new Set(prev).add(h.id));
+      setCelebrateId(h.id);
+      setTimeout(() => setCelebrateId(null), 700);
+    }
   };
 
   const handleDelete = async (id: string) => {

@@ -285,7 +285,7 @@ export default function JournalPage() {
         payload.linked_morning_post_id = morningPost.id;
         if (goalAchieved) payload.goal_achieved = goalAchieved;
       }
-      // 夜の複利スコアを保存
+      // 夜の積み上げスコアを保存
       const todoRate = morningTodos.length === 0 ? 0.5
         : morningTodos.filter(t => t.done).length / morningTodos.length;
       const score = dailyCompoundScore({
@@ -365,7 +365,7 @@ export default function JournalPage() {
       setAiFeedback(feedback);
       showToast("success", `投稿できたよ！${mode === "morning" ? "☀️" : "🌙"} 今日の積み上げ +1🌱`);
       setPosted(true);
-      // 朝ジャーナル投稿後: 3秒後にホームへ遷移
+      // 朝のひとこと投稿後: 3秒後にホームへ遷移
       if (mode === "morning") {
         setTimeout(() => router.push("/home"), 3000);
       }
@@ -673,7 +673,7 @@ export default function JournalPage() {
           </button>
         )}
 
-        {/* 夜モード: 今日の複利スコア予測（showMore 時のみ） */}
+        {/* 夜モード: 今日の積み上げスコア予測（showMore 時のみ） */}
         {mode === "evening" && showMore && (() => {
           const todoRate = morningTodos.length === 0 ? 0.5
             : morningTodos.filter(t => t.done).length / morningTodos.length;

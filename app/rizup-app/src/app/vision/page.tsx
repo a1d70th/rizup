@@ -179,7 +179,7 @@ export default function VisionPage() {
             {showForm ? "✕" : "＋ 追加"}
           </button>
         </div>
-        {/* タブ切替：ビジョン / アンチビジョン */}
+        {/* タブ切替：なりたい自分 / 避けたい未来 */}
         <div className="flex bg-white rounded-2xl p-1 border border-gray-100 mb-4">
           <button onClick={() => setTab("vision")}
             className={`flex-1 py-2 rounded-xl text-xs font-bold transition ${tab === "vision" ? "bg-mint-light text-mint" : "text-text-light"}`}>
@@ -331,7 +331,7 @@ export default function VisionPage() {
   );
 }
 
-/** アンチビジョン一覧（ビジョン画面のタブ内に埋め込み・自動生成） */
+/** 避けたい未来一覧（なりたい自分画面のタブ内に埋め込み・自動生成） */
 function AntiVisionPanel({ userId, visions }: { userId: string | null; visions: Vision[] }) {
   const [items, setItems] = useState<AntiVision[]>([]);
   const [generating, setGenerating] = useState(false);

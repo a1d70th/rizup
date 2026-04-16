@@ -108,7 +108,7 @@ export default function GrowthPage() {
   const avgPositivity = posRows.length > 0
     ? Math.round(posRows.reduce((s, p) => s + (p.positivity_score || 0), 0) / posRows.length) : 0;
 
-  // 複利予測: 理想 vs 実績（過去14日の習慣達成率を反映）
+  // 積み重ね予測: 理想 vs 実績（過去14日の毎日のこと達成率を反映）
   const compoundRange = range === "30d" ? 30 : range === "90d" ? 90 : 365;
   const ideal30 = compoundPercent(30);
   const ideal90 = compoundPercent(90);
@@ -146,7 +146,7 @@ export default function GrowthPage() {
         <h2 className="text-2xl font-extrabold mb-1">📈 成長グラフ</h2>
         <p className="text-xs text-text-light mb-4">毎日の1歩が、1年で大きな変化になる</p>
 
-        {/* 複利カード */}
+        {/* 積み重ねカード */}
         <div className="glass-mint rounded-3xl p-5 mb-4 animate-slide-up relative overflow-hidden border border-mint/20"
           style={{ boxShadow: "0 20px 40px rgba(110,203,176,0.18)" }}>
           <div className="absolute -top-10 -right-10 w-36 h-36 bg-gradient-to-br from-mint/20 to-orange/10 rounded-full blur-3xl pointer-events-none" />
@@ -328,7 +328,7 @@ function ChartCard({ title, avg, color, data, domainMax }: {
   );
 }
 
-// 複利曲線：理想 vs 実績
+// 積み重ね曲線：理想 vs 実績
 function CompoundCurve({ streak, habitAchievement, days }: { streak: number; habitAchievement: number; days: number }) {
   const W = 320, H = 100, PAD = 6;
   const maxMult = Math.pow(1.01, days);
@@ -349,7 +349,7 @@ function CompoundCurve({ streak, habitAchievement, days }: { streak: number; hab
 
   return (
     <div className="bg-white/70 dark:bg-[#1a1a1a]/70 rounded-2xl p-3">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-24" role="img" aria-label="複利曲線 理想 vs 実績">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-24" role="img" aria-label="積み重ね曲線 理想 vs 実績">
         <path d={idealPath} fill="none" stroke="#f4976c" strokeWidth="2.5" strokeDasharray="4 4" strokeLinecap="round" />
         <path d={actualPath} fill="none" stroke="#6ecbb0" strokeWidth="3" strokeLinecap="round" />
         <circle cx={nowX} cy={nowY} r="5" fill="#6ecbb0" stroke="#ffffff" strokeWidth="2" />

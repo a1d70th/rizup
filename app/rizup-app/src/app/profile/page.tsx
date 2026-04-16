@@ -219,7 +219,7 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* 複利成長カード（大） */}
+        {/* 積み重ね成長カード（大） */}
         <Link href="/growth"
           className="block glass-mint rounded-3xl p-5 mb-4 shadow-lg shadow-mint/10 hover:shadow-xl transition animate-slide-up">
           <div className="flex items-center justify-between mb-3">
@@ -383,7 +383,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-/** 複利成長の小さな可視化バー（連続日数に応じて30/90/365のマイルストーン表示） */
+/** 積み重ね成長の小さな可視化バー（連続日数に応じて30/90/365のマイルストーン表示） */
 function CompoundBar({ streak }: { streak: number }) {
   const milestones = [
     { day: 30, pct: compoundPercent(30), label: "30日" },

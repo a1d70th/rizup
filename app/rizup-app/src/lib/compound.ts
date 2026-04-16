@@ -1,21 +1,21 @@
-// Rizup 複利エフェクト計算ライブラリ
+// Rizup 小さな積み重ねエフェクト計算ライブラリ
 // ダーレン・ハーディ「The Compound Effect」に基づき、毎日1%の小さな改善が
-// 1年（365日）で約37.78倍になる複利曲線を提供する。
+// 1年（365日）で約37.78倍になる成長曲線を提供する。
 
 export const DAILY_GROWTH = 0.01; // 1日あたり1%の成長
 
-/** 日数経過時の複利倍率（1.01^days） */
+/** 日数経過時の積み重ね倍率（1.01^days） */
 export function compoundMultiplier(days: number): number {
   if (days <= 0) return 1;
   return Math.pow(1 + DAILY_GROWTH, days);
 }
 
-/** 複利成長率をパーセントで返す（0日→0%、365日→約3678%） */
+/** 積み重ね成長率をパーセントで返す（0日→0%、365日→約3678%） */
 export function compoundPercent(days: number): number {
   return Math.round((compoundMultiplier(days) - 1) * 100);
 }
 
-/** 実際の達成率を反映した複利倍率
+/** 実際の達成率を反映した積み重ね倍率
  *  achievementRate = 0〜1。0.8 なら日々の成長率は 0.01 * 0.8 = 0.008
  */
 export function actualCompound(days: number, achievementRate: number): number {
@@ -28,7 +28,7 @@ export function actualCompoundPercent(days: number, achievementRate: number): nu
   return Math.round((actualCompound(days, achievementRate) - 1) * 100);
 }
 
-/** 複利曲線用の点を返す（0日から targetDays まで step日刻み） */
+/** 積み重ね曲線用の点を返す（0日から targetDays まで step日刻み） */
 export function compoundSeries(targetDays: number, step = 1): { day: number; ideal: number; }[] {
   const out: { day: number; ideal: number }[] = [];
   for (let d = 0; d <= targetDays; d += step) {
@@ -46,8 +46,8 @@ export function actualSeries(targetDays: number, achievementRate: number, step =
   return out;
 }
 
-/** 1日の複利スコア（0〜100）
- *  計算: 朝ToDo達成率 × 習慣チェック率 × ポジティブ度
+/** 1日の積み上げスコア（0〜100）
+ *  計算: 朝ToDo達成率 × 毎日のことチェック率 × ポジティブ度
  *  入力はすべて 0〜1 に正規化済みの想定
  */
 export function dailyCompoundScore(params: {
@@ -65,7 +65,7 @@ export function dailyCompoundScore(params: {
   return Math.round(raw * 100);
 }
 
-/** ビジョン達成予測日数
+/** なりたい自分 達成予測日数
  *  仮定：現在の進捗が 0〜100%、達成ペース（日）=直近7日で何%進んだか
  */
 export function estimateDaysToGoal(params: {
@@ -80,7 +80,7 @@ export function estimateDaysToGoal(params: {
   return Math.ceil(remaining / dailyGain);
 }
 
-/** 習慣を N日続けた時の複利成長パーセント */
+/** 毎日のことを N日続けた時の積み重ね成長パーセント */
 export function habitCompoundForecast(days: number): number {
   return compoundPercent(days);
 }

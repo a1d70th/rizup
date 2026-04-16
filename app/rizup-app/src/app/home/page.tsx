@@ -205,7 +205,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* 今日のひとこと（ビジョン抜粋） */}
+          {/* 今日のひとこと（なりたい自分から抜粋） */}
           {todayQuote && (
             <div className="bg-mint-light dark:bg-[#1a2620] border border-mint/20 rounded-2xl px-3 py-2 mb-3 flex items-start gap-2">
               <span className="text-base">🎯</span>

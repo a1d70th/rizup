@@ -121,7 +121,7 @@ html, body, #__next, main { background-color: #fafafa; }
 /* v4.8: html 自体にダークカラーを明示（iOS Safari のバウンススクロール対策） */
 html { background-color: #fafafa; }
 html.dark { background-color: #111111; }
-html.dark body { background-color: #111111; }
+html.dark body { background-color: #111111 !important; }
 .bg-white { background-color: var(--card) !important; }
 .text-text { color: var(--text) !important; }
 .text-text-mid { color: var(--text-mid) !important; }

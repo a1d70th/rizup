@@ -9,7 +9,7 @@ const planInfo: Record<string, { name: string; price: string; color: string; fea
     name: "Pro",
     price: "¥780/月",
     color: "text-mint",
-    features: ["AIフィードバック", "Rizup Insight", "成長グラフ全指標", "習慣・ビジョン無制限", "アンチビジョン"],
+    features: ["AIフィードバック", "Rizup Insight", "成長グラフ全指標", "毎日のこと・なりたい自分 無制限", "避けたい未来"],
   },
   premium: {
     name: "Premium",

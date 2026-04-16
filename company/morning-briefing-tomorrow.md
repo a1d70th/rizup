@@ -1,41 +1,39 @@
-# 明日の朝礼コマンド（2026-04-16・木曜）
+# 朝礼ブリーフィング（2026-04-17）
 
-> 作成：Haru（秘書）/ 2026-04-15 夜更新
-> 翔平さんが朝Claude Codeを開いて「一発コピペ」すれば全社員が動き始めます。
+> 作成：Haru（秘書）/ 2026-04-16 夜更新
+> 翔平さんが朝このファイルを開いて順番に実行すれば、今日のタスクが全て進みます。
 
 ---
 
-## 🌅 一発実行コマンド（これをコピペ）
+## 最優先アクション（翔平さんが今日やること）
 
-以下を朝9時にClaude Codeに貼り付けて実行してください。
+### 1. Supabase v5 SQL実行
+- Supabase管理画面 → SQL Editor を開く
+- `app/rizup-app/supabase-v5.sql` の内容をコピペして実行
+- 次に `app/rizup-app/supabase-final-fix.sql` を実行
+- 最後に `social-automation/supabase-seed-recommendations.sql` を実行
+- 実行後、テーブル一覧で friends / journal_transformations / strength_gifts が存在することを確認
 
-````
-@Haru として動いてください。木曜朝礼を開始します。
+### 2. スレッズに投稿
+- `marketing/threads-today.md` のパターン1をコピペして投稿
+- 投稿後、いいね・リプライを確認（夕方にチェック）
 
-■ 今日の日付：2026年4月16日（木）
-■ 直近のリリース：v4.3（散歩メモ7項目＋A11y/ダークモード/オフライン仕上げ）
+### 3. Stripe設定開始
+- Stripe管理画面 → 商品作成（Pro: ¥980/月、Premium: ¥1,980/月）
+- Webhook URL: https://rizup-app.vercel.app/api/stripe-webhook
+- Vercel環境変数に STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET を設定
 
-■ 今日の最重要5つ（tomorrow-priorities.md より）：
-  1. スマホで Meta 認証 → Threads 全自動化完成
-  2. クラウドワークス スカウト① 送信（crowdworks-send-ready.md）
-  3. X / Threads 初投稿（threads-week1.md Day1-朝）
-  4. Stripe 本番設定（商品・Webhook・Vercel環境変数）
-  5. App Store 申請準備（Capacitorラップ＋新アイコンでスクショ撮り直し）
+### 4. クラウドワークス提案文送信
+- `consulting/crowdworks-send-ready.md` の件名Aと本文をコピペ
+- 対象案件に送信（最低3件）
 
-■ 今月の残り売上目標：¥200,000
-■ 今日のブロッカー：（翔平さんに確認）
+---
 
-■ 各社員の指示出し：
-  - Sora（CTO）：v4.3 実機バグ報告を待機。報告あれば即修正→push
-  - Rei（CCO）：X/Threads 初投稿の最終チェック・Day2以降の予約セット
-  - Leo（CSO）：CW スカウト①送信支援・返信きたら24時間以内対応
-  - Kai（CMO）：Week1投稿のエンゲージ分析フレーム準備
-  - QA：v4.3 実機5端末（iPhone Safari/Chrome、Android Chrome、PC Chrome、PC Safari）動作確認
-
-■ 翔平さんへ：
-  今日は5タスク全完了で「今週のマイルストーン突破」。
-  音声入力で「Haru、今日のタスク何だっけ」って話しかけてOKです。
-````
+## 今日の目標
+- SQL実行完了 → v5.0の村機能が本番で動く状態にする
+- スレッズ初投稿 → 共感フェーズ開始
+- Stripe設定 → 課金可能状態にする
+- CW送信 → 今月の受注1件に向けて動く
 
 ---
 
@@ -47,4 +45,4 @@
 
 ---
 
-*Haru：おはようございます翔平さん。朝の1%、始めましょう🌿*
+*Haru：おはようございます翔平さん。朝の1%、始めましょう*
