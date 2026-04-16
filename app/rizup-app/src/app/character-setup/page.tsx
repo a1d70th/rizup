@@ -65,11 +65,13 @@ export default function CharacterSetupPage() {
                 <button
                   key={a.kind}
                   onClick={() => setAnimal(a.kind)}
-                  className={`bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border-2 text-left transition active:scale-95 ${
-                    animal === a.kind ? "border-mint shadow-md shadow-mint/20" : "border-gray-100 dark:border-[#2a2a2a]"
+                  className={`bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border-2 flex flex-col items-center text-center transition active:scale-95 ${
+                    animal === a.kind ? "border-mint shadow-lg shadow-mint/20 scale-[1.02]" : "border-gray-100 dark:border-[#2a2a2a]"
                   }`}
                 >
-                  <div className="text-3xl mb-1">{a.emoji}</div>
+                  <div className="mb-2">
+                    <MyCharacter streak={1} name="" animal={a.kind} size={64} />
+                  </div>
                   <p className="text-sm font-extrabold dark:text-gray-100">{a.label}</p>
                   <p className="text-[10px] text-text-light mt-0.5">{a.desc}</p>
                 </button>

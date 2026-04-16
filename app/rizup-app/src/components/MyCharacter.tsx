@@ -70,13 +70,13 @@ function wroteToday(last: Date | null | undefined): boolean {
   return today === lastJst;
 }
 
-// 動物別のカラーパレット（ミント系・自然風）
-const PALETTE: Record<AnimalKind, { body: string; belly: string; accent: string; cheek: string }> = {
-  rabbit:   { body: "#d4e8dd", belly: "#f5fbf7", accent: "#6ecbb0", cheek: "#f4976c" },
-  raccoon:  { body: "#b7c9c0", belly: "#f5fbf7", accent: "#5a7368", cheek: "#f4976c" },
-  cat:      { body: "#e9d6c0", belly: "#fdf7ef", accent: "#f4976c", cheek: "#e17a63" },
-  squirrel: { body: "#d9a87a", belly: "#fdf2e4", accent: "#a66a3d", cheek: "#f4976c" },
-  owl:      { body: "#c0b39c", belly: "#f5eeda", accent: "#6e5a45", cheek: "#f4976c" },
+// 動物別のカラーパレット（パステル系）
+const PALETTE: Record<AnimalKind, { body: string; bodyLight: string; accent: string; cheek: string; ear: string }> = {
+  rabbit:   { body: "#f5ede3", bodyLight: "#fdf8f3", accent: "#c4a882", cheek: "#ffb6c1", ear: "#ffc0cb" },
+  raccoon:  { body: "#c8c0b4", bodyLight: "#e8e2d8", accent: "#6b5b4e", cheek: "#ffb6c1", ear: "#a09080" },
+  cat:      { body: "#fce0c8", bodyLight: "#fef4e8", accent: "#e8a060", cheek: "#ffb6c1", ear: "#f5c8a0" },
+  squirrel: { body: "#d4a070", bodyLight: "#f0d8b8", accent: "#8b5e3c", cheek: "#ffb6c1", ear: "#c08850" },
+  owl:      { body: "#c8b898", bodyLight: "#e8dcc8", accent: "#7a6848", cheek: "#ffb6c1", ear: "#b0a080" },
 };
 
 // アニメーションは stage と書いたかで分岐
@@ -177,29 +177,40 @@ export default function MyCharacter({
 
 // ───────── SVG サブコンポーネント ─────────
 
-function EggSvg({ size, palette, cracking }: { size: number; palette: { accent: string }; cracking?: boolean }) {
-  const r = size;
+function EggSvg({ size, cracking }: { size: number; palette: { accent: string }; cracking?: boolean }) {
   return (
-    <svg width={r} height={r} viewBox="0 0 100 100">
+    <svg width={size} height={size * 1.2} viewBox="0 0 100 120">
       <defs>
-        <radialGradient id="egg-g" cx="50%" cy="35%" r="65%">
+        <radialGradient id="egg-grad" cx="40%" cy="35%" r="60%">
           <stop offset="0%" stopColor="#ffffff" />
-          <stop offset="100%" stopColor={palette.accent} stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#d4f0e7" />
         </radialGradient>
       </defs>
-      <ellipse cx="50" cy="55" rx="26" ry="34" fill="url(#egg-g)" stroke={palette.accent} strokeWidth="1.5" />
-      <ellipse cx="42" cy="45" rx="4" ry="6" fill="#ffffff" opacity="0.8" />
+      {/* 卵本体 */}
+      <ellipse cx="50" cy="65" rx="30" ry="38" fill="url(#egg-grad)" stroke="#b8e0d2" strokeWidth="2" />
+      {/* 水玉模様 */}
+      <circle cx="38" cy="55" r="4" fill="#c8ead8" opacity="0.5" />
+      <circle cx="58" cy="48" r="3" fill="#c8ead8" opacity="0.5" />
+      <circle cx="45" cy="75" r="3.5" fill="#c8ead8" opacity="0.5" />
+      <circle cx="62" cy="68" r="2.5" fill="#c8ead8" opacity="0.4" />
+      {/* 目（点2つ） */}
+      <circle cx="43" cy="60" r="2" fill="#5a5a5a" />
+      <circle cx="57" cy="60" r="2" fill="#5a5a5a" />
+      {/* ハイライト */}
+      <circle cx="43.5" cy="59.5" r="0.7" fill="#fff" />
+      <circle cx="57.5" cy="59.5" r="0.7" fill="#fff" />
+      {/* ほっぺ */}
+      <ellipse cx="36" cy="66" rx="4" ry="2.5" fill="#ffc0cb" opacity="0.4" />
+      <ellipse cx="64" cy="66" rx="4" ry="2.5" fill="#ffc0cb" opacity="0.4" />
+      {/* ヒビ（cracking時） */}
       {cracking && (
         <g>
-          <line x1="42" y1="50" x2="50" y2="38" stroke={palette.accent} strokeWidth="1.5" strokeLinecap="round">
-            <animate attributeName="opacity" from="0" to="1" dur="0.5s" fill="freeze" />
-          </line>
-          <line x1="50" y1="38" x2="55" y2="50" stroke={palette.accent} strokeWidth="1.5" strokeLinecap="round">
-            <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.3s" fill="freeze" />
-          </line>
-          <line x1="48" y1="44" x2="58" y2="42" stroke={palette.accent} strokeWidth="1" strokeLinecap="round">
-            <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.5s" fill="freeze" />
-          </line>
+          <polyline points="40,45 45,38 50,46 53,36" fill="none" stroke="#7ab8a0" strokeWidth="1.5" strokeLinecap="round">
+            <animate attributeName="opacity" from="0" to="1" dur="0.6s" fill="freeze" />
+          </polyline>
+          <polyline points="55,42 58,35 62,44" fill="none" stroke="#7ab8a0" strokeWidth="1.2" strokeLinecap="round">
+            <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.4s" fill="freeze" />
+          </polyline>
         </g>
       )}
     </svg>
@@ -216,131 +227,327 @@ function AnimalSvg({
 }: {
   size: number;
   animal: AnimalKind;
-  palette: { body: string; belly: string; accent: string; cheek: string };
+  palette: { body: string; bodyLight: string; accent: string; cheek: string; ear: string };
   isHappy: boolean;
   isSad: boolean;
   stage: number;
 }) {
-  // stage に応じてサイズを少し変える（2=小、3=中、4+=大）
-  const scale = stage === 2 ? 0.85 : stage === 3 ? 0.92 : 1;
-  const eyeY = isHappy ? 42 : 44;
-  const mouth = isHappy
-    ? <path d="M 45 58 Q 50 64 55 58" stroke={palette.accent} strokeWidth="2" fill="none" strokeLinecap="round" />
-    : isSad
-      ? <path d="M 46 57 Q 50 59 54 57" stroke={palette.accent} strokeWidth="1.5" fill="none" strokeLinecap="round" />
-      : <path d="M 46 58 Q 50 61 54 58" stroke={palette.accent} strokeWidth="1.8" fill="none" strokeLinecap="round" />;
+  const stageScale = stage === 1 ? 0.75 : stage === 2 ? 0.8 : stage === 3 ? 0.88 : stage === 4 ? 0.95 : 1;
+  const cheekOpacity = isHappy ? 0.6 : 0.4;
+
+  // 共通の表情パーツ生成
+  function Eyes() {
+    if (animal === "owl") {
+      // ふくろう専用の大きな目
+      if (isHappy) {
+        return (
+          <>
+            <circle cx="46" cy="62" r="10" fill={palette.bodyLight} stroke={palette.accent} strokeWidth="1" />
+            <circle cx="74" cy="62" r="10" fill={palette.bodyLight} stroke={palette.accent} strokeWidth="1" />
+            <path d="M 40 62 Q 46 67 52 62" stroke="#3a3a3a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+            <path d="M 68 62 Q 74 67 80 62" stroke="#3a3a3a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+          </>
+        );
+      }
+      if (isSad) {
+        return (
+          <>
+            <circle cx="46" cy="62" r="10" fill={palette.bodyLight} stroke={palette.accent} strokeWidth="1" />
+            <circle cx="74" cy="62" r="10" fill={palette.bodyLight} stroke={palette.accent} strokeWidth="1" />
+            <circle cx="46" cy="62" r="7" fill="#3a3a3a" />
+            <circle cx="74" cy="62" r="7" fill="#3a3a3a" />
+            <circle cx="48" cy="60" r="3" fill="#fff" />
+            <circle cx="76" cy="60" r="3" fill="#fff" />
+            <circle cx="44" cy="64" r="1.5" fill="#fff" />
+            <circle cx="72" cy="64" r="1.5" fill="#fff" />
+          </>
+        );
+      }
+      return (
+        <>
+          <circle cx="46" cy="62" r="10" fill={palette.bodyLight} stroke={palette.accent} strokeWidth="1" />
+          <circle cx="74" cy="62" r="10" fill={palette.bodyLight} stroke={palette.accent} strokeWidth="1" />
+          <circle cx="46" cy="62" r="6" fill="#3a3a3a" />
+          <circle cx="74" cy="62" r="6" fill="#3a3a3a" />
+          <circle cx="48" cy="60" r="2" fill="#fff" />
+          <circle cx="76" cy="60" r="2" fill="#fff" />
+        </>
+      );
+    }
+
+    // 通常動物の目
+    if (isHappy) {
+      return (
+        <>
+          <path d="M 42 62 Q 48 56 54 62" stroke="#3a3a3a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+          <path d="M 66 62 Q 72 56 78 62" stroke="#3a3a3a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+        </>
+      );
+    }
+    if (isSad) {
+      return (
+        <>
+          <circle cx="48" cy="62" r="6" fill="#3a3a3a" />
+          <circle cx="72" cy="62" r="6" fill="#3a3a3a" />
+          <circle cx="50" cy="60" r="2.5" fill="#fff" />
+          <circle cx="74" cy="60" r="2.5" fill="#fff" />
+          <circle cx="46" cy="63" r="1.2" fill="#fff" />
+          <circle cx="70" cy="63" r="1.2" fill="#fff" />
+        </>
+      );
+    }
+    // neutral
+    return (
+      <>
+        <circle cx="48" cy="62" r="6" fill="#3a3a3a" />
+        <circle cx="72" cy="62" r="6" fill="#3a3a3a" />
+        <circle cx="50" cy="60" r="2" fill="#fff" />
+        <circle cx="74" cy="60" r="2" fill="#fff" />
+      </>
+    );
+  }
+
+  function Mouth() {
+    if (isHappy) {
+      return <path d="M 52 77 Q 60 84 68 77" stroke={palette.accent} strokeWidth="1.8" fill="none" strokeLinecap="round" />;
+    }
+    if (isSad) {
+      return <path d="M 55 76 Q 60 78 65 76" stroke={palette.accent} strokeWidth="1.2" fill="none" strokeLinecap="round" />;
+    }
+    return <path d="M 54 75 Q 60 80 66 75" stroke={palette.accent} strokeWidth="1.5" fill="none" strokeLinecap="round" />;
+  }
+
+  // 動物別の装飾（stage 5+ 葉っぱ / 6+ 王冠 / 7+ キラキラ）
+  function StageDecoration() {
+    return (
+      <>
+        {stage >= 5 && stage < 6 && (
+          <g>
+            {/* 小さな葉っぱ */}
+            <path d="M 60 18 Q 55 8 50 14 Q 48 20 55 22 Q 58 16 60 18 Z" fill="#7bc67e" stroke="#5aa85d" strokeWidth="0.8" />
+            <line x1="55" y1="22" x2="58" y2="16" stroke="#5aa85d" strokeWidth="0.6" />
+          </g>
+        )}
+        {stage >= 6 && (
+          <g>
+            {/* 王冠 */}
+            <path d="M 46 20 L 48 8 L 54 16 L 60 6 L 66 16 L 72 8 L 74 20 Z" fill="#FFD700" stroke="#DAA520" strokeWidth="1" />
+            <circle cx="54" cy="14" r="1.5" fill="#FF6B6B" />
+            <circle cx="60" cy="9" r="1.5" fill="#87CEEB" />
+            <circle cx="66" cy="14" r="1.5" fill="#FF6B6B" />
+          </g>
+        )}
+        {stage >= 7 && (
+          <g>
+            {/* キラキラエフェクト（4つの星） */}
+            <g>
+              <path d="M 15 30 L 17 26 L 19 30 L 17 34 Z" fill="#FFD700" opacity="0.8">
+                <animate attributeName="opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite" />
+              </path>
+            </g>
+            <g>
+              <path d="M 105 35 L 107 31 L 109 35 L 107 39 Z" fill="#FFD700" opacity="0.8">
+                <animate attributeName="opacity" values="0.4;1;0.4" dur="2.3s" repeatCount="indefinite" begin="0.5s" />
+              </path>
+            </g>
+            <g>
+              <path d="M 20 85 L 22 81 L 24 85 L 22 89 Z" fill="#FFD700" opacity="0.8">
+                <animate attributeName="opacity" values="0.4;1;0.4" dur="1.8s" repeatCount="indefinite" begin="0.8s" />
+              </path>
+            </g>
+            <g>
+              <path d="M 100 80 L 102 76 L 104 80 L 102 84 Z" fill="#FFD700" opacity="0.8">
+                <animate attributeName="opacity" values="0.4;1;0.4" dur="2.5s" repeatCount="indefinite" begin="1.2s" />
+              </path>
+            </g>
+          </g>
+        )}
+      </>
+    );
+  }
+
+  // 動物ごとの本体SVG
+  function AnimalBody() {
+    switch (animal) {
+      case "rabbit":
+        return (
+          <>
+            {/* 耳 */}
+            <ellipse cx="42" cy="25" rx="8" ry="22" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            <ellipse cx="78" cy="25" rx="8" ry="22" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            <ellipse cx="42" cy="27" rx="4" ry="14" fill={palette.ear} opacity="0.5" />
+            <ellipse cx="78" cy="27" rx="4" ry="14" fill={palette.ear} opacity="0.5" />
+            {/* 体 */}
+            <ellipse cx="60" cy="72" rx="32" ry="35" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            {/* お腹 */}
+            <ellipse cx="60" cy="82" rx="22" ry="20" fill={palette.bodyLight} />
+            {/* 目 */}
+            <Eyes />
+            {/* ほっぺ */}
+            <ellipse cx="38" cy="72" rx="6" ry="4" fill={palette.cheek} opacity={cheekOpacity} />
+            <ellipse cx="82" cy="72" rx="6" ry="4" fill={palette.cheek} opacity={cheekOpacity} />
+            {/* 鼻 */}
+            <ellipse cx="60" cy="70" rx="3" ry="2" fill={palette.accent} />
+            {/* 口 */}
+            <Mouth />
+          </>
+        );
+
+      case "raccoon":
+        return (
+          <>
+            {/* 丸い耳 */}
+            <circle cx="38" cy="38" r="7" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            <circle cx="82" cy="38" r="7" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            <circle cx="38" cy="38" r="4" fill={palette.ear} />
+            <circle cx="82" cy="38" r="4" fill={palette.ear} />
+            {/* 体（大きめ） */}
+            <ellipse cx="60" cy="72" rx="34" ry="36" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            {/* お腹 */}
+            <ellipse cx="60" cy="82" rx="24" ry="22" fill={palette.bodyLight} />
+            {/* タヌキ目模様 */}
+            <ellipse cx="46" cy="60" rx="10" ry="8" fill="#4a3a2a" opacity="0.3" />
+            <ellipse cx="74" cy="60" rx="10" ry="8" fill="#4a3a2a" opacity="0.3" />
+            {/* 目 */}
+            <Eyes />
+            {/* ほっぺ */}
+            <ellipse cx="36" cy="72" rx="6" ry="4" fill={palette.cheek} opacity={cheekOpacity} />
+            <ellipse cx="84" cy="72" rx="6" ry="4" fill={palette.cheek} opacity={cheekOpacity} />
+            {/* 鼻 */}
+            <ellipse cx="60" cy="70" rx="3" ry="2" fill={palette.accent} />
+            {/* 口 */}
+            <Mouth />
+            {/* 縞しっぽ */}
+            <path d="M 90 80 Q 105 70 108 60 Q 110 50 105 45" fill="none" stroke={palette.body} strokeWidth="8" strokeLinecap="round" />
+            <path d="M 105 70 Q 108 65 106 60" fill="none" stroke={palette.accent} strokeWidth="3" strokeLinecap="round" opacity="0.4" />
+            <path d="M 107 58 Q 109 53 106 48" fill="none" stroke={palette.accent} strokeWidth="3" strokeLinecap="round" opacity="0.4" />
+          </>
+        );
+
+      case "cat":
+        return (
+          <>
+            {/* 三角耳 */}
+            <polygon points="35,48 28,18 50,40" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            <polygon points="85,48 92,18 70,40" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            <polygon points="37,44 32,24 48,40" fill={palette.ear} opacity="0.5" />
+            <polygon points="83,44 88,24 72,40" fill={palette.ear} opacity="0.5" />
+            {/* やや横長の体 */}
+            <ellipse cx="60" cy="72" rx="34" ry="32" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            {/* お腹 */}
+            <ellipse cx="60" cy="80" rx="22" ry="18" fill={palette.bodyLight} />
+            {/* ねこ目 */}
+            {isHappy ? (
+              <>
+                <path d="M 42 62 Q 48 56 54 62" stroke="#3a3a3a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+                <path d="M 66 62 Q 72 56 78 62" stroke="#3a3a3a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+              </>
+            ) : isSad ? (
+              <>
+                <ellipse cx="48" cy="62" rx="5" ry="6" fill="#3a3a3a" />
+                <ellipse cx="72" cy="62" rx="5" ry="6" fill="#3a3a3a" />
+                <ellipse cx="49" cy="60" rx="2" ry="2.5" fill="#fff" />
+                <ellipse cx="73" cy="60" rx="2" ry="2.5" fill="#fff" />
+              </>
+            ) : (
+              <>
+                <ellipse cx="48" cy="62" rx="5" ry="4" fill="#3a3a3a" />
+                <ellipse cx="72" cy="62" rx="5" ry="4" fill="#3a3a3a" />
+                <ellipse cx="49.5" cy="61" rx="1.5" ry="2" fill="#fff" />
+                <ellipse cx="73.5" cy="61" rx="1.5" ry="2" fill="#fff" />
+              </>
+            )}
+            {/* ひげ */}
+            <line x1="25" y1="66" x2="42" y2="68" stroke={palette.accent} strokeWidth="0.8" opacity="0.6" />
+            <line x1="24" y1="70" x2="42" y2="70" stroke={palette.accent} strokeWidth="0.8" opacity="0.6" />
+            <line x1="25" y1="74" x2="42" y2="72" stroke={palette.accent} strokeWidth="0.8" opacity="0.6" />
+            <line x1="78" y1="68" x2="95" y2="66" stroke={palette.accent} strokeWidth="0.8" opacity="0.6" />
+            <line x1="78" y1="70" x2="96" y2="70" stroke={palette.accent} strokeWidth="0.8" opacity="0.6" />
+            <line x1="78" y1="72" x2="95" y2="74" stroke={palette.accent} strokeWidth="0.8" opacity="0.6" />
+            {/* ほっぺ */}
+            <ellipse cx="38" cy="72" rx="6" ry="4" fill={palette.cheek} opacity={cheekOpacity} />
+            <ellipse cx="82" cy="72" rx="6" ry="4" fill={palette.cheek} opacity={cheekOpacity} />
+            {/* 鼻 */}
+            <ellipse cx="60" cy="68" rx="3" ry="2" fill={palette.accent} />
+            {/* 口 */}
+            <Mouth />
+            {/* 長いしっぽ */}
+            <path d="M 90 85 Q 105 75 110 60 Q 112 48 105 42" fill="none" stroke={palette.body} strokeWidth="6" strokeLinecap="round" />
+          </>
+        );
+
+      case "squirrel":
+        return (
+          <>
+            {/* 小さい丸耳 */}
+            <ellipse cx="40" cy="38" rx="6" ry="7" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            <ellipse cx="80" cy="38" rx="6" ry="7" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            <ellipse cx="40" cy="38" r="3" fill={palette.ear} />
+            <ellipse cx="80" cy="38" r="3" fill={palette.ear} />
+            {/* 大きくふわふわのしっぽ（右上に大きなカーブ） */}
+            <path d="M 85 80 Q 110 65 108 42 Q 106 25 95 22 Q 82 20 85 35 Q 88 50 85 65 Z" fill={palette.body} stroke={palette.accent} strokeWidth="1" opacity="0.9" />
+            {/* 小さめの体 */}
+            <ellipse cx="60" cy="72" rx="28" ry="30" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            {/* お腹 */}
+            <ellipse cx="60" cy="80" rx="18" ry="18" fill={palette.bodyLight} />
+            {/* 目 */}
+            <Eyes />
+            {/* ぷっくりほっぺ（大きめ） */}
+            <ellipse cx="36" cy="72" rx="8" ry="5" fill={palette.cheek} opacity={cheekOpacity} />
+            <ellipse cx="84" cy="72" rx="8" ry="5" fill={palette.cheek} opacity={cheekOpacity} />
+            {/* 鼻 */}
+            <ellipse cx="60" cy="70" rx="3" ry="2" fill={palette.accent} />
+            {/* 口 */}
+            <Mouth />
+            {/* 短い手を前に出す */}
+            <path d="M 38 80 Q 32 85 34 90" stroke={palette.accent} strokeWidth="2" fill="none" strokeLinecap="round" />
+            <path d="M 82 80 Q 88 85 86 90" stroke={palette.accent} strokeWidth="2" fill="none" strokeLinecap="round" />
+          </>
+        );
+
+      case "owl":
+        return (
+          <>
+            {/* サイドに小さな羽 */}
+            <path d="M 22 72 Q 12 65 18 55 Q 24 60 28 68 Z" fill={palette.body} stroke={palette.accent} strokeWidth="1" />
+            <path d="M 98 72 Q 108 65 102 55 Q 96 60 92 68 Z" fill={palette.body} stroke={palette.accent} strokeWidth="1" />
+            {/* ずんぐり丸い体 */}
+            <ellipse cx="60" cy="72" rx="34" ry="38" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            {/* お腹 */}
+            <ellipse cx="60" cy="82" rx="24" ry="24" fill={palette.bodyLight} />
+            {/* 羽模様（V字のストローク） */}
+            <path d="M 48 86 L 52 82 L 56 86" fill="none" stroke={palette.accent} strokeWidth="1" opacity="0.3" />
+            <path d="M 56 90 L 60 86 L 64 90" fill="none" stroke={palette.accent} strokeWidth="1" opacity="0.3" />
+            <path d="M 64 86 L 68 82 L 72 86" fill="none" stroke={palette.accent} strokeWidth="1" opacity="0.3" />
+            {/* 耳（ツノのような飾り羽） */}
+            <path d="M 38 40 Q 32 28 40 34" fill={palette.body} stroke={palette.accent} strokeWidth="1" />
+            <path d="M 82 40 Q 88 28 80 34" fill={palette.body} stroke={palette.accent} strokeWidth="1" />
+            {/* 大きな目 */}
+            <Eyes />
+            {/* くちばし */}
+            <polygon points="57,72 63,72 60,78" fill={palette.accent} />
+            {/* ほっぺ */}
+            <ellipse cx="36" cy="72" rx="5" ry="3" fill={palette.cheek} opacity={cheekOpacity} />
+            <ellipse cx="84" cy="72" rx="5" ry="3" fill={palette.cheek} opacity={cheekOpacity} />
+          </>
+        );
+
+      default:
+        return null;
+    }
+  }
 
   return (
-    <svg width={size} height={size} viewBox="0 0 100 100" style={{ transform: `scale(${scale})${isHappy ? ' translateY(-2px)' : isSad ? ' rotate(2deg)' : ''}` }}>
-      <defs>
-        <radialGradient id={`body-${animal}`} cx="50%" cy="60%" r="55%">
-          <stop offset="0%" stopColor={palette.belly} />
-          <stop offset="60%" stopColor={palette.body} />
-          <stop offset="100%" stopColor={palette.accent} stopOpacity="0.4" />
-        </radialGradient>
-      </defs>
-
-      {/* Ears / accessory depending on animal */}
-      {animal === "rabbit" && (
-        <>
-          <ellipse cx="36" cy="22" rx="5" ry="14" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
-          <ellipse cx="64" cy="22" rx="5" ry="14" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
-          <ellipse cx="36" cy="24" rx="2" ry="8" fill={palette.cheek} opacity="0.4" />
-          <ellipse cx="64" cy="24" rx="2" ry="8" fill={palette.cheek} opacity="0.4" />
-        </>
-      )}
-      {animal === "raccoon" && (
-        <>
-          <polygon points="32,24 40,10 44,28" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
-          <polygon points="68,24 60,10 56,28" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
-        </>
-      )}
-      {animal === "cat" && (
-        <>
-          <polygon points="30,22 38,6 44,26" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
-          <polygon points="70,22 62,6 56,26" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
-          <polygon points="34,22 38,14 42,24" fill={palette.cheek} opacity="0.5" />
-          <polygon points="66,22 62,14 58,24" fill={palette.cheek} opacity="0.5" />
-        </>
-      )}
-      {animal === "squirrel" && (
-        <>
-          <ellipse cx="34" cy="18" rx="4" ry="6" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
-          <ellipse cx="66" cy="18" rx="4" ry="6" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
-          {/* big fluffy tail */}
-          <path d="M 80 55 Q 95 40 88 70 Q 82 85 70 70" fill={palette.body} stroke={palette.accent} strokeWidth="1.5" />
-        </>
-      )}
-      {animal === "owl" && (
-        <>
-          <polygon points="28,24 34,12 40,26" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
-          <polygon points="72,24 66,12 60,26" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
-        </>
-      )}
-
-      {/* Body */}
-      <ellipse cx="50" cy="62" rx="28" ry="30" fill={`url(#body-${animal})`} stroke={palette.accent} strokeWidth="1.5" />
-      {/* Belly */}
-      <ellipse cx="50" cy="70" rx="18" ry="18" fill={palette.belly} />
-
-      {/* Owl face discs */}
-      {animal === "owl" && (
-        <>
-          <circle cx="42" cy={eyeY} r="8" fill={palette.belly} stroke={palette.accent} strokeWidth="1" />
-          <circle cx="58" cy={eyeY} r="8" fill={palette.belly} stroke={palette.accent} strokeWidth="1" />
-        </>
-      )}
-
-      {/* Eyes */}
-      {isHappy ? (
-        <>
-          <path d={`M 38 ${eyeY - 1} Q 42 ${eyeY + 3} 46 ${eyeY - 1}`} stroke={palette.accent} strokeWidth="2.2" fill="none" strokeLinecap="round" />
-          <path d={`M 54 ${eyeY - 1} Q 58 ${eyeY + 3} 62 ${eyeY - 1}`} stroke={palette.accent} strokeWidth="2.2" fill="none" strokeLinecap="round" />
-        </>
-      ) : isSad ? (
-        <>
-          <circle cx="42" cy={eyeY} r="3" fill={palette.accent} />
-          <circle cx="58" cy={eyeY} r="3" fill={palette.accent} />
-          <circle cx="43" cy={eyeY - 1} r="1.2" fill="#ffffff" />
-          <circle cx="59" cy={eyeY - 1} r="1.2" fill="#ffffff" />
-        </>
-      ) : (
-        <>
-          <circle cx="42" cy={eyeY} r="2.4" fill={palette.accent} />
-          <circle cx="58" cy={eyeY} r="2.4" fill={palette.accent} />
-          <circle cx="42.8" cy={eyeY - 0.8} r="0.8" fill="#ffffff" />
-          <circle cx="58.8" cy={eyeY - 0.8} r="0.8" fill="#ffffff" />
-        </>
-      )}
-
-      {/* Cheeks */}
-      <circle cx="36" cy="52" r="3" fill={palette.cheek} opacity="0.45" />
-      <circle cx="64" cy="52" r="3" fill={palette.cheek} opacity="0.45" />
-
-      {/* Nose / beak */}
-      {animal === "owl" ? (
-        <polygon points="48,52 52,52 50,58" fill={palette.accent} />
-      ) : (
-        <ellipse cx="50" cy="53" rx="2" ry="1.5" fill={palette.accent} />
-      )}
-
-      {/* Mouth */}
-      {mouth}
-
-      {/* Stage 5+ : small crown/leaf for village/elder */}
-      {stage >= 5 && (
-        <g>
-          <path d="M 44 14 L 50 8 L 56 14 L 54 20 L 46 20 Z" fill={palette.cheek} stroke={palette.accent} strokeWidth="1" />
-        </g>
-      )}
-      {stage >= 7 && (
-        <g>
-          <circle cx="20" cy="20" r="2" fill={palette.cheek} />
-          <circle cx="80" cy="22" r="1.5" fill={palette.cheek} />
-          <circle cx="12" cy="60" r="1.5" fill={palette.cheek} />
-          <circle cx="88" cy="60" r="2" fill={palette.cheek} />
-        </g>
-      )}
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 120 120"
+      style={{
+        transform: `scale(${stageScale})${isHappy ? ' translateY(-2px)' : isSad ? ' rotate(2deg)' : ''}`,
+      }}
+    >
+      <StageDecoration />
+      <AnimalBody />
     </svg>
   );
 }

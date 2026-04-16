@@ -5,6 +5,8 @@ import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
+import MiniCharacter from "@/components/MiniCharacter";
+import { AnimalKind } from "@/components/MyCharacter";
 import { compressImage } from "@/lib/image-compress";
 import { dailyCompoundScore } from "@/lib/compound";
 import CountUp from "@/components/CountUp";
@@ -47,6 +49,7 @@ export default function JournalPage() {
   const [crisis, setCrisis] = useState(false);
   const [suspended, setSuspended] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [charAnimal, setCharAnimal] = useState<AnimalKind | null>(null);
 
   // 夜モード用: 今朝の投稿
   const [morningPost, setMorningPost] = useState<MorningPost | null>(null);
@@ -71,8 +74,9 @@ export default function JournalPage() {
 
         // プロフィール取得（テーブル/カラム不在でも落ちない）
         try {
-          const { data: prof } = await supabase.from("profiles").select("is_suspended").eq("id", user.id).maybeSingle();
+          const { data: prof } = await supabase.from("profiles").select("is_suspended, character_animal").eq("id", user.id).maybeSingle();
           if (prof?.is_suspended) setSuspended(true);
+          if (prof?.character_animal) setCharAnimal(prof.character_animal as AnimalKind);
         } catch { /* ignore */ }
 
         // 今日ToDo（夜の振り返り用）
@@ -374,7 +378,7 @@ export default function JournalPage() {
         </div>
 
         <div className="flex items-center gap-3 mb-5">
-          <Image src="/icons/icon-192.png" alt="Rizup" width={40} height={40} className="rounded-full" />
+          <MiniCharacter animal={charAnimal} size={40} />
           <div className="flex-1">
             <p className="font-extrabold">{mode === "morning" ? "おはよう！☀️" : "おつかれさま🌙"}</p>
             <p className="text-xs text-text-mid">

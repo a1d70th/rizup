@@ -202,8 +202,14 @@ export default function VillagePage() {
       <Header />
       <div className={`max-w-md mx-auto bg-gradient-to-b ${SEASON_BG[season]} dark:from-[#111111] dark:via-[#131716] dark:to-[#111111]`}>
         <div className="px-4 py-4">
+          {/* 森のシルエット背景 */}
+          <div className="relative mb-2 overflow-hidden rounded-2xl" style={{ height: 60 }}>
+            <svg viewBox="0 0 400 60" className="w-full h-full opacity-10 dark:opacity-5">
+              <path d="M0,60 L20,20 L40,60 L60,15 L80,60 L100,25 L120,60 L140,10 L160,60 L180,20 L200,60 L220,18 L240,60 L260,12 L280,60 L300,22 L320,60 L340,8 L360,60 L380,25 L400,60 Z" fill="#6ecbb0" />
+            </svg>
+          </div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-lg font-extrabold dark:text-gray-100">{SEASON_LABEL[season]}</h2>
+            <h2 className="text-xl font-extrabold dark:text-gray-100">{SEASON_LABEL[season]}</h2>
             <span className="text-[11px] font-bold text-mint bg-white/70 dark:bg-[#1a1a1a]/70 rounded-full px-3 py-1">
               仲間 {members.length}/{maxFriends}{!isPro && "（Proで+2）"}
             </span>
