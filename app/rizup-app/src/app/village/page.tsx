@@ -39,11 +39,11 @@ const SEASON_BG: Record<string, string> = {
 };
 
 const SEASON_LABEL: Record<string, string> = {
-  spring: "🌸 桜咲く村",
-  summer: "🌻 ひまわりの村",
-  autumn: "🍁 紅葉の村",
-  winter: "❄️ 雪の村",
-  night: "✨ 星降る村",
+  spring: "🌸 春の森",
+  summer: "🌻 夏の森",
+  autumn: "🍁 秋の森",
+  winter: "❄️ 冬の森",
+  night: "✨ 星空の森",
 };
 
 export default function VillagePage() {
@@ -211,7 +211,7 @@ export default function VillagePage() {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xl font-extrabold dark:text-gray-100">{SEASON_LABEL[season]}</h2>
             <span className="text-[11px] font-bold text-mint bg-white/70 dark:bg-[#1a1a1a]/70 rounded-full px-3 py-1">
-              仲間 {members.length}/{maxFriends}{!isPro && "（Proで+2）"}
+              住人 {members.length + 1}（あなた含む）
             </span>
           </div>
 
@@ -226,28 +226,69 @@ export default function VillagePage() {
 
               {/* 仲間の家（グリッド） */}
               {members.length === 0 ? (
-                <div className="bg-white/80 dark:bg-[#1a1a1a]/80 rounded-2xl p-6 text-center mb-4">
-                  <p className="text-sm font-extrabold mb-5 dark:text-gray-100">仲間が増えると、ここに家が建つよ</p>
-
-                  <div className="flex flex-col gap-5 mb-6">
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="text-3xl">🏠</span>
-                      <p className="text-xs font-extrabold dark:text-gray-100">ホームのタイムラインを見る</p>
-                    </div>
-                    <span className="text-text-light text-lg">↓</span>
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="text-3xl">🌱</span>
-                      <p className="text-xs font-extrabold dark:text-gray-100">気になる投稿に「わかる」を押す</p>
-                    </div>
-                    <span className="text-text-light text-lg">↓</span>
-                    <div className="flex flex-col items-center gap-1">
-                      <span className="text-3xl">✨</span>
-                      <p className="text-xs font-extrabold dark:text-gray-100">お互いが押したら村人になれる</p>
+                <div className="bg-white/80 dark:bg-[#1a1a1a]/80 rounded-2xl p-6 mb-4">
+                  {/* 箱庭ビジュアル：streakに応じて成長 */}
+                  <div className="relative h-40 rounded-xl bg-gradient-to-b from-sky-100 to-green-50 dark:from-[#1a2030] dark:to-[#152018] overflow-hidden mb-4">
+                    {/* 地面 */}
+                    <div className="absolute bottom-0 left-0 right-0 h-12 bg-[#8bc48a] dark:bg-[#2a4a2a] rounded-t-[50%]" />
+                    {/* 草 */}
+                    <svg className="absolute bottom-8 left-0 right-0" viewBox="0 0 300 30" style={{ width: "100%", height: 30 }}>
+                      <path d="M10,30 Q15,10 20,30 M40,30 Q45,8 50,30 M70,30 Q75,12 80,30 M110,30 Q115,6 120,30 M150,30 Q155,14 160,30 M190,30 Q195,8 200,30 M230,30 Q235,10 240,30 M270,30 Q275,12 280,30" fill="none" stroke="#5a9a58" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                    {/* 花（streak >= 3 で表示） */}
+                    {(self?.streak || 0) >= 3 && (
+                      <>
+                        <div className="absolute bottom-10 left-8 text-lg">🌷</div>
+                        <div className="absolute bottom-12 left-24 text-sm">🌼</div>
+                        <div className="absolute bottom-10 right-16 text-lg">🌸</div>
+                      </>
+                    )}
+                    {/* 木（streak >= 7 で表示） */}
+                    {(self?.streak || 0) >= 7 && (
+                      <div className="absolute bottom-10 right-8 text-2xl">🌳</div>
+                    )}
+                    {/* 小川（streak >= 14 で表示） */}
+                    {(self?.streak || 0) >= 14 && (
+                      <svg className="absolute bottom-4 left-1/4 right-1/4" viewBox="0 0 150 20" style={{ width: "50%", height: 16 }}>
+                        <path d="M0,10 Q30,2 60,10 Q90,18 120,10 Q135,6 150,10" fill="none" stroke="#7ac0d8" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+                      </svg>
+                    )}
+                    {/* 自分のキャラ（中央） */}
+                    <div className="absolute bottom-14 left-1/2 -translate-x-1/2">
+                      {self && (
+                        <MyCharacter
+                          streak={self.streak || 0}
+                          name={self.character_name}
+                          animal={(self.character_animal as AnimalKind) || "rabbit"}
+                          size={60}
+                        />
+                      )}
                     </div>
                   </div>
 
-                  <Link href="/home" className="inline-block bg-mint text-white font-extrabold px-6 py-3 rounded-full shadow-lg shadow-mint/30 text-sm">
-                    タイムラインを見てみる →
+                  {/* 森の成長状況 */}
+                  <div className="text-center mb-4">
+                    <p className="text-sm font-extrabold dark:text-gray-100 mb-1">
+                      {(self?.streak || 0) === 0 ? "書き始めると、森が育ち始めるよ" :
+                       (self?.streak || 0) < 3 ? "毎日書くと、花が咲くよ" :
+                       (self?.streak || 0) < 7 ? "もうすぐ木が生えてくる！" :
+                       (self?.streak || 0) < 14 ? "小川が流れ始めるかも" :
+                       "あなたの森、どんどん育ってるよ🌿"}
+                    </p>
+                    <p className="text-[11px] text-text-mid">
+                      {(self?.streak || 0)}日連続で書いてるよ
+                    </p>
+                  </div>
+
+                  {/* 仲間の説明（シンプルに） */}
+                  <div className="bg-mint-light/30 dark:bg-[#162621] rounded-xl p-3 mb-3">
+                    <p className="text-[11px] text-text-mid dark:text-gray-400 text-center">
+                      仲間が増えると、森にみんなの家が建つよ
+                    </p>
+                  </div>
+
+                  <Link href="/home" className="block text-center bg-mint text-white font-extrabold px-5 py-3 rounded-full shadow-md shadow-mint/30 text-sm">
+                    タイムラインを見に行く →
                   </Link>
                 </div>
               ) : (

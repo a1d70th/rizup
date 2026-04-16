@@ -14,13 +14,13 @@ interface Props {
 
 // Stage と表情の判定
 function stageOf(streak: number): number {
-  if (streak <= 0) return 1;
-  if (streak <= 3) return 2;
-  if (streak <= 14) return 3;
-  if (streak <= 29) return 4;
-  if (streak <= 59) return 5;
-  if (streak <= 99) return 6;
-  return 7;
+  if (streak <= 2) return 1;  // 卵（3日間あたためる）
+  if (streak <= 6) return 2;  // 赤ちゃん
+  if (streak <= 20) return 3; // 子供
+  if (streak <= 44) return 4; // 大人
+  if (streak <= 74) return 5; // 村人
+  if (streak <= 99) return 6; // 村長
+  return 7;                   // 伝説
 }
 
 const STAGE_MESSAGES: Record<number, string> = {
@@ -63,11 +63,11 @@ function wroteToday(last: Date | null | undefined): boolean {
 
 // 動物別のカラーパレット（パステル系）
 const PALETTE: Record<AnimalKind, { body: string; bodyLight: string; accent: string; cheek: string; ear: string }> = {
-  rabbit:   { body: "#f5ede3", bodyLight: "#fdf8f3", accent: "#c4a882", cheek: "#ffb6c1", ear: "#ffc0cb" },
-  raccoon:  { body: "#c8c0b4", bodyLight: "#e8e2d8", accent: "#6b5b4e", cheek: "#ffb6c1", ear: "#a09080" },
-  cat:      { body: "#fce0c8", bodyLight: "#fef4e8", accent: "#e8a060", cheek: "#ffb6c1", ear: "#f5c8a0" },
-  squirrel: { body: "#d4a070", bodyLight: "#f0d8b8", accent: "#8b5e3c", cheek: "#ffb6c1", ear: "#c08850" },
-  owl:      { body: "#c8b898", bodyLight: "#e8dcc8", accent: "#7a6848", cheek: "#ffb6c1", ear: "#b0a080" },
+  rabbit:   { body: "#fff0e8", bodyLight: "#fff8f3", accent: "#d4a882", cheek: "#ff9eb5", ear: "#ffb8cc" },
+  raccoon:  { body: "#d5cfc5", bodyLight: "#ede8e0", accent: "#7b6b5e", cheek: "#ff9eb5", ear: "#b8a898" },
+  cat:      { body: "#ffe4cc", bodyLight: "#fff6ee", accent: "#f0a868", cheek: "#ff9eb5", ear: "#ffd0a8" },
+  squirrel: { body: "#e0b080", bodyLight: "#f5dec0", accent: "#9b6e4c", cheek: "#ff9eb5", ear: "#d09860" },
+  owl:      { body: "#d8c8a8", bodyLight: "#f0e4d0", accent: "#8a7858", cheek: "#ff9eb5", ear: "#c0b090" },
 };
 
 // アニメーションは stage と書いたかで分岐
@@ -108,7 +108,11 @@ export default function MyCharacter({
       : lastWritten
         ? `${charName}と一緒に今日も🌱`
         : stage === 1
-          ? `今日書くと${charName === "相棒" ? "" : " " + charName + " が"}生まれるよ🌱`
+          ? streak === 0
+            ? `今日書くとあたため始めるよ🥚`
+            : streak === 1
+              ? `あたたかい。中で何か動いてる...`
+              : `もうすぐ会えるよ...！明日を楽しみに✨`
           : STAGE_MESSAGES[stage];
 
   return (
@@ -120,7 +124,7 @@ export default function MyCharacter({
         className={`relative focus:outline-none ${isHappy ? "animate-sho-bounce" : isSad ? "animate-sho-float" : wrote ? "animate-sho-bounce" : "animate-sho-float"}`}
       >
         {stage === 1 ? (
-          <EggSvg size={size} palette={palette} />
+          <EggSvg size={size} palette={palette} crackLevel={streak} />
         ) : hatching ? (
           <div className="relative">
             <EggSvg size={size} palette={palette} cracking />
@@ -169,14 +173,16 @@ export default function MyCharacter({
 
 // ───────── SVG サブコンポーネント ─────────
 
-function EggSvg({ size, cracking }: { size: number; palette: { accent: string }; cracking?: boolean }) {
+function EggSvg({ size, crackLevel = 0, cracking }: { size: number; palette: { accent: string }; crackLevel?: number; cracking?: boolean }) {
   return (
-    <svg width={size} height={size * 1.2} viewBox="0 0 100 120">
+    <svg width={size} height={size * 1.2} viewBox="0 0 100 120"
+      style={crackLevel >= 2 ? { animation: "eggWobble 1.5s ease-in-out infinite" } : undefined}>
       <defs>
         <radialGradient id="egg-grad" cx="40%" cy="35%" r="60%">
           <stop offset="0%" stopColor="#ffffff" />
           <stop offset="100%" stopColor="#d4f0e7" />
         </radialGradient>
+        <style>{`@keyframes eggWobble { 0%,100% { transform: rotate(0deg); } 25% { transform: rotate(3deg); } 75% { transform: rotate(-3deg); } }`}</style>
       </defs>
       {/* 卵本体 */}
       <ellipse cx="50" cy="65" rx="30" ry="38" fill="url(#egg-grad)" stroke="#b8e0d2" strokeWidth="2" />
@@ -194,15 +200,15 @@ function EggSvg({ size, cracking }: { size: number; palette: { accent: string };
       {/* ほっぺ */}
       <ellipse cx="36" cy="66" rx="4" ry="2.5" fill="#ffc0cb" opacity="0.4" />
       <ellipse cx="64" cy="66" rx="4" ry="2.5" fill="#ffc0cb" opacity="0.4" />
-      {/* ヒビ（cracking時） */}
-      {cracking && (
+      {/* ヒビ: streak 1 = 小さなヒビ1本 */}
+      {(crackLevel >= 1 || cracking) && (
+        <polyline points="42,46 46,39 50,47" fill="none" stroke="#7ab8a0" strokeWidth="1.5" strokeLinecap="round" />
+      )}
+      {/* ヒビ: streak 2 = 追加のヒビ + 揺れアニメ */}
+      {(crackLevel >= 2 || cracking) && (
         <g>
-          <polyline points="40,45 45,38 50,46 53,36" fill="none" stroke="#7ab8a0" strokeWidth="1.5" strokeLinecap="round">
-            <animate attributeName="opacity" from="0" to="1" dur="0.6s" fill="freeze" />
-          </polyline>
-          <polyline points="55,42 58,35 62,44" fill="none" stroke="#7ab8a0" strokeWidth="1.2" strokeLinecap="round">
-            <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.4s" fill="freeze" />
-          </polyline>
+          <polyline points="53,44 57,36 60,45" fill="none" stroke="#7ab8a0" strokeWidth="1.3" strokeLinecap="round" />
+          <polyline points="46,50 50,43 54,50" fill="none" stroke="#7ab8a0" strokeWidth="1" strokeLinecap="round" />
         </g>
       )}
     </svg>
@@ -225,7 +231,7 @@ function AnimalSvg({
   stage: number;
 }) {
   const stageScale = stage === 1 ? 0.75 : stage === 2 ? 0.85 : stage === 3 ? 0.9 : stage === 4 ? 0.95 : 1;
-  const cheekOpacity = isHappy ? 0.6 : 0.5;
+  const cheekOpacity = isHappy ? 0.8 : 0.7;
 
   // 共通の表情パーツ生成
   function Eyes() {
@@ -236,8 +242,8 @@ function AnimalSvg({
           <>
             <circle cx="46" cy="62" r="10" fill={palette.bodyLight} stroke={palette.accent} strokeWidth="1" />
             <circle cx="74" cy="62" r="10" fill={palette.bodyLight} stroke={palette.accent} strokeWidth="1" />
-            <path d="M 40 62 Q 46 67 52 62" stroke="#3a3a3a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-            <path d="M 68 62 Q 74 67 80 62" stroke="#3a3a3a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+            <path d="M 40 62 Q 46 67 52 62" stroke="#3a3a3a" strokeWidth="3" fill="none" strokeLinecap="round" />
+            <path d="M 68 62 Q 74 67 80 62" stroke="#3a3a3a" strokeWidth="3" fill="none" strokeLinecap="round" />
           </>
         );
       }
@@ -248,10 +254,10 @@ function AnimalSvg({
             <circle cx="74" cy="62" r="10" fill={palette.bodyLight} stroke={palette.accent} strokeWidth="1" />
             <circle cx="46" cy="62" r="7" fill="#3a3a3a" />
             <circle cx="74" cy="62" r="7" fill="#3a3a3a" />
-            <circle cx="48" cy="60" r="3" fill="#fff" />
-            <circle cx="76" cy="60" r="3" fill="#fff" />
-            <circle cx="44" cy="64" r="1.5" fill="#fff" />
-            <circle cx="72" cy="64" r="1.5" fill="#fff" />
+            <circle cx="48" cy="60" r="5" fill="#fff" />
+            <circle cx="76" cy="60" r="5" fill="#fff" />
+            <circle cx="44" cy="64" r="1.5" fill="#fff" opacity="0.6" />
+            <circle cx="72" cy="64" r="1.5" fill="#fff" opacity="0.6" />
           </>
         );
       }
@@ -261,52 +267,61 @@ function AnimalSvg({
           <circle cx="74" cy="62" r="10" fill={palette.bodyLight} stroke={palette.accent} strokeWidth="1" />
           <circle cx="46" cy="62" r="6" fill="#3a3a3a" />
           <circle cx="74" cy="62" r="6" fill="#3a3a3a" />
-          <circle cx="48" cy="60" r="2" fill="#fff" />
-          <circle cx="76" cy="60" r="2" fill="#fff" />
+          <circle cx="48" cy="60" r="4" fill="#fff" />
+          <circle cx="76" cy="60" r="4" fill="#fff" />
+          <circle cx="44" cy="64" r="1.5" fill="#fff" opacity="0.6" />
+          <circle cx="72" cy="64" r="1.5" fill="#fff" opacity="0.6" />
         </>
       );
     }
 
     // 通常動物の目
+    const eyeY = 62;
     if (isHappy) {
       return (
         <>
-          <path d="M 42 62 Q 48 56 54 62" stroke="#3a3a3a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-          <path d="M 66 62 Q 72 56 78 62" stroke="#3a3a3a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+          <path d={`M 42 ${eyeY} Q 48 ${eyeY - 6} 54 ${eyeY}`} stroke="#3a3a3a" strokeWidth="3" fill="none" strokeLinecap="round" />
+          <path d={`M 66 ${eyeY} Q 72 ${eyeY - 6} 78 ${eyeY}`} stroke="#3a3a3a" strokeWidth="3" fill="none" strokeLinecap="round" />
         </>
       );
     }
     if (isSad) {
       return (
         <>
-          <circle cx="48" cy="62" r="8" fill="#3a3a3a" />
-          <circle cx="72" cy="62" r="8" fill="#3a3a3a" />
-          <circle cx="50" cy="60" r="2.5" fill="#fff" />
-          <circle cx="74" cy="60" r="2.5" fill="#fff" />
-          <circle cx="46" cy="63" r="1.2" fill="#fff" />
-          <circle cx="70" cy="63" r="1.2" fill="#fff" />
+          <circle cx="48" cy={eyeY} r="11" fill="#2a2a2a" />
+          <circle cx="72" cy={eyeY} r="11" fill="#2a2a2a" />
+          {/* メインハイライト（うるうる） */}
+          <circle cx="51" cy={eyeY - 3} r="5" fill="#ffffff" />
+          <circle cx="75" cy={eyeY - 3} r="5" fill="#ffffff" />
+          {/* 第2ハイライト */}
+          <circle cx="46" cy={eyeY + 2} r="1.5" fill="#ffffff" opacity="0.6" />
+          <circle cx="70" cy={eyeY + 2} r="1.5" fill="#ffffff" opacity="0.6" />
         </>
       );
     }
     // neutral
     return (
       <>
-        <circle cx="48" cy="62" r="8" fill="#3a3a3a" />
-        <circle cx="72" cy="62" r="8" fill="#3a3a3a" />
-        <circle cx="50" cy="60" r="2" fill="#fff" />
-        <circle cx="74" cy="60" r="2" fill="#fff" />
+        <circle cx="48" cy={eyeY} r="11" fill="#2a2a2a" />
+        <circle cx="72" cy={eyeY} r="11" fill="#2a2a2a" />
+        {/* メインハイライト */}
+        <circle cx="51" cy={eyeY - 3} r="4" fill="#ffffff" />
+        <circle cx="75" cy={eyeY - 3} r="4" fill="#ffffff" />
+        {/* 第2ハイライト */}
+        <circle cx="46" cy={eyeY + 2} r="1.5" fill="#ffffff" opacity="0.6" />
+        <circle cx="70" cy={eyeY + 2} r="1.5" fill="#ffffff" opacity="0.6" />
       </>
     );
   }
 
   function Mouth() {
     if (isHappy) {
-      return <path d="M 52 77 Q 60 84 68 77" stroke={palette.accent} strokeWidth="1.8" fill="none" strokeLinecap="round" />;
+      return <path d="M 54 74 Q 60 80 66 74" stroke={palette.accent} strokeWidth="2" fill="none" strokeLinecap="round" />;
     }
     if (isSad) {
-      return <path d="M 55 76 Q 60 78 65 76" stroke={palette.accent} strokeWidth="1.2" fill="none" strokeLinecap="round" />;
+      return <path d="M 56 76 Q 60 78 64 76" stroke={palette.accent} strokeWidth="1.2" fill="none" strokeLinecap="round" />;
     }
-    return <path d="M 54 75 Q 60 80 66 75" stroke={palette.accent} strokeWidth="1.5" fill="none" strokeLinecap="round" />;
+    return <path d="M 56 75 Q 60 79 64 75" stroke={palette.accent} strokeWidth="1.8" fill="none" strokeLinecap="round" />;
   }
 
   // 動物別の装飾（stage 5+ 葉っぱ / 6+ 王冠 / 7+ キラキラ）
@@ -370,14 +385,14 @@ function AnimalSvg({
             <ellipse cx="42" cy="27" rx="4" ry="14" fill={palette.ear} opacity="0.5" />
             <ellipse cx="78" cy="27" rx="4" ry="14" fill={palette.ear} opacity="0.5" />
             {/* 体 */}
-            <ellipse cx="60" cy="72" rx="32" ry="35" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            <ellipse cx="60" cy="78" rx="32" ry="28" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
             {/* お腹 */}
-            <ellipse cx="60" cy="82" rx="22" ry="20" fill={palette.bodyLight} />
+            <ellipse cx="60" cy="86" rx="18" ry="16" fill={palette.bodyLight} />
             {/* 目 */}
             <Eyes />
             {/* ほっぺ */}
-            <ellipse cx="38" cy="72" rx="6" ry="4" fill={palette.cheek} opacity={cheekOpacity} />
-            <ellipse cx="82" cy="72" rx="6" ry="4" fill={palette.cheek} opacity={cheekOpacity} />
+            <ellipse cx="38" cy="72" rx="8" ry="5" fill={palette.cheek} opacity={cheekOpacity} />
+            <ellipse cx="82" cy="72" rx="8" ry="5" fill={palette.cheek} opacity={cheekOpacity} />
             {/* 鼻 */}
             <ellipse cx="60" cy="70" rx="3" ry="2" fill={palette.accent} />
             {/* 口 */}
@@ -394,17 +409,17 @@ function AnimalSvg({
             <circle cx="38" cy="38" r="4" fill={palette.ear} />
             <circle cx="82" cy="38" r="4" fill={palette.ear} />
             {/* 体（大きめ） */}
-            <ellipse cx="60" cy="72" rx="34" ry="36" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            <ellipse cx="60" cy="78" rx="34" ry="29" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
             {/* お腹 */}
-            <ellipse cx="60" cy="82" rx="24" ry="22" fill={palette.bodyLight} />
+            <ellipse cx="60" cy="86" rx="20" ry="18" fill={palette.bodyLight} />
             {/* タヌキ目模様 */}
             <ellipse cx="46" cy="60" rx="10" ry="8" fill="#4a3a2a" opacity="0.3" />
             <ellipse cx="74" cy="60" rx="10" ry="8" fill="#4a3a2a" opacity="0.3" />
             {/* 目 */}
             <Eyes />
             {/* ほっぺ */}
-            <ellipse cx="36" cy="72" rx="6" ry="4" fill={palette.cheek} opacity={cheekOpacity} />
-            <ellipse cx="84" cy="72" rx="6" ry="4" fill={palette.cheek} opacity={cheekOpacity} />
+            <ellipse cx="36" cy="72" rx="8" ry="5" fill={palette.cheek} opacity={cheekOpacity} />
+            <ellipse cx="84" cy="72" rx="8" ry="5" fill={palette.cheek} opacity={cheekOpacity} />
             {/* 鼻 */}
             <ellipse cx="60" cy="70" rx="3" ry="2" fill={palette.accent} />
             {/* 口 */}
@@ -425,14 +440,14 @@ function AnimalSvg({
             <polygon points="37,44 32,24 48,40" fill={palette.ear} opacity="0.5" />
             <polygon points="83,44 88,24 72,40" fill={palette.ear} opacity="0.5" />
             {/* やや横長の体 */}
-            <ellipse cx="60" cy="72" rx="34" ry="32" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            <ellipse cx="60" cy="78" rx="34" ry="26" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
             {/* お腹 */}
-            <ellipse cx="60" cy="80" rx="22" ry="18" fill={palette.bodyLight} />
+            <ellipse cx="60" cy="84" rx="18" ry="14" fill={palette.bodyLight} />
             {/* ねこ目 */}
             {isHappy ? (
               <>
-                <path d="M 42 62 Q 48 56 54 62" stroke="#3a3a3a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-                <path d="M 66 62 Q 72 56 78 62" stroke="#3a3a3a" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+                <path d="M 42 62 Q 48 56 54 62" stroke="#3a3a3a" strokeWidth="3" fill="none" strokeLinecap="round" />
+                <path d="M 66 62 Q 72 56 78 62" stroke="#3a3a3a" strokeWidth="3" fill="none" strokeLinecap="round" />
               </>
             ) : isSad ? (
               <>
@@ -457,8 +472,8 @@ function AnimalSvg({
             <line x1="78" y1="70" x2="96" y2="70" stroke={palette.accent} strokeWidth="0.8" opacity="0.6" />
             <line x1="78" y1="72" x2="95" y2="74" stroke={palette.accent} strokeWidth="0.8" opacity="0.6" />
             {/* ほっぺ */}
-            <ellipse cx="38" cy="72" rx="6" ry="4" fill={palette.cheek} opacity={cheekOpacity} />
-            <ellipse cx="82" cy="72" rx="6" ry="4" fill={palette.cheek} opacity={cheekOpacity} />
+            <ellipse cx="38" cy="72" rx="8" ry="5" fill={palette.cheek} opacity={cheekOpacity} />
+            <ellipse cx="82" cy="72" rx="8" ry="5" fill={palette.cheek} opacity={cheekOpacity} />
             {/* 鼻 */}
             <ellipse cx="60" cy="68" rx="3" ry="2" fill={palette.accent} />
             {/* 口 */}
@@ -479,14 +494,14 @@ function AnimalSvg({
             {/* 大きくふわふわのしっぽ（右上に大きなカーブ） */}
             <path d="M 85 80 Q 110 65 108 42 Q 106 25 95 22 Q 82 20 85 35 Q 88 50 85 65 Z" fill={palette.body} stroke={palette.accent} strokeWidth="1" opacity="0.9" />
             {/* 小さめの体 */}
-            <ellipse cx="60" cy="72" rx="28" ry="30" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            <ellipse cx="60" cy="78" rx="28" ry="24" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
             {/* お腹 */}
-            <ellipse cx="60" cy="80" rx="18" ry="18" fill={palette.bodyLight} />
+            <ellipse cx="60" cy="84" rx="15" ry="14" fill={palette.bodyLight} />
             {/* 目 */}
             <Eyes />
             {/* ぷっくりほっぺ（大きめ） */}
-            <ellipse cx="36" cy="72" rx="8" ry="5" fill={palette.cheek} opacity={cheekOpacity} />
-            <ellipse cx="84" cy="72" rx="8" ry="5" fill={palette.cheek} opacity={cheekOpacity} />
+            <ellipse cx="36" cy="72" rx="10" ry="6.5" fill={palette.cheek} opacity={cheekOpacity} />
+            <ellipse cx="84" cy="72" rx="10" ry="6.5" fill={palette.cheek} opacity={cheekOpacity} />
             {/* 鼻 */}
             <ellipse cx="60" cy="70" rx="3" ry="2" fill={palette.accent} />
             {/* 口 */}
@@ -504,9 +519,9 @@ function AnimalSvg({
             <path d="M 22 72 Q 12 65 18 55 Q 24 60 28 68 Z" fill={palette.body} stroke={palette.accent} strokeWidth="1" />
             <path d="M 98 72 Q 108 65 102 55 Q 96 60 92 68 Z" fill={palette.body} stroke={palette.accent} strokeWidth="1" />
             {/* ずんぐり丸い体 */}
-            <ellipse cx="60" cy="72" rx="34" ry="38" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
+            <ellipse cx="60" cy="78" rx="34" ry="30" fill={palette.body} stroke={palette.accent} strokeWidth="1.2" />
             {/* お腹 */}
-            <ellipse cx="60" cy="82" rx="24" ry="24" fill={palette.bodyLight} />
+            <ellipse cx="60" cy="86" rx="20" ry="19" fill={palette.bodyLight} />
             {/* 羽模様（V字のストローク） */}
             <path d="M 48 86 L 52 82 L 56 86" fill="none" stroke={palette.accent} strokeWidth="1" opacity="0.3" />
             <path d="M 56 90 L 60 86 L 64 90" fill="none" stroke={palette.accent} strokeWidth="1" opacity="0.3" />
@@ -519,8 +534,8 @@ function AnimalSvg({
             {/* くちばし */}
             <polygon points="57,72 63,72 60,78" fill={palette.accent} />
             {/* ほっぺ */}
-            <ellipse cx="36" cy="72" rx="5" ry="3" fill={palette.cheek} opacity={cheekOpacity} />
-            <ellipse cx="84" cy="72" rx="5" ry="3" fill={palette.cheek} opacity={cheekOpacity} />
+            <ellipse cx="36" cy="72" rx="6.5" ry="4" fill={palette.cheek} opacity={cheekOpacity} />
+            <ellipse cx="84" cy="72" rx="6.5" ry="4" fill={palette.cheek} opacity={cheekOpacity} />
           </>
         );
 
