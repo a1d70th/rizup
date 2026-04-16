@@ -285,7 +285,7 @@ export default function JournalPage() {
       setPosted(true);
       // 朝のひとこと投稿後: 3秒後にホームへ遷移
       if (mode === "morning") {
-        setTimeout(() => router.push("/home"), 3000);
+        setTimeout(() => router.push("/home?posted=true"), 3000);
       }
     }
     setLoading(false);

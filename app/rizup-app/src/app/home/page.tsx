@@ -60,6 +60,7 @@ export default function HomePage() {
   const [charAnimal, setCharAnimal] = useState<AnimalKind | null>(null);
   const [charName, setCharName] = useState<string>("");
   const [lastWritten, setLastWritten] = useState<Date | null>(null);
+  const [justPosted, setJustPosted] = useState(false);
 
   const fetchPosts = async () => {
     const first = await supabase.from("posts")
@@ -133,6 +134,19 @@ export default function HomePage() {
     })();
   }, []);
 
+  // URL パラメータから posted=true を検知
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("posted") === "true") {
+      setJustPosted(true);
+      // URLからパラメータを消す
+      window.history.replaceState({}, "", "/home");
+      // 3秒後に消す
+      const t = setTimeout(() => setJustPosted(false), 3000);
+      return () => clearTimeout(t);
+    }
+  }, []);
+
   const refresh = async () => { setRefreshing(true); await fetchPosts(); setRefreshing(false); };
 
   const onStart = (e: React.TouchEvent) => {
@@ -174,31 +188,28 @@ export default function HomePage() {
               animal={charAnimal || "rabbit"}
               lastWritten={lastWritten}
               size={130}
+              mood={justPosted ? 'good' : 'neutral'}
             />
             {!charAnimal && (
               <Link href="/character-setup" className="mt-2 text-[11px] font-bold text-mint border border-mint rounded-full px-3 py-1 hover:bg-mint-light transition">
                 🌱 相棒を選ぶ
               </Link>
             )}
-            {/* 時間帯別ジャーナル誘導 */}
-            {(() => {
-              const h = new Date().getHours();
-              if (h >= 5 && h < 12 && !morningDone) {
-                return (
-                  <Link href="/journal" className="mt-3 bg-mint text-white text-sm font-extrabold px-5 py-2.5 rounded-full shadow-md shadow-mint/30 active:scale-95 transition">
-                    今日のひとことを書く ☀️
-                  </Link>
-                );
-              }
-              if (h >= 18 && h < 24 && !eveningDone) {
-                return (
-                  <Link href="/journal" className="mt-3 bg-[#f4976c] text-white text-sm font-extrabold px-5 py-2.5 rounded-full shadow-md shadow-orange/30 active:scale-95 transition">
-                    今日の振り返りを書く 🌙
-                  </Link>
-                );
-              }
-              return null;
-            })()}
+            {/* ジャーナル誘導（常時表示） */}
+            {justPosted && (
+              <p className="mt-2 text-sm font-extrabold text-mint animate-fade-in">
+                書いてくれたね！ありがとう🌱
+              </p>
+            )}
+            {!morningDone ? (
+              <Link href="/journal" className="mt-3 bg-mint text-white text-sm font-extrabold px-5 py-2.5 rounded-full shadow-md shadow-mint/30 active:scale-95 transition">
+                今日のひとことを書く 📝
+              </Link>
+            ) : !eveningDone ? (
+              <Link href="/journal" className="mt-3 bg-[#f4976c] text-white text-sm font-extrabold px-5 py-2.5 rounded-full shadow-md shadow-orange/30 active:scale-95 transition">
+                今日の振り返りを書く 🌙
+              </Link>
+            ) : null}
           </div>
 
           {/* 3リング可視化（朝/夜/毎日のこと）＋ 連続日数 */}

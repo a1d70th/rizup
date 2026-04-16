@@ -23,6 +23,8 @@ interface ProfileData {
   is_admin?: boolean;
   mbti?: string;
   strengths?: string[];
+  character_animal?: string;
+  character_name?: string;
 }
 
 interface StrengthGift {
@@ -177,6 +179,12 @@ export default function ProfilePage() {
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
           </div>
           <h1 className="text-xl font-extrabold">{profile.name}</h1>
+          {profile.character_name && (
+            <p className="text-sm text-mint font-bold mt-1">
+              {profile.character_animal === "rabbit" ? "🐰" : profile.character_animal === "raccoon" ? "🦝" : profile.character_animal === "cat" ? "🐱" : profile.character_animal === "squirrel" ? "🐿️" : profile.character_animal === "owl" ? "🦉" : "🌿"}
+              {" "}{profile.character_name}
+            </p>
+          )}
           {profile.dream && <p className="text-sm text-text-mid mt-1">🎯 {profile.dream}</p>}
           <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
             {typeInfo && (

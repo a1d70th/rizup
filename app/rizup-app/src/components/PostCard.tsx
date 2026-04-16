@@ -114,27 +114,31 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
 
   useEffect(() => {
     const load = async () => {
-      const { data: allReactions } = await supabase
-        .from("reactions")
-        .select("type, user_id")
-        .eq("post_id", post.id);
-      if (allReactions) {
-        const c: Record<string, number> = { cheer: 0, relate: 0, amazing: 0 };
-        const mine = new Set<string>();
-        allReactions.forEach((r) => {
-          c[r.type] = (c[r.type] || 0) + 1;
-          if (userId && r.user_id === userId) mine.add(r.type);
-        });
-        setCounts(c);
-        setMyReactions(mine);
-      }
-      const { data: cmts } = await supabase
-        .from("comments")
-        .select("id, content, profiles(name)")
-        .eq("post_id", post.id)
-        .order("created_at", { ascending: true });
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (cmts) setComments(cmts as any);
+      try {
+        const { data: allReactions } = await supabase
+          .from("reactions")
+          .select("type, user_id")
+          .eq("post_id", post.id);
+        if (allReactions) {
+          const c: Record<string, number> = { cheer: 0, relate: 0, amazing: 0 };
+          const mine = new Set<string>();
+          allReactions.forEach((r) => {
+            c[r.type] = (c[r.type] || 0) + 1;
+            if (userId && r.user_id === userId) mine.add(r.type);
+          });
+          setCounts(c);
+          setMyReactions(mine);
+        }
+      } catch { /* reactions テーブル未作成時は無視 */ }
+      try {
+        const { data: cmts } = await supabase
+          .from("comments")
+          .select("id, content, profiles(name)")
+          .eq("post_id", post.id)
+          .order("created_at", { ascending: true });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (cmts) setComments(cmts as any);
+      } catch { /* comments テーブル未作成時は無視 */ }
     };
     load();
   }, [post.id, userId]);
@@ -147,29 +151,34 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
     setAnimating(type);
     setTimeout(() => setAnimating(null), 400);
 
-    if (myReactions.has(type)) {
-      await supabase.from("reactions").delete().match({ post_id: post.id, user_id: userId, type });
-      setMyReactions((prev) => {
-        const s = new Set(prev);
-        s.delete(type);
-        return s;
-      });
-      setCounts((prev) => ({ ...prev, [type]: Math.max(0, (prev[type] || 0) - 1) }));
-    } else {
-      await supabase.from("reactions").insert({ post_id: post.id, user_id: userId, type });
-      setMyReactions((prev) => new Set(prev).add(type));
-      setCounts((prev) => ({ ...prev, [type]: (prev[type] || 0) + 1 }));
-      if (post.user_id !== userId) {
-        const emojiMap: Record<string, string> = { cheer: "🌱", relate: "🤝", amazing: "✨" };
-        supabase
-          .from("notifications")
-          .insert({
-            user_id: post.user_id,
-            type: "reaction",
-            content: `あなたの投稿に${emojiMap[type] || ""}リアクションがつきました`,
-          })
-          .then(() => {});
+    try {
+      if (myReactions.has(type)) {
+        await supabase.from("reactions").delete().match({ post_id: post.id, user_id: userId, type });
+        setMyReactions((prev) => {
+          const s = new Set(prev);
+          s.delete(type);
+          return s;
+        });
+        setCounts((prev) => ({ ...prev, [type]: Math.max(0, (prev[type] || 0) - 1) }));
+      } else {
+        await supabase.from("reactions").insert({ post_id: post.id, user_id: userId, type });
+        setMyReactions((prev) => new Set(prev).add(type));
+        setCounts((prev) => ({ ...prev, [type]: (prev[type] || 0) + 1 }));
+        if (post.user_id !== userId) {
+          try {
+            const emojiMap: Record<string, string> = { cheer: "🌱", relate: "🤝", amazing: "✨" };
+            await supabase
+              .from("notifications")
+              .insert({
+                user_id: post.user_id,
+                type: "reaction",
+                content: `あなたの投稿に${emojiMap[type] || ""}リアクションがつきました`,
+              });
+          } catch { /* notifications テーブル未作成時は無視 */ }
+        }
       }
+    } catch {
+      console.warn("[PostCard] reaction error - テーブル未作成の可能性");
     }
   };
 
