@@ -181,7 +181,7 @@ export default function HomePage() {
         )}
         <div className="max-w-md mx-auto px-4 py-2">
           {/* My Character：村の住人・毎日の相棒 */}
-          <div className="bg-gradient-to-b from-mint-light/50 to-white dark:from-[#162621] dark:to-[#1a1a1a] rounded-2xl border border-mint/20 dark:border-[#2a3a34] shadow-sm px-4 py-5 mb-3 flex flex-col items-center">
+          <div className="bg-gradient-to-b from-[#ecfdf5] to-white dark:from-[#0d2818] dark:to-[#1a1a1a] rounded-2xl border border-mint/20 dark:border-[#2a3a34] shadow-sm px-4 py-5 mb-3 flex flex-col items-center">
             <MyCharacter
               streak={streak}
               name={charName}
