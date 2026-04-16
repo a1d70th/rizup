@@ -232,8 +232,8 @@ function AnimalSvg({
   isSad: boolean;
   stage: number;
 }) {
-  const stageScale = stage === 1 ? 0.75 : stage === 2 ? 0.8 : stage === 3 ? 0.88 : stage === 4 ? 0.95 : 1;
-  const cheekOpacity = isHappy ? 0.6 : 0.4;
+  const stageScale = stage === 1 ? 0.75 : stage === 2 ? 0.85 : stage === 3 ? 0.9 : stage === 4 ? 0.95 : 1;
+  const cheekOpacity = isHappy ? 0.6 : 0.5;
 
   // 共通の表情パーツ生成
   function Eyes() {
@@ -287,8 +287,8 @@ function AnimalSvg({
     if (isSad) {
       return (
         <>
-          <circle cx="48" cy="62" r="6" fill="#3a3a3a" />
-          <circle cx="72" cy="62" r="6" fill="#3a3a3a" />
+          <circle cx="48" cy="62" r="8" fill="#3a3a3a" />
+          <circle cx="72" cy="62" r="8" fill="#3a3a3a" />
           <circle cx="50" cy="60" r="2.5" fill="#fff" />
           <circle cx="74" cy="60" r="2.5" fill="#fff" />
           <circle cx="46" cy="63" r="1.2" fill="#fff" />
@@ -299,8 +299,8 @@ function AnimalSvg({
     // neutral
     return (
       <>
-        <circle cx="48" cy="62" r="6" fill="#3a3a3a" />
-        <circle cx="72" cy="62" r="6" fill="#3a3a3a" />
+        <circle cx="48" cy="62" r="8" fill="#3a3a3a" />
+        <circle cx="72" cy="62" r="8" fill="#3a3a3a" />
         <circle cx="50" cy="60" r="2" fill="#fff" />
         <circle cx="74" cy="60" r="2" fill="#fff" />
       </>
