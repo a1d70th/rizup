@@ -429,17 +429,17 @@ export default function JournalPage() {
           </div>
         )}
 
-        {/* 気分（二択） */}
-        <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-6 border border-gray-100 dark:border-[#2a2a2a] mb-3">
-          <p className="text-sm font-bold mb-4 text-center">今の気分は？</p>
-          <div className="flex gap-3 justify-center">
+        {/* 気分（二択・大きめ） */}
+        <div className="bg-white dark:bg-[#252535] rounded-2xl p-6 border border-gray-100 dark:border-[#3a3a4a] mb-3">
+          <p className="text-base font-extrabold mb-5 text-center dark:text-gray-100">今の気分は？</p>
+          <div className="flex gap-4 justify-center">
             {moodOptions.map(m => (
               <button key={m.value} onClick={() => { setMood(m.value); setWantWrite(false); }}
-                className={`flex flex-col items-center gap-2 px-8 py-5 rounded-2xl border-2 transition-all ${
-                  mood === m.value ? m.color + " scale-105 shadow-md" : "bg-gray-50 dark:bg-[#222] border-gray-200 dark:border-[#333] opacity-60"
+                className={`flex flex-col items-center gap-3 px-10 py-6 rounded-2xl border-2 transition-all ${
+                  mood === m.value ? m.color + " scale-105 shadow-lg" : "bg-gray-50 dark:bg-[#2a2a3a] border-gray-200 dark:border-[#3a3a4a] opacity-50"
                 }`}>
-                <span className="text-4xl">{m.emoji}</span>
-                <span className="text-sm font-bold">{m.label}</span>
+                <span className="text-5xl">{m.emoji}</span>
+                <span className="text-base font-extrabold">{m.label}</span>
               </button>
             ))}
           </div>
@@ -447,14 +447,14 @@ export default function JournalPage() {
 
         {/* 気分選択後：このまま送る or 一言追加する */}
         {mood !== 0 && !wantWrite && (
-          <div className="flex flex-col gap-2 mb-3 animate-fade-in">
+          <div className="flex flex-col gap-3 mb-3 animate-fade-in">
             <button onClick={handlePost}
               disabled={loading}
-              className="w-full bg-mint text-white font-bold py-4 rounded-2xl shadow-lg shadow-mint/30 text-base active:scale-95 transition">
-              {loading ? "送信中..." : "このまま送る ✨"}
+              className="w-full bg-mint text-white font-extrabold py-5 rounded-2xl shadow-xl shadow-mint/40 text-lg active:scale-95 transition flex items-center justify-center gap-2">
+              {loading ? "送信中..." : <><span>✨</span><span>このまま送る</span></>}
             </button>
             <button onClick={() => setWantWrite(true)}
-              className="w-full bg-white dark:bg-[#1a1a1a] border-2 border-gray-100 dark:border-[#2a2a2a] text-text-mid font-bold py-3 rounded-2xl text-sm active:scale-95 transition">
+              className="w-full bg-white dark:bg-[#252535] border-2 border-gray-100 dark:border-[#3a3a4a] text-text-mid font-bold py-3.5 rounded-2xl text-sm active:scale-95 transition">
               💬 一言追加する
             </button>
           </div>

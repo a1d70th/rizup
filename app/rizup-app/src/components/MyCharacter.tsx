@@ -24,8 +24,8 @@ function stageOf(streak: number): number {
 }
 
 const STAGE_MESSAGES: Record<number, string> = {
-  1: "まだ生まれていないよ。今日書くと孵るかも🥚",
-  2: "生まれたよ！一緒にいるね🌱",
+  1: "今日書くと生まれるよ🌱",
+  2: "一緒に今日も🌱",
   3: "だんだん大きくなってきたよ✨",
   4: "村ができたよ！仲間が来るかも🏡",
   5: "村が賑やかになってきたね🌸",
@@ -33,15 +33,6 @@ const STAGE_MESSAGES: Record<number, string> = {
   7: "この村はあなたが作った。すごいよ🌟",
 };
 
-const STAGE_LABELS: Record<number, string> = {
-  1: "たまご",
-  2: "あかちゃん",
-  3: "こども",
-  4: "おとな",
-  5: "村びと",
-  6: "村長",
-  7: "伝説",
-};
 
 // 時間帯別メッセージ
 function timeOfDay(): "morning" | "day" | "evening" | "deep" {
@@ -115,8 +106,10 @@ export default function MyCharacter({
     : isHappy
       ? `今日もありがとう、${charName}がジャンプしてるよ✨`
       : lastWritten
-        ? `おかえり、${charName}は待ってたよ🌿`
-        : STAGE_MESSAGES[stage];
+        ? `${charName}と一緒に今日も🌱`
+        : stage === 1
+          ? `今日書くと${charName === "相棒" ? "" : " " + charName + " が"}生まれるよ🌱`
+          : STAGE_MESSAGES[stage];
 
   return (
     <div className="flex flex-col items-center" style={{ width: size + 40 }}>
@@ -154,12 +147,11 @@ export default function MyCharacter({
         )}
       </button>
 
-      <div className="mt-2 text-center">
-        <p className="text-[11px] font-extrabold text-mint">
-          {charName !== "相棒" ? charName : "名前をつけてね"}
-          <span className="ml-1 text-[10px] text-text-light font-bold">・{STAGE_LABELS[stage]}</span>
-        </p>
-      </div>
+      {name && (
+        <div className="mt-2 text-center">
+          <p className="text-[12px] font-extrabold text-mint">{name}</p>
+        </div>
+      )}
 
       {showBubble && (
         <div className="mt-2 max-w-[280px] bg-white dark:bg-[#1a1a1a] border border-mint/30 dark:border-[#2a3a34] rounded-2xl px-4 py-2.5 shadow-md animate-fade-in">

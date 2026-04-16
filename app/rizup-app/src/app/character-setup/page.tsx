@@ -6,12 +6,13 @@ import MyCharacter, { AnimalKind } from "@/components/MyCharacter";
 import Header from "@/components/Header";
 
 const animals: { kind: AnimalKind; emoji: string; label: string; desc: string }[] = [
-  { kind: "rabbit", emoji: "🐰", label: "うさぎ", desc: "やさしくて、ふわっと跳ねる" },
-  { kind: "raccoon", emoji: "🦝", label: "たぬき", desc: "好奇心いっぱい、夜が得意" },
-  { kind: "cat", emoji: "🐱", label: "ねこ", desc: "マイペース、静かなあなたに" },
-  { kind: "squirrel", emoji: "🐿️", label: "りす", desc: "コツコツ貯める、小さな幸せ" },
-  { kind: "owl", emoji: "🦉", label: "ふくろう", desc: "落ち着きと、知恵の相棒" },
+  { kind: "rabbit", emoji: "\u{1F430}", label: "うさぎ", desc: "やさしくて、ふわっと跳ねる" },
+  { kind: "raccoon", emoji: "\u{1F99D}", label: "たぬき", desc: "好奇心いっぱい、夜が得意" },
+  { kind: "cat", emoji: "\u{1F431}", label: "ねこ", desc: "マイペース、静かなあなたに" },
+  { kind: "squirrel", emoji: "\u{1F43F}\u{FE0F}", label: "りす", desc: "コツコツ貯める、小さな幸せ" },
+  { kind: "owl", emoji: "\u{1F989}", label: "ふくろう", desc: "落ち着きと、知恵の相棒" },
 ];
+
 
 export default function CharacterSetupPage() {
   const router = useRouter();
@@ -66,12 +67,12 @@ export default function CharacterSetupPage() {
                   key={a.kind}
                   onClick={() => setAnimal(a.kind)}
                   className={`bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border-2 flex flex-col items-center text-center transition active:scale-95 ${
-                    animal === a.kind ? "border-mint shadow-lg shadow-mint/20 scale-[1.02]" : "border-gray-100 dark:border-[#2a2a2a]"
+                    animal === a.kind
+                      ? "border-mint bg-[#ecfdf5] dark:bg-[#0d2818] shadow-lg shadow-mint/20 scale-[1.02]"
+                      : "border-gray-100 dark:border-[#2a2a2a]"
                   }`}
                 >
-                  <div className="mb-2">
-                    <MyCharacter streak={1} name="" animal={a.kind} size={64} />
-                  </div>
+                  <div className="text-4xl mb-2">{a.emoji}</div>
                   <p className="text-sm font-extrabold dark:text-gray-100">{a.label}</p>
                   <p className="text-[10px] text-text-light mt-0.5">{a.desc}</p>
                 </button>
@@ -88,7 +89,9 @@ export default function CharacterSetupPage() {
         )}
         {step === 2 && animal && (
           <>
-            <h1 className="text-xl font-extrabold mb-1 dark:text-gray-100">名前をつけてあげよう🌱</h1>
+            <h1 className="text-xl font-extrabold mb-1 dark:text-gray-100">
+              {animals.find(a => a.kind === animal)?.label}に名前をつけてあげよう
+            </h1>
             <p className="text-xs text-text-mid mb-5">呼ぶたびに、ちょっとだけ頑張れる名前を</p>
             <div className="flex justify-center my-4">
               <MyCharacter streak={1} name={name || "あいぼう"} animal={animal} size={140} />
@@ -113,7 +116,7 @@ export default function CharacterSetupPage() {
                 disabled={!name.trim() || saving}
                 className="flex-[2] bg-mint text-white font-extrabold py-3.5 rounded-full shadow-lg shadow-mint/30 disabled:opacity-30"
               >
-                {saving ? "保存中..." : "はじめる 🌿"}
+                {saving ? "保存中..." : "はじめる"}
               </button>
             </div>
           </>
