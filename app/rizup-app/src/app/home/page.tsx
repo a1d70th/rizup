@@ -24,35 +24,16 @@ interface PostWithProfile {
 
 const todayJST = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
 
-function Ring({ pct, color, label, emoji }: { pct: number; color: string; label: string; emoji: string }) {
-  const r = 28; const c = 2 * Math.PI * r;
-  const dash = `${(c * Math.min(pct, 1)).toFixed(1)} ${c.toFixed(1)}`;
-  return (
-    <div className="flex flex-col items-center gap-1.5" aria-label={`${label} ${Math.round(pct * 100)}%`}>
-      <div className="relative w-16 h-16">
-        <svg viewBox="0 0 64 64" className="w-16 h-16 -rotate-90">
-          <circle cx="32" cy="32" r={r} fill="none" stroke="currentColor"
-            className="text-gray-200 dark:text-[#2a2a2a]" strokeWidth="6" />
-          <circle cx="32" cy="32" r={r} fill="none" stroke={color} strokeWidth="6"
-            strokeLinecap="round" strokeDasharray={dash}
-            style={{ transition: "stroke-dasharray 600ms ease" }} />
-        </svg>
-        <span className="absolute inset-0 flex items-center justify-center text-xl">{emoji}</span>
-      </div>
-      <span className="text-xs font-bold text-text-mid">{label}</span>
-    </div>
-  );
-}
 
 export default function HomePage() {
   const [posts, setPosts] = useState<PostWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [streak, setStreak] = useState(0);
-  const [habits, setHabits] = useState({ done: 0, total: 0 });
+  const [, setHabits] = useState({ done: 0, total: 0 });
   const [morningDone, setMorningDone] = useState(false);
   const [eveningDone, setEveningDone] = useState(false);
-  const [morningMood, setMorningMood] = useState<number>(0);
+  const [, setMorningMood] = useState<number>(0);
   const [isAdmin, setIsAdmin] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [pull, setPull] = useState(0);
@@ -62,6 +43,8 @@ export default function HomePage() {
   const [lastWritten, setLastWritten] = useState<Date | null>(null);
   const [justPosted, setJustPosted] = useState(false);
   const [milestoneModal, setMilestoneModal] = useState<{ days: number; message: string } | null>(null);
+  const [snackGiven, setSnackGiven] = useState(false);
+  const [munching, setMunching] = useState(false);
 
   const fetchPosts = async () => {
     const first = await supabase.from("posts")
@@ -131,6 +114,10 @@ export default function HomePage() {
         }
         await fetchPosts();
       } catch (e) { console.error("[Home]", e); }
+      try {
+        const snackKey = `rizup_snack_${today}`;
+        setSnackGiven(!!localStorage.getItem(snackKey));
+      } catch {}
       setLoading(false);
     })();
   }, []);
@@ -142,6 +129,12 @@ export default function HomePage() {
       setJustPosted(true);
       // URLからパラメータを消す
       window.history.replaceState({}, "", "/home");
+      // 今日の花カウントをインクリメント
+      try {
+        const flowerKey = `rizup_flowers_${new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" })}`;
+        const current = parseInt(localStorage.getItem(flowerKey) || '0');
+        localStorage.setItem(flowerKey, String(current + 1));
+      } catch {}
       // 3秒後に消す
       const t = setTimeout(() => setJustPosted(false), 3000);
       return () => clearTimeout(t);
@@ -193,8 +186,6 @@ export default function HomePage() {
     return diff;
   })();
 
-  const habitPct = habits.total > 0 ? habits.done / habits.total : 0;
-
   return (
     <main onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEnd}
       className="min-h-screen bg-[#fafafa] dark:bg-[#111111] pb-20">
@@ -229,15 +220,33 @@ export default function HomePage() {
         )}
         <div className="max-w-md mx-auto px-4 py-2">
           {/* My Character：村の住人・毎日の相棒 */}
-          <div className="bg-gradient-to-b from-[#ecfdf5] to-white dark:from-[#0d2818] dark:to-[#1a1a1a] rounded-2xl border border-mint/20 dark:border-[#2a3a34] shadow-sm px-4 py-5 mb-3 flex flex-col items-center">
+          <div className="bg-gradient-to-b from-[#ecfdf5] to-white dark:from-[#0d2818] dark:to-[#1a1a1a] rounded-2xl border border-mint/20 dark:border-[#2a3a34] shadow-sm px-4 py-8 mb-3 flex flex-col items-center relative">
             <MyCharacter
               streak={streak}
               name={charName}
               animal={charAnimal || "rabbit"}
               lastWritten={lastWritten}
-              size={130}
-              mood={justPosted ? 'good' : (daysSinceLastPost >= 2 && daysSinceLastPost < 999) ? 'bad' : 'neutral'}
+              size={160}
+              mood={justPosted ? 'good' : munching ? 'good' : snackGiven ? 'good' : (daysSinceLastPost >= 2 && daysSinceLastPost < 999) ? 'bad' : 'neutral'}
             />
+            {justPosted && (
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                {["🌸", "✨", "⭐", "🌷", "💫", "🌟", "🎉", "🌿"].map((emoji, i) => {
+                  const angle = (i / 8) * Math.PI * 2;
+                  return (
+                    <span key={i} className="particle text-lg absolute"
+                      style={{
+                        left: '50%', top: '40%',
+                        '--tx': `${Math.cos(angle) * 60}px`,
+                        '--ty': `${Math.sin(angle) * 60}px`,
+                        animationDelay: `${i * 0.05}s`,
+                      } as React.CSSProperties}>
+                      {emoji}
+                    </span>
+                  );
+                })}
+              </div>
+            )}
             {!charAnimal && (
               <Link href="/character-setup" className="mt-2 text-[11px] font-bold text-mint border border-mint rounded-full px-3 py-1 hover:bg-mint-light transition">
                 🌱 相棒を選ぶ
@@ -247,7 +256,6 @@ export default function HomePage() {
             {(() => {
               const thresholds = [0, 3, 7, 21, 45, 75, 100];
               const stageNames = ["", "赤ちゃん", "子供", "大人", "村人", "村長", "伝説"];
-              const stageEmojis = ["🥚", "🐣", "🧒", "🧑", "🏡", "👑", "⭐"];
               const currentStageIdx = thresholds.findIndex((t, i) => i < thresholds.length - 1 && streak >= t && streak < thresholds[i + 1]);
               if (currentStageIdx === -1 || currentStageIdx >= thresholds.length - 1) return null;
               const nextThreshold = thresholds[currentStageIdx + 1];
@@ -255,12 +263,11 @@ export default function HomePage() {
               const remaining = nextThreshold - streak;
               const progress = (streak - currentThreshold) / (nextThreshold - currentThreshold);
               const nextName = stageNames[currentStageIdx + 1] || "";
-              const nextEmoji = stageEmojis[currentStageIdx + 1] || "";
               if (!nextName) return null;
               return (
                 <div className="w-full mt-3 px-2">
                   <p className="text-[11px] font-extrabold text-center text-text-mid dark:text-gray-300 mb-1.5">
-                    {nextEmoji} あと{remaining}日で{nextName}に変身！
+                    あと{remaining}日...✨
                   </p>
                   <div className="w-full bg-gray-100 dark:bg-[#2a2a2a] rounded-full h-2 overflow-hidden">
                     <div className="bg-gradient-to-r from-mint to-[#4ecba0] rounded-full h-2 transition-all duration-700"
@@ -285,6 +292,25 @@ export default function HomePage() {
               }
               return null;
             })()}
+            {/* おやつボタン（1日1回） */}
+            {!snackGiven && !justPosted && (
+              <button
+                onClick={() => {
+                  localStorage.setItem(`rizup_snack_${todayJST()}`, 'true');
+                  setSnackGiven(true);
+                  setMunching(true);
+                  setTimeout(() => setMunching(false), 1500);
+                }}
+                className="mt-2 text-[11px] font-bold text-orange border border-orange rounded-full px-3 py-1.5 hover:bg-orange-light transition"
+              >
+                🍪 おやつをあげる
+              </button>
+            )}
+            {munching && (
+              <p className="mt-1 text-sm font-extrabold text-orange animate-fade-in">
+                もぐもぐ... おいしい！🍪
+              </p>
+            )}
             {/* ジャーナル誘導（常時表示） */}
             {justPosted && (
               <p className="mt-2 text-sm font-extrabold text-mint animate-fade-in">
@@ -307,18 +333,14 @@ export default function HomePage() {
             ) : null}
           </div>
 
-          {/* 3リング可視化（朝/夜/毎日のこと）＋ 連続日数 */}
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm px-4 py-5 mb-3">
-            <div className="flex items-center justify-around">
-              <Ring pct={morningDone ? 1 : 0} color="#6ecbb0" label="朝" emoji={morningDone ? (morningMood >= 4 ? "😊" : morningMood > 0 ? "😔" : "☀️") : "☀️"} />
-              <Ring pct={eveningDone ? 1 : 0} color="#f4976c" label="夜" emoji="🌙" />
-              <Ring pct={habitPct} color="#5b8def" label="毎日のこと" emoji="🔄" />
-              <div className="flex flex-col items-center gap-1.5">
-                <div className="w-16 h-16 rounded-full bg-orange-light dark:bg-[#2a1f15] flex items-center justify-center">
-                  <span className="text-orange font-extrabold text-lg"><span className="streak-fire">🔥</span>{streak}</span>
-                </div>
-                <span className="text-xs font-bold text-text-mid">連続</span>
-              </div>
+          {/* 今日のステータス（シンプル1行） */}
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm px-4 py-3 mb-3 flex items-center justify-between">
+            <span className="text-sm dark:text-gray-100">
+              {morningDone || eveningDone ? "☀️ 今日のひとこと済み ✅" : "📝 今日のひとことまだ"}
+            </span>
+            <div className="flex items-center gap-1">
+              <span className="streak-fire">🔥</span>
+              <span className="font-extrabold text-orange">{streak}</span>
             </div>
           </div>
 

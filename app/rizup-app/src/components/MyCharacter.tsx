@@ -109,8 +109,9 @@ export default function MyCharacter({
   size = 140,
   mood = 'neutral',
 }: Props) {
-  const [showBubble, setShowBubble] = useState(false);
+  const [showBubble, setShowBubble] = useState(true);
   const [hatching, setHatching] = useState(false);
+  const [petting, setPetting] = useState(false);
   const stage = stageOf(streak);
   const palette = PALETTE[animal || "rabbit"];
   const tod = useMemo(() => timeOfDay(), []);
@@ -129,7 +130,9 @@ export default function MyCharacter({
   }, [stage, lastWritten]);
 
   const tapMsg = useMemo(() => timeMessage(charName, tod), [charName, tod]);
-  const baseMsg = hatching
+  const baseMsg = petting
+    ? "えへへ、気持ちいい♪"
+    : hatching
     ? `生まれたよ！一緒にいるね🌱`
     : isSad
     ? `そばにいるよ。${charName}はずっと一緒だよ🌿`
@@ -150,8 +153,12 @@ export default function MyCharacter({
       <button
         type="button"
         aria-label={`${charName}をタップして話す`}
-        onClick={() => setShowBubble(s => !s)}
-        className={`relative focus:outline-none ${isHappy ? "animate-sho-bounce" : isSad ? "animate-sho-float" : wrote ? "animate-sho-bounce" : "animate-sho-float"}`}
+        onClick={() => {
+          setShowBubble(s => !s);
+          setPetting(true);
+          setTimeout(() => setPetting(false), 800);
+        }}
+        className={`relative focus:outline-none ${petting ? "animate-pet" : isHappy ? "animate-sho-bounce" : isSad ? "animate-sho-float" : wrote ? "animate-sho-bounce" : "animate-sho-float"}`}
       >
         {stage === 1 ? (
           <EggSvg size={size} palette={palette} crackLevel={streak} />
@@ -189,7 +196,7 @@ export default function MyCharacter({
 
       {showBubble && (
         <div className="mt-2 max-w-[280px] bg-white dark:bg-[#1a1a1a] border border-mint/30 dark:border-[#2a3a34] rounded-2xl px-4 py-2.5 shadow-md animate-fade-in">
-          <p className="text-[12px] text-text dark:text-gray-100 leading-relaxed">{tapMsg}</p>
+          <p className="text-[12px] text-text dark:text-gray-100 leading-relaxed">{petting ? "えへへ、気持ちいい♪" : tapMsg}</p>
         </div>
       )}
       {!showBubble && (

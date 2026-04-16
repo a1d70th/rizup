@@ -50,6 +50,7 @@ export default function JournalPage() {
   const [suspended, setSuspended] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [charAnimal, setCharAnimal] = useState<AnimalKind | null>(null);
+  const [currentStreak, setCurrentStreak] = useState(0);
 
   // 夜モード用: 今朝の投稿
   const [morningPost, setMorningPost] = useState<MorningPost | null>(null);
@@ -74,9 +75,10 @@ export default function JournalPage() {
 
         // プロフィール取得（テーブル/カラム不在でも落ちない）
         try {
-          const { data: prof } = await supabase.from("profiles").select("is_suspended, character_animal").eq("id", user.id).maybeSingle();
+          const { data: prof } = await supabase.from("profiles").select("is_suspended, character_animal, streak").eq("id", user.id).maybeSingle();
           if (prof?.is_suspended) setSuspended(true);
           if (prof?.character_animal) setCharAnimal(prof.character_animal as AnimalKind);
+          if (prof?.streak) setCurrentStreak(prof.streak);
         } catch { /* ignore */ }
 
         // 今日ToDo（夜の振り返り用）
@@ -355,6 +357,17 @@ export default function JournalPage() {
             <p className="text-sm text-text leading-relaxed">{aiFeedback}</p>
           </div>
         )}
+        {/* 明日のプレビュー */}
+        <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl px-4 py-3 max-w-xs mb-4 border border-gray-100 dark:border-[#2a2a2a]">
+          <p className="text-xs font-bold text-text-mid mb-1">🔮 明日のプレビュー</p>
+          <p className="text-sm font-extrabold text-text dark:text-gray-100">
+            {currentStreak <= 2
+              ? "明日、もっとヒビが入るかも...！🥚"
+              : currentStreak <= 6
+                ? "明日は何の冒険かな？🐣"
+                : ["明日もあなたの言葉を待ってるよ🌱", "明日来たら、森がもう少し育ってるかも🌿", "明日はどんな発見があるかな？✨", "明日の自分に楽しみを残しておこう"][Math.floor(Date.now() / 86400000) % 4]}
+          </p>
+        </div>
         <div className="flex gap-3">
           <a href="/home" className="bg-mint text-white font-bold px-6 py-3 rounded-full shadow-lg shadow-mint/30">ホームへ</a>
         </div>
