@@ -61,6 +61,7 @@ export default function HomePage() {
   const [charName, setCharName] = useState<string>("");
   const [lastWritten, setLastWritten] = useState<Date | null>(null);
   const [justPosted, setJustPosted] = useState(false);
+  const [milestoneModal, setMilestoneModal] = useState<{ days: number; message: string } | null>(null);
 
   const fetchPosts = async () => {
     const first = await supabase.from("posts")
@@ -147,6 +148,24 @@ export default function HomePage() {
     }
   }, []);
 
+  // マイルストーン到達チェック
+  useEffect(() => {
+    if (streak <= 0) return;
+    const milestones: Record<number, string> = {
+      3: "3日続いた！すごい第一歩🌱",
+      7: "1週間！本当にすごいよ✨",
+      14: "2週間続けた。これは本物だ🔥",
+      30: "1ヶ月！あなたは変わった🌟",
+    };
+    const msg = milestones[streak];
+    if (!msg) return;
+    const key = `rizup_milestone_${streak}`;
+    if (typeof window !== "undefined" && !localStorage.getItem(key)) {
+      localStorage.setItem(key, new Date().toISOString());
+      setMilestoneModal({ days: streak, message: msg });
+    }
+  }, [streak]);
+
   const refresh = async () => { setRefreshing(true); await fetchPosts(); setRefreshing(false); };
 
   const onStart = (e: React.TouchEvent) => {
@@ -179,6 +198,25 @@ export default function HomePage() {
   return (
     <main onTouchStart={onStart} onTouchMove={onMove} onTouchEnd={onEnd}
       className="min-h-screen bg-[#fafafa] dark:bg-[#111111] pb-20">
+      {/* マイルストーンモーダル */}
+      {milestoneModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-3xl p-8 mx-6 max-w-sm text-center shadow-2xl">
+            <div className="text-5xl mb-4">🎉</div>
+            <p className="text-3xl font-extrabold mb-2 dark:text-gray-100">{milestoneModal.days}日連続！</p>
+            <p className="text-sm text-text-mid mb-6 leading-relaxed">{milestoneModal.message}</p>
+            {charName && (
+              <p className="text-xs text-mint font-bold mb-4">{charName}もジャンプして喜んでるよ</p>
+            )}
+            <button
+              onClick={() => setMilestoneModal(null)}
+              className="bg-mint text-white font-extrabold px-8 py-3 rounded-full shadow-lg shadow-mint/30 active:scale-95 transition"
+            >
+              ありがとう！
+            </button>
+          </div>
+        </div>
+      )}
       <Header />
       <div style={{
         transform: pull ? `translateY(${pull}px)` : undefined,
@@ -209,6 +247,7 @@ export default function HomePage() {
             {(() => {
               const thresholds = [0, 3, 7, 21, 45, 75, 100];
               const stageNames = ["", "赤ちゃん", "子供", "大人", "村人", "村長", "伝説"];
+              const stageEmojis = ["🥚", "🐣", "🧒", "🧑", "🏡", "👑", "⭐"];
               const currentStageIdx = thresholds.findIndex((t, i) => i < thresholds.length - 1 && streak >= t && streak < thresholds[i + 1]);
               if (currentStageIdx === -1 || currentStageIdx >= thresholds.length - 1) return null;
               const nextThreshold = thresholds[currentStageIdx + 1];
@@ -216,18 +255,35 @@ export default function HomePage() {
               const remaining = nextThreshold - streak;
               const progress = (streak - currentThreshold) / (nextThreshold - currentThreshold);
               const nextName = stageNames[currentStageIdx + 1] || "";
+              const nextEmoji = stageEmojis[currentStageIdx + 1] || "";
               if (!nextName) return null;
               return (
-                <div className="w-full mt-2 px-4">
-                  <div className="flex items-center justify-between text-[10px] text-text-mid mb-1">
-                    <span>あと{remaining}日で{nextName}に</span>
-                    <span>{Math.round(progress * 100)}%</span>
-                  </div>
-                  <div className="w-full bg-gray-100 dark:bg-[#2a2a2a] rounded-full h-1.5">
-                    <div className="bg-mint rounded-full h-1.5 transition-all duration-500" style={{ width: `${Math.round(progress * 100)}%` }} />
+                <div className="w-full mt-3 px-2">
+                  <p className="text-[11px] font-extrabold text-center text-text-mid dark:text-gray-300 mb-1.5">
+                    {nextEmoji} あと{remaining}日で{nextName}に変身！
+                  </p>
+                  <div className="w-full bg-gray-100 dark:bg-[#2a2a2a] rounded-full h-2 overflow-hidden">
+                    <div className="bg-gradient-to-r from-mint to-[#4ecba0] rounded-full h-2 transition-all duration-700"
+                      style={{ width: `${Math.max(Math.round(progress * 100), 4)}%` }} />
                   </div>
                 </div>
               );
+            })()}
+            {/* ストリーク危機バナー（22時以降・今日未投稿） */}
+            {(() => {
+              const hour = new Date().getHours();
+              const remaining = 24 - hour;
+              if (hour >= 22 && !morningDone && !eveningDone && streak > 0) {
+                return (
+                  <div className="w-full mt-2 bg-amber-50 dark:bg-[#2a2515] border border-amber-200 dark:border-[#4a3a20] rounded-xl px-4 py-3 animate-fade-in">
+                    <p className="text-xs font-extrabold text-amber-700 dark:text-amber-300 text-center">
+                      ⏰ あと{remaining}時間で{streak}日連続が途切れちゃう...
+                      {charName && charName !== "相棒" ? `${charName}が待ってるよ` : ""}
+                    </p>
+                  </div>
+                );
+              }
+              return null;
             })()}
             {/* ジャーナル誘導（常時表示） */}
             {justPosted && (
