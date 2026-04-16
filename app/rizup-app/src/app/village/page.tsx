@@ -222,13 +222,31 @@ export default function VillagePage() {
               {members.length === 0 ? (
                 <div className="bg-white/80 dark:bg-[#1a1a1a]/80 rounded-2xl p-5 text-center mb-4">
                   <p className="text-2xl mb-2">🏡</p>
-                  <p className="text-sm font-extrabold mb-1 dark:text-gray-100">まだ村に仲間がいない</p>
-                  <p className="text-[11px] text-text-mid dark:text-gray-400 mb-3">
-                    タイムラインで気になる人に「応援してる🌱」を贈ると、<br />
-                    だんだん仲間が集まってくるよ
+                  <p className="text-sm font-extrabold mb-1 dark:text-gray-100">まだ仲間がいないよ</p>
+                  <p className="text-[11px] text-text-mid dark:text-gray-400 mb-4">
+                    仲間が増えると、ここに家が建つよ
                   </p>
-                  <Link href="/home" className="inline-block bg-mint text-white text-xs font-extrabold px-4 py-2 rounded-full shadow-md shadow-mint/30">
-                    タイムラインに行く →
+
+                  <div className="bg-mint-light/50 dark:bg-[#162621] rounded-2xl p-4 mb-4 text-left">
+                    <p className="text-xs font-extrabold text-mint mb-3">仲間の増やし方 👇</p>
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-start gap-2">
+                        <span className="bg-mint text-white text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center shrink-0">1</span>
+                        <p className="text-[12px] text-text dark:text-gray-200">ホームのみんなの投稿を見る</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="bg-mint text-white text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center shrink-0">2</span>
+                        <p className="text-[12px] text-text dark:text-gray-200">気になる投稿の「わかる🌱」を押す</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <span className="bg-mint text-white text-[10px] font-extrabold w-5 h-5 rounded-full flex items-center justify-center shrink-0">3</span>
+                        <p className="text-[12px] text-text dark:text-gray-200">相手も返してくれたら村人になれる</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Link href="/home" className="inline-block bg-mint text-white text-xs font-extrabold px-5 py-2.5 rounded-full shadow-md shadow-mint/30">
+                    みんなの投稿を見に行く →
                   </Link>
                 </div>
               ) : (

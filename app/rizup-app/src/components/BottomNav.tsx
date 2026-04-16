@@ -5,11 +5,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
 const baseItems = [
-  { href: "/home", icon: "🏠", label: "ホーム" },
-  { href: "/journal", icon: "📝", label: "ジャーナル" },
-  { href: "/village", icon: "🏘️", label: "村" },
-  { href: "/growth", icon: "📈", label: "成長" },
-  { href: "/profile", icon: "👤", label: "マイページ" },
+  { href: "/home", icon: "\u{1F3E0}", label: "ホーム" },
+  { href: "/journal", icon: "\u{1F4DD}", label: "ジャーナル" },
+  { href: "/village", icon: "\u{1F333}", label: "みんな" },
+  { href: "/growth", icon: "\u{1F4C8}", label: "成長" },
+  { href: "/profile", icon: "\u{1F464}", label: "マイページ" },
 ];
 
 export default function BottomNav() {
@@ -24,7 +24,7 @@ export default function BottomNav() {
       const { data: profile } = await supabase.from("profiles")
         .select("is_admin").eq("id", user.id).single();
       if (profile?.is_admin) {
-        setExtraItems([{ href: "/admin", icon: "⚙️", label: "管理" }]);
+        setExtraItems([{ href: "/admin", icon: "\u{2699}\u{FE0F}", label: "管理" }]);
       }
     };
     load();

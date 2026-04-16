@@ -52,32 +52,14 @@ function timeOfDay(): "morning" | "day" | "evening" | "deep" {
   return "deep";
 }
 
-function timeMessage(name: string, tod: string): string {
-  const n = name || "相棒";
-  const map: Record<string, string[]> = {
-    morning: [
-      `おはよう🌞 ${n}はもう起きてたよ`,
-      `今日はどんな日にする？${n}は楽しみ`,
-      `朝の空気、気持ちいいね🌿`,
-    ],
-    day: [
-      `${n}も日向ぼっこ中☀️`,
-      `ちょっと休憩する？`,
-      `今日の1歩、どう進んでる？`,
-    ],
-    evening: [
-      `おつかれさま🌙 ${n}も今日はよく頑張ったね`,
-      `今日のいいこと、1つだけ教えて`,
-      `ゆっくりしよう。夜はもう少し`,
-    ],
-    deep: [
-      `まだ起きてるの？${n}も一緒だよ🌙`,
-      `夜は考えすぎないでね。明日話そう`,
-      `深呼吸して、あったかくして寝よう💤`,
-    ],
+function timeMessage(_name: string, tod: string): string {
+  const map: Record<string, string> = {
+    morning: "おはよう！今日もいるよ🌱",
+    day: "今日どんな感じ？",
+    evening: "お疲れさま、ゆっくりしてね🌙",
+    deep: "眠れない夜は、ここにいるよ⭐",
   };
-  const list = map[tod] || map.day;
-  return list[new Date().getDate() % list.length];
+  return map[tod] || map.day;
 }
 
 function wroteToday(last: Date | null | undefined): boolean {

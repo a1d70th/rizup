@@ -8,7 +8,7 @@ import BottomNav from "@/components/BottomNav";
 import { compressImage } from "@/lib/image-compress";
 import { dailyCompoundScore } from "@/lib/compound";
 import CountUp from "@/components/CountUp";
-import { safeInsertPost, safeInsertTodo, findTodayPost } from "@/lib/safe-insert";
+import { safeInsertPost, findTodayPost } from "@/lib/safe-insert";
 import { showToast } from "@/components/Toast";
 
 const moodOptions = [
@@ -20,20 +20,6 @@ function todayJST(): string {
   return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
 }
 
-// 朝のプロンプト質問ローテ（曜日ごと・JST）
-const MORNING_PROMPTS = [
-  "来週の自分に一言送るなら？",        // 日
-  "今日の一番大切なことは？",          // 月
-  "今日どんな自分でいたい？",          // 火
-  "今日終わったら何に感謝できそう？",  // 水
-  "今日乗り越えたいことは？",          // 木
-  "今週できたことを一つ挙げるなら？",  // 金
-  "今日誰かに何かしてあげられる？",    // 土
-];
-function morningPromptOfToday(): string {
-  const dow = new Date().getDay(); // 0=日
-  return MORNING_PROMPTS[dow];
-}
 
 interface Todo { id: string; title: string; vision_id: string | null; is_done: boolean; }
 interface MorningPost {
@@ -62,22 +48,12 @@ export default function JournalPage() {
   const [suspended, setSuspended] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // 朝モード用: 今日のToDo選択
-  const [availableTodos, setAvailableTodos] = useState<Todo[]>([]);
-  const [selectedTodoIds, setSelectedTodoIds] = useState<Set<string>>(new Set());
-  const [newTodoTitle, setNewTodoTitle] = useState("");
-
   // 夜モード用: 今朝の投稿
   const [morningPost, setMorningPost] = useState<MorningPost | null>(null);
   const [goalAchieved, setGoalAchieved] = useState<"yes" | "partial" | "no" | null>(null);
   const [morningTodos, setMorningTodos] = useState<(Todo & { done: boolean })[]>([]);
   const [habitDoneRatio, setHabitDoneRatio] = useState(0);
 
-  // 昨日の朝目標（"⟳ 昨日と同じ" ボタン用）
-  const [lastMorningGoal, setLastMorningGoal] = useState<string>("");
-
-  // 朝1分タイマー（Fabulous 方式）
-  const [timerSec, setTimerSec] = useState<number | null>(null);
 
   // もっと書く▼（デフォルト折りたたみ・最小2-3タップで投稿）
   const [showMore, setShowMore] = useState(false);
@@ -88,13 +64,6 @@ export default function JournalPage() {
     handlePost();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moodOnly]);
-
-  useEffect(() => {
-    if (timerSec == null) return;
-    if (timerSec <= 0) { showToast("success", "1分の自分時間、おつかれさま🌿"); setTimerSec(null); return; }
-    const t = setTimeout(() => setTimerSec(s => (s == null ? null : s - 1)), 1000);
-    return () => clearTimeout(t);
-  }, [timerSec]);
 
   const imageRef = useRef<HTMLInputElement>(null);
 
@@ -113,7 +82,7 @@ export default function JournalPage() {
           if (prof?.is_suspended) setSuspended(true);
         } catch { /* ignore */ }
 
-        // 今日ToDo
+        // 今日ToDo（夜の振り返り用）
         let todos: Todo[] | null = null;
         try {
           const { data } = await supabase.from("todos")
@@ -121,7 +90,6 @@ export default function JournalPage() {
             .eq("user_id", user.id).eq("due_date", today)
             .order("created_at");
           todos = data as Todo[] | null;
-          if (todos) setAvailableTodos(todos);
         } catch { /* ignore */ }
 
         // 習慣達成率
@@ -133,20 +101,6 @@ export default function JournalPage() {
               .select("habit_id").eq("user_id", user.id).eq("logged_date", today);
             setHabitDoneRatio((logs?.length || 0) / habitsData.length);
           }
-        } catch { /* ignore */ }
-
-        // 昨日の朝目標（今日まだ未投稿時のみ再利用提案用）
-        try {
-          const yest = new Date();
-          yest.setDate(yest.getDate() - 1);
-          const yestJST = yest.toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
-          const { data: yp } = await supabase.from("posts")
-            .select("morning_goal, created_at")
-            .eq("user_id", user.id).eq("type", "morning")
-            .gte("created_at", `${yestJST}T00:00:00+09:00`)
-            .lt("created_at", `${yestJST}T23:59:59+09:00`)
-            .order("created_at", { ascending: false }).limit(1).maybeSingle();
-          if (yp?.morning_goal) setLastMorningGoal(yp.morning_goal);
         } catch { /* ignore */ }
 
         // 夜モード：朝投稿
@@ -187,32 +141,6 @@ export default function JournalPage() {
     const reader = new FileReader();
     reader.onload = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(compressed);
-  };
-
-  const addNewTodo = async () => {
-    if (!userId || !newTodoTitle.trim()) return;
-    const { data, error } = await safeInsertTodo<Todo>(supabase, {
-      user_id: userId, title: newTodoTitle.trim(), due_date: todayJST(),
-    });
-    if (error) {
-      showToast("error", `ToDoを追加できませんでした：${error.message}`);
-      return;
-    }
-    if (data) {
-      setAvailableTodos(prev => [...prev, data]);
-      setSelectedTodoIds(prev => new Set(prev).add(data.id));
-      showToast("success", `「${data.title}」を追加したよ🌱`);
-    }
-    setNewTodoTitle("");
-  };
-
-  const toggleTodoSelection = (id: string) => {
-    setSelectedTodoIds(prev => {
-      const s = new Set(prev);
-      if (s.has(id)) s.delete(id);
-      else if (s.size < 3) s.add(id);
-      return s;
-    });
   };
 
   const toggleMorningTodoDone = async (todo: Todo & { done: boolean }) => {
@@ -322,14 +250,6 @@ export default function JournalPage() {
     }
 
     if (data) {
-      // 朝モード: journal_todos に保存（テーブル未作成は無視）
-      if (mode === "morning" && selectedTodoIds.size > 0) {
-        try {
-          const rows = Array.from(selectedTodoIds).map(tid => ({ post_id: data.id, todo_id: tid }));
-          await supabase.from("journal_todos").insert(rows);
-        } catch { /* 未作成は無視 */ }
-      }
-
       // AIフィードバック（シンプル版）
       const feedbacks = mode === "morning" ? [
         `今日の一歩、ちゃんと言葉にできたね。選んだToDoを終わらせる必要はない。できる分だけでOK。`,
@@ -465,25 +385,9 @@ export default function JournalPage() {
           <div className="flex-1">
             <p className="font-extrabold">{mode === "morning" ? "おはよう！☀️" : "おつかれさま🌙"}</p>
             <p className="text-xs text-text-mid">
-              {mode === "morning" ? "今日の気分を教えてね" : "今日の振り返り。朝の目標は達成できた？"}
+              {mode === "morning" ? "気分をタップするだけでOK" : "今日の振り返り。朝の目標は達成できた？"}
             </p>
           </div>
-          {mode === "morning" && timerSec == null && (
-            <button
-              onClick={() => setTimerSec(60)}
-              aria-label="1分だけ自分と向き合う"
-              className="text-[11px] font-bold bg-mint-light text-mint border border-mint/30 rounded-full px-3 py-1.5 hover:bg-mint/10 transition shrink-0">
-              ⏱ 1分
-            </button>
-          )}
-          {mode === "morning" && timerSec != null && (
-            <button
-              onClick={() => setTimerSec(null)}
-              aria-label="タイマーを止める"
-              className="text-[11px] font-extrabold bg-mint text-white rounded-full px-3 py-1.5 shrink-0 animate-pop">
-              {timerSec}秒
-            </button>
-          )}
         </div>
 
         {/* 夜モード: 朝の振り返り */}
@@ -544,31 +448,24 @@ export default function JournalPage() {
           </div>
         </div>
 
-        {/* 気分選択後の分岐メッセージ */}
-        {mood === 4 && (
+        {/* 気分選択後のひとこと入力 */}
+        {mood !== 0 && (
           <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
-            <p className="text-sm font-bold mb-2">今日のひとこと書く？（書かなくてもOK）</p>
+            <p className="text-sm font-bold mb-2">
+              {mood === 4 ? "今日のひとこと書く？（書かなくてもOK）" : "少し話す？（無理しなくていいよ）"}
+            </p>
             <textarea value={content} onChange={e => { setContent(e.target.value); setModerationError(null); }}
-              placeholder="例：散歩が気持ちよかった"
-              className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm resize-none h-20 outline-none focus:border-mint"
-              maxLength={500} />
-          </div>
-        )}
-        {mood === 2 && (
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
-            <p className="text-sm font-bold mb-2">少し話す？（無理しなくていいよ）</p>
-            <textarea value={content} onChange={e => { setContent(e.target.value); setModerationError(null); }}
-              placeholder="何でもいいよ。聞いてるよ"
+              placeholder="今日のひとこと、何でも"
               className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm resize-none h-20 outline-none focus:border-mint"
               maxLength={500} />
           </div>
         )}
 
-        {/* 睡眠（もっと書く内のみ） */}
-        {showMore && (
+        {/* 睡眠（夜モード・もっと書く内のみ） */}
+        {mode === "evening" && showMore && (
           <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
             <p className="text-sm font-bold mb-2">
-              {mode === "morning" ? "😴 昨夜の睡眠時間" : "😴 昨夜は何時間寝ましたか？"}
+😴 昨夜は何時間寝ましたか？
             </p>
             <input type="number" min="0" max="24" step="0.5"
               value={sleepHours} onChange={e => setSleepHours(e.target.value)}
@@ -577,81 +474,6 @@ export default function JournalPage() {
               className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint box-border"
               style={{ WebkitAppearance: "none" }} />
           </div>
-        )}
-
-        {/* 朝モード: 今日の問いかけ（曜日ローテ・大きめ） */}
-        {mode === "morning" && (
-          <div className="relative bg-gradient-to-br from-mint-light via-white to-mint-light/50 dark:from-[#132824] dark:via-[#1a1a1a] dark:to-[#132824] rounded-3xl px-5 py-4 border border-mint/30 shadow-md shadow-mint/10 mb-3 overflow-hidden">
-            <span className="absolute -top-3 -right-3 text-[64px] opacity-10 select-none">🌿</span>
-            <p className="text-[11px] font-extrabold text-mint mb-1 tracking-wider">🌿 今日の問いかけ</p>
-            <p className="text-base font-extrabold text-text dark:text-gray-100 leading-relaxed">{morningPromptOfToday()}</p>
-          </div>
-        )}
-
-        {/* 朝モード: 今日の目標（もっと書く内） */}
-        {mode === "morning" && showMore && (
-          <div className="bg-gradient-to-br from-orange-light to-yellow-50 dark:from-[#2a1f15] dark:to-[#1f1a10] rounded-3xl p-5 border-2 border-orange/40 shadow-lg shadow-orange/10 mb-3">
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-base font-extrabold text-orange">🎯 今日の一言目標</p>
-              {lastMorningGoal && morningGoal === "" && (
-                <button
-                  onClick={() => setMorningGoal(lastMorningGoal)}
-                  aria-label="昨日と同じ目標を使う"
-                  className="text-[12px] font-extrabold text-white bg-orange rounded-full px-3 py-1.5 shadow-md shadow-orange/30 hover:opacity-90 active:scale-95 transition"
-                >
-                  ⟳ 昨日と同じ
-                </button>
-              )}
-            </div>
-            <p className="text-[11px] text-text-mid mb-3">1日1つ、小さくてもOK（50字前後がちょうどいい）</p>
-            <input type="text" value={morningGoal} onChange={e => setMorningGoal(e.target.value)}
-              placeholder="例：10分だけ読書する" maxLength={100}
-              aria-label="今日の目標"
-              className="w-full border-2 border-orange/30 bg-white dark:bg-[#1a1a1a] rounded-xl px-4 py-3 text-base font-bold outline-none focus:border-orange" />
-            <p className="text-[10px] text-text-light mt-1 text-right">{morningGoal.length}/100</p>
-          </div>
-        )}
-
-        {/* 朝モード: ToDo選択（折りたたみ内） */}
-        {mode === "morning" && showMore && (
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
-            <p className="text-sm font-bold mb-1">✅ 今日やること（3つまで）</p>
-            <p className="text-[10px] text-text-light mb-3">選択: {selectedTodoIds.size}/3</p>
-            <div className="flex flex-col gap-1.5 mb-2">
-              {availableTodos.map(t => {
-                const sel = selectedTodoIds.has(t.id);
-                const atLimit = !sel && selectedTodoIds.size >= 3;
-                return (
-                  <button key={t.id} onClick={() => toggleTodoSelection(t.id)}
-                    disabled={atLimit}
-                    className={`flex items-center gap-2 p-2 rounded-xl text-left text-sm transition disabled:opacity-40 ${sel ? "bg-mint-light border-2 border-mint" : "bg-gray-50 border-2 border-transparent"}`}>
-                    <span className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${sel ? "bg-mint border-mint text-white" : "border-gray-300"}`}>
-                      {sel && "✓"}
-                    </span>
-                    <span>{t.title}</span>
-                  </button>
-                );
-              })}
-            </div>
-            <div className="flex gap-2">
-              <input type="text" value={newTodoTitle} onChange={e => setNewTodoTitle(e.target.value)}
-                placeholder="新しいToDoを追加" onKeyDown={e => { if (e.key === "Enter") addNewTodo(); }}
-                className="flex-1 border-2 border-gray-100 rounded-xl px-3 py-2 text-xs outline-none focus:border-mint" />
-              <button onClick={addNewTodo} disabled={!newTodoTitle.trim()}
-                className="bg-mint text-white font-bold px-4 py-2 rounded-xl text-xs disabled:opacity-30">追加</button>
-            </div>
-          </div>
-        )}
-
-        {/* もっと書く▼ トグル（朝は最初から折りたたむ） */}
-        {mode === "morning" && !showMore && (
-          <button
-            type="button"
-            onClick={() => setShowMore(true)}
-            className="w-full py-2 mb-3 text-xs font-extrabold text-mint hover:bg-mint-light dark:hover:bg-[#1f2824] rounded-full transition"
-            aria-label="追加項目を表示">
-            もっと書く ▼（目標・睡眠・ToDo・画像）
-          </button>
         )}
 
         {/* 夜モード: 本文（常時表示） */}
@@ -665,8 +487,8 @@ export default function JournalPage() {
         </div>
         )}
 
-        {/* 画像添付（もっと書く内のみ） */}
-        {showMore && (
+        {/* 画像添付（夜モード・もっと書く内のみ） */}
+        {mode === "evening" && showMore && (
         <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
           <button onClick={() => imageRef.current?.click()} type="button"
             className="flex items-center gap-1 text-sm text-text-light hover:text-mint transition">
@@ -759,7 +581,7 @@ export default function JournalPage() {
           <button onClick={() => { setContent(""); setMorningGoal(""); setMoodOnly(true); }}
             disabled={loading || mood === 0}
             className="w-full text-text-light text-sm py-2 disabled:opacity-40">
-            書かなくていい（気分だけ記録）
+            今日は書かなくていい
           </button>
         </div>
       </div>

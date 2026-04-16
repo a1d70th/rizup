@@ -54,7 +54,6 @@ export default function HomePage() {
   const [eveningDone, setEveningDone] = useState(false);
   const [morningMood, setMorningMood] = useState<number>(0);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [todayQuote, setTodayQuote] = useState<string>("");
   const [refreshing, setRefreshing] = useState(false);
   const [pull, setPull] = useState(0);
   const startY = useRef<number | null>(null);
@@ -122,16 +121,6 @@ export default function HomePage() {
               const { data: logs } = await supabase.from("habit_logs")
                 .select("habit_id").eq("user_id", user.id).eq("logged_date", today);
               setHabits({ done: (logs || []).length, total: h.length });
-            }
-          } catch { /* ignore */ }
-          // 今日のひとこと：最も近い vision の title or description から1文
-          try {
-            const { data: vs } = await supabase.from("visions")
-              .select("title, description, time_horizon").eq("user_id", user.id)
-              .order("time_horizon").limit(5);
-            if (vs && vs.length > 0) {
-              const seed = vs[Math.floor(Date.now() / 86400000) % vs.length];
-              setTodayQuote(seed.description?.split(/[。\n]/)[0]?.trim() || seed.title);
             }
           } catch { /* ignore */ }
           fetch("/api/check-progress", { method: "POST" })
@@ -208,13 +197,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* 今日のひとこと（なりたい自分から抜粋） */}
-          {todayQuote && (
-            <div className="bg-mint-light dark:bg-[#1a2620] border border-mint/20 rounded-2xl px-3 py-2 mb-3 flex items-start gap-2">
-              <span className="text-base">🎯</span>
-              <p className="text-[12px] font-bold text-mint flex-1 leading-relaxed">{todayQuote}</p>
-            </div>
-          )}
 
           {loading ? (
             <SkeletonTimeline />
