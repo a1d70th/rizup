@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 export type AnimalKind = "rabbit" | "raccoon" | "cat" | "squirrel" | "owl";
 
@@ -52,12 +52,13 @@ function timeOfDay(): "morning" | "day" | "evening" | "deep" {
   return "deep";
 }
 
-function timeMessage(_name: string, tod: string): string {
+function timeMessage(name: string, tod: string): string {
+  const n = name || "相棒";
   const map: Record<string, string> = {
-    morning: "おはよう！今日もいるよ🌱",
-    day: "今日どんな感じ？",
-    evening: "お疲れさま、ゆっくりしてね🌙",
-    deep: "眠れない夜は、ここにいるよ⭐",
+    morning: `${n}、おはよう！今日も来てくれてありがとう☀️`,
+    day: `昨日より少しだけでいい🌿`,
+    evening: `今日もお疲れさま🌙`,
+    deep: `眠れない夜は、ここにいるよ⭐`,
   };
   return map[tod] || map.day;
 }
@@ -88,6 +89,7 @@ export default function MyCharacter({
   mood = 'neutral',
 }: Props) {
   const [showBubble, setShowBubble] = useState(false);
+  const [hatching, setHatching] = useState(false);
   const stage = stageOf(streak);
   const palette = PALETTE[animal || "rabbit"];
   const tod = useMemo(() => timeOfDay(), []);
@@ -96,8 +98,19 @@ export default function MyCharacter({
   const isSad = mood === 'bad';
   const charName = name || "相棒";
 
+  // streak=1 かつ lastWritten が今日 → 孵化アニメーション
+  useEffect(() => {
+    if (stage === 2 && wroteToday(lastWritten)) {
+      setHatching(true);
+      const timer = setTimeout(() => setHatching(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [stage, lastWritten]);
+
   const tapMsg = useMemo(() => timeMessage(charName, tod), [charName, tod]);
-  const baseMsg = isSad
+  const baseMsg = hatching
+    ? `生まれたよ！一緒にいるね🌱`
+    : isSad
     ? `そばにいるよ。${charName}はずっと一緒だよ🌿`
     : isHappy
       ? `今日もありがとう、${charName}がジャンプしてるよ✨`
@@ -115,6 +128,20 @@ export default function MyCharacter({
       >
         {stage === 1 ? (
           <EggSvg size={size} palette={palette} />
+        ) : hatching ? (
+          <div className="relative">
+            <EggSvg size={size} palette={palette} cracking />
+            <div className="absolute inset-0 flex items-center justify-center animate-fade-in" style={{ animationDelay: '1.5s', animationFillMode: 'both' }}>
+              <AnimalSvg
+                size={size * 0.7}
+                animal={animal || "rabbit"}
+                palette={palette}
+                isHappy={true}
+                isSad={false}
+                stage={2}
+              />
+            </div>
+          </div>
         ) : (
           <AnimalSvg
             size={size}
@@ -150,7 +177,7 @@ export default function MyCharacter({
 
 // ───────── SVG サブコンポーネント ─────────
 
-function EggSvg({ size, palette }: { size: number; palette: { accent: string } }) {
+function EggSvg({ size, palette, cracking }: { size: number; palette: { accent: string }; cracking?: boolean }) {
   const r = size;
   return (
     <svg width={r} height={r} viewBox="0 0 100 100">
@@ -162,6 +189,19 @@ function EggSvg({ size, palette }: { size: number; palette: { accent: string } }
       </defs>
       <ellipse cx="50" cy="55" rx="26" ry="34" fill="url(#egg-g)" stroke={palette.accent} strokeWidth="1.5" />
       <ellipse cx="42" cy="45" rx="4" ry="6" fill="#ffffff" opacity="0.8" />
+      {cracking && (
+        <g>
+          <line x1="42" y1="50" x2="50" y2="38" stroke={palette.accent} strokeWidth="1.5" strokeLinecap="round">
+            <animate attributeName="opacity" from="0" to="1" dur="0.5s" fill="freeze" />
+          </line>
+          <line x1="50" y1="38" x2="55" y2="50" stroke={palette.accent} strokeWidth="1.5" strokeLinecap="round">
+            <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.3s" fill="freeze" />
+          </line>
+          <line x1="48" y1="44" x2="58" y2="42" stroke={palette.accent} strokeWidth="1" strokeLinecap="round">
+            <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.5s" fill="freeze" />
+          </line>
+        </g>
+      )}
     </svg>
   );
 }

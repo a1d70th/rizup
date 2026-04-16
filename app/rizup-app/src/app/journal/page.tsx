@@ -36,14 +36,14 @@ export default function JournalPage() {
   const [content, setContent] = useState("");
   const [gratitudes, setGratitudes] = useState(["", "", ""]);
   const [sleepHours, setSleepHours] = useState("");
-  const [morningGoal, setMorningGoal] = useState("");
+  const [morningGoal] = useState("");
   const [loading, setLoading] = useState(false);
   const [aiFeedback, setAiFeedback] = useState<string | null>(null);
   const [posted, setPosted] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [moderationError, setModerationError] = useState<string | null>(null);
-  const [moodOnly, setMoodOnly] = useState(false);
+  const [wantWrite, setWantWrite] = useState(false);
   const [crisis, setCrisis] = useState(false);
   const [suspended, setSuspended] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -57,13 +57,6 @@ export default function JournalPage() {
 
   // もっと書く▼（デフォルト折りたたみ・最小2-3タップで投稿）
   const [showMore, setShowMore] = useState(false);
-
-  // 「書かなくていい」ボタン: moodだけ記録して投稿
-  useEffect(() => {
-    if (!moodOnly) return;
-    handlePost();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [moodOnly]);
 
   const imageRef = useRef<HTMLInputElement>(null);
 
@@ -347,7 +340,7 @@ export default function JournalPage() {
           <Image src="/icons/icon-192.png" alt="Rizup" width={120} height={120} className="rounded-full animate-sho-bounce drop-shadow-xl" />
           <div className="absolute -top-2 -right-2 text-3xl animate-pop">🎉</div>
         </div>
-        <h2 className="text-2xl font-extrabold mb-1">{moodOnly ? "来てくれただけで十分だよ" : "投稿できたよ！"}</h2>
+        <h2 className="text-2xl font-extrabold mb-1">{!content.trim() ? "来てくれただけで十分だよ" : "投稿できたよ！"}</h2>
         <p className="text-xs text-text-mid mb-4">今日の積み上げ +1🌱</p>
         {aiFeedback && (
           <div className="bg-mint-light rounded-2xl p-4 max-w-xs mb-6 text-left">
@@ -437,7 +430,7 @@ export default function JournalPage() {
           <p className="text-sm font-bold mb-4 text-center">今の気分は？</p>
           <div className="flex gap-3 justify-center">
             {moodOptions.map(m => (
-              <button key={m.value} onClick={() => setMood(m.value)}
+              <button key={m.value} onClick={() => { setMood(m.value); setWantWrite(false); }}
                 className={`flex flex-col items-center gap-2 px-8 py-5 rounded-2xl border-2 transition-all ${
                   mood === m.value ? m.color + " scale-105 shadow-md" : "bg-gray-50 dark:bg-[#222] border-gray-200 dark:border-[#333] opacity-60"
                 }`}>
@@ -448,16 +441,32 @@ export default function JournalPage() {
           </div>
         </div>
 
-        {/* 気分選択後のひとこと入力 */}
-        {mood !== 0 && (
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
+        {/* 気分選択後：このまま送る or 一言追加する */}
+        {mood !== 0 && !wantWrite && (
+          <div className="flex flex-col gap-2 mb-3 animate-fade-in">
+            <button onClick={handlePost}
+              disabled={loading}
+              className="w-full bg-mint text-white font-bold py-4 rounded-2xl shadow-lg shadow-mint/30 text-base active:scale-95 transition">
+              {loading ? "送信中..." : "このまま送る ✨"}
+            </button>
+            <button onClick={() => setWantWrite(true)}
+              className="w-full bg-white dark:bg-[#1a1a1a] border-2 border-gray-100 dark:border-[#2a2a2a] text-text-mid font-bold py-3 rounded-2xl text-sm active:scale-95 transition">
+              💬 一言追加する
+            </button>
+          </div>
+        )}
+
+        {/* 一言入力（wantWrite時のみ表示） */}
+        {mood !== 0 && wantWrite && (
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3 animate-fade-in">
             <p className="text-sm font-bold mb-2">
-              {mood === 4 ? "今日のひとこと書く？（書かなくてもOK）" : "少し話す？（無理しなくていいよ）"}
+              {mood === 4 ? "今日のひとこと（書かなくてもOK）" : "少し話す？（無理しなくていいよ）"}
             </p>
             <textarea value={content} onChange={e => { setContent(e.target.value); setModerationError(null); }}
               placeholder="今日のひとこと、何でも"
               className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm resize-none h-20 outline-none focus:border-mint"
-              maxLength={500} />
+              maxLength={500}
+              autoFocus />
           </div>
         )}
 
@@ -566,25 +575,22 @@ export default function JournalPage() {
         <div aria-hidden="true" className="h-28" />
       </div>
 
-      {/* 固定投稿ボタン：スクロールせず常に押せる */}
-      <div
-        className="fixed left-0 right-0 bottom-16 z-40 px-4 pointer-events-none"
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-      >
-        <div className="max-w-md mx-auto pointer-events-auto flex flex-col gap-2">
-          <button onClick={handlePost}
-            disabled={loading || mood === 0}
-            aria-label="ジャーナルを投稿"
-            className="w-full bg-mint text-white font-bold py-4 rounded-full shadow-xl shadow-mint/40 disabled:opacity-40 text-base">
-            {loading ? "投稿中..." : mode === "morning" ? "☀️ 朝のひとことを送る" : "🌙 夜のふりかえりを送る"}
-          </button>
-          <button onClick={() => { setContent(""); setMorningGoal(""); setMoodOnly(true); }}
-            disabled={loading || mood === 0}
-            className="w-full text-text-light text-sm py-2 disabled:opacity-40">
-            今日は書かなくていい
-          </button>
+      {/* 固定投稿ボタン（wantWrite時 or 夜モード時のみ表示） */}
+      {(wantWrite || mode === "evening") && (
+        <div
+          className="fixed left-0 right-0 bottom-16 z-40 px-4 pointer-events-none"
+          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        >
+          <div className="max-w-md mx-auto pointer-events-auto">
+            <button onClick={handlePost}
+              disabled={loading || mood === 0}
+              aria-label="ジャーナルを投稿"
+              className="w-full bg-mint text-white font-bold py-4 rounded-full shadow-xl shadow-mint/40 disabled:opacity-40 text-base">
+              {loading ? "投稿中..." : mode === "morning" ? "☀️ 朝のひとことを送る" : "🌙 夜のふりかえりを送る"}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       <BottomNav />
     </div>

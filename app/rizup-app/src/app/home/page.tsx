@@ -180,6 +180,25 @@ export default function HomePage() {
                 🌱 相棒を選ぶ
               </Link>
             )}
+            {/* 時間帯別ジャーナル誘導 */}
+            {(() => {
+              const h = new Date().getHours();
+              if (h >= 5 && h < 12 && !morningDone) {
+                return (
+                  <Link href="/journal" className="mt-3 bg-mint text-white text-sm font-extrabold px-5 py-2.5 rounded-full shadow-md shadow-mint/30 active:scale-95 transition">
+                    今日のひとことを書く ☀️
+                  </Link>
+                );
+              }
+              if (h >= 18 && h < 24 && !eveningDone) {
+                return (
+                  <Link href="/journal" className="mt-3 bg-[#f4976c] text-white text-sm font-extrabold px-5 py-2.5 rounded-full shadow-md shadow-orange/30 active:scale-95 transition">
+                    今日の振り返りを書く 🌙
+                  </Link>
+                );
+              }
+              return null;
+            })()}
           </div>
 
           {/* 3リング可視化（朝/夜/毎日のこと）＋ 連続日数 */}
