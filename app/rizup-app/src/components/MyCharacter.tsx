@@ -45,13 +45,43 @@ function timeOfDay(): "morning" | "day" | "evening" | "deep" {
 
 function timeMessage(name: string, tod: string): string {
   const n = name || "相棒";
-  const map: Record<string, string> = {
-    morning: `${n}、おはよう！今日も来てくれてありがとう☀️`,
-    day: `昨日より少しだけでいい🌿`,
-    evening: `今日もお疲れさま🌙`,
-    deep: `眠れない夜は、ここにいるよ⭐`,
+  // 日付ベースで30日周期のバリエーション
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+  const variant = dayOfYear % 5;
+
+  const messages: Record<string, string[]> = {
+    morning: [
+      `${n}、おはよう！今日も来てくれてありがとう☀️`,
+      `おはよう。${n}は早起きして待ってたよ🌱`,
+      `新しい1日だね。${n}と一緒に始めよう`,
+      `おはよう！昨日の自分より1%だけ前へ☀️`,
+      `${n}、今日はどんな日になるかな？`,
+    ],
+    day: [
+      `昨日より少しだけでいい🌿`,
+      `${n}もお昼休憩中。ゆっくりしてね`,
+      `午後も自分のペースでいこう🌱`,
+      `ちょっと深呼吸して、また頑張ろう`,
+      `${n}はいつもそばにいるよ`,
+    ],
+    evening: [
+      `今日もお疲れさま🌙`,
+      `今日1日、よく頑張ったね。${n}も嬉しい`,
+      `夜はゆっくり自分を褒める時間🌙`,
+      `今日できたこと、1つでもあれば十分だよ`,
+      `${n}と一緒に今日を振り返ろう`,
+    ],
+    deep: [
+      `眠れない夜は、ここにいるよ⭐`,
+      `夜更かしさん。${n}も起きてるよ`,
+      `考えすぎないで。明日また話そう💤`,
+      `深呼吸して、温かくして寝よう`,
+      `${n}がそばにいるから大丈夫`,
+    ],
   };
-  return map[tod] || map.day;
+
+  const list = messages[tod] || messages.day;
+  return list[variant % list.length];
 }
 
 function wroteToday(last: Date | null | undefined): boolean {

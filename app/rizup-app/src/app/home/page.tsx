@@ -164,6 +164,16 @@ export default function HomePage() {
     setPull(0);
   };
 
+  // lastWritten から「最後に書いてからの日数」を計算
+  const daysSinceLastPost = (() => {
+    if (!lastWritten) return 999;
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
+    const lastDay = new Date(lastWritten).toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
+    if (today === lastDay) return 0;
+    const diff = Math.floor((new Date(today).getTime() - new Date(lastDay).getTime()) / 86400000);
+    return diff;
+  })();
+
   const habitPct = habits.total > 0 ? habits.done / habits.total : 0;
 
   return (
@@ -188,17 +198,46 @@ export default function HomePage() {
               animal={charAnimal || "rabbit"}
               lastWritten={lastWritten}
               size={130}
-              mood={justPosted ? 'good' : 'neutral'}
+              mood={justPosted ? 'good' : (daysSinceLastPost >= 2 && daysSinceLastPost < 999) ? 'bad' : 'neutral'}
             />
             {!charAnimal && (
               <Link href="/character-setup" className="mt-2 text-[11px] font-bold text-mint border border-mint rounded-full px-3 py-1 hover:bg-mint-light transition">
                 🌱 相棒を選ぶ
               </Link>
             )}
+            {/* プログレスバー: 次のステージまで */}
+            {(() => {
+              const thresholds = [0, 3, 7, 21, 45, 75, 100];
+              const stageNames = ["", "赤ちゃん", "子供", "大人", "村人", "村長", "伝説"];
+              const currentStageIdx = thresholds.findIndex((t, i) => i < thresholds.length - 1 && streak >= t && streak < thresholds[i + 1]);
+              if (currentStageIdx === -1 || currentStageIdx >= thresholds.length - 1) return null;
+              const nextThreshold = thresholds[currentStageIdx + 1];
+              const currentThreshold = thresholds[currentStageIdx];
+              const remaining = nextThreshold - streak;
+              const progress = (streak - currentThreshold) / (nextThreshold - currentThreshold);
+              const nextName = stageNames[currentStageIdx + 1] || "";
+              if (!nextName) return null;
+              return (
+                <div className="w-full mt-2 px-4">
+                  <div className="flex items-center justify-between text-[10px] text-text-mid mb-1">
+                    <span>あと{remaining}日で{nextName}に</span>
+                    <span>{Math.round(progress * 100)}%</span>
+                  </div>
+                  <div className="w-full bg-gray-100 dark:bg-[#2a2a2a] rounded-full h-1.5">
+                    <div className="bg-mint rounded-full h-1.5 transition-all duration-500" style={{ width: `${Math.round(progress * 100)}%` }} />
+                  </div>
+                </div>
+              );
+            })()}
             {/* ジャーナル誘導（常時表示） */}
             {justPosted && (
               <p className="mt-2 text-sm font-extrabold text-mint animate-fade-in">
                 書いてくれたね！ありがとう🌱
+              </p>
+            )}
+            {!justPosted && daysSinceLastPost >= 2 && daysSinceLastPost < 999 && (
+              <p className="mt-2 text-sm font-extrabold text-mint animate-fade-in">
+                おかえり！待ってたよ🌱
               </p>
             )}
             {!morningDone ? (
