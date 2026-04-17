@@ -92,6 +92,13 @@ export default function HomePage() {
               if (ln && !nameLocal) nameLocal = ln;
             } catch { /* ignore */ }
           }
+          // 過去テストで紛れ込んだ不正値を除去（名前フィールドではなく役職が保存されていた場合）
+          const BAD_NAMES = new Set(["アシスタントマネージャー", "マネージャー", "アシスタント", "undefined", "null"]);
+          if (nameLocal && BAD_NAMES.has(nameLocal.trim())) {
+            nameLocal = "";
+            try { localStorage.removeItem("rizup_character_name"); } catch {}
+            try { await supabase.from("profiles").update({ character_name: null }).eq("id", user.id); } catch {}
+          }
           if (animalLocal) setCharAnimal(animalLocal);
           if (nameLocal) setCharName(nameLocal);
           // 最新の投稿日（lastWritten）
@@ -184,6 +191,15 @@ export default function HomePage() {
     setTimeout(() => setHappyAnim(false), 1500);
     setTimeout(() => setThanks(false), 3000);
   };
+
+  // URL パラメータから subscribed=true を検知（Stripe 成功 → Pro 昇格）
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("subscribed") === "true") {
+      showToast("success", "✨ Pro にアップグレードしたよ！ありがとう🌱");
+      window.history.replaceState({}, "", "/home");
+    }
+  }, []);
 
   // URL パラメータから posted=true を検知
   useEffect(() => {
