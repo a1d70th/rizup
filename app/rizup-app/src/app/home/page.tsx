@@ -47,6 +47,7 @@ export default function HomePage() {
   const [justPosted, setJustPosted] = useState(false);
   const [milestoneModal, setMilestoneModal] = useState<{ days: number; message: string } | null>(null);
   // Quick-post モーダル（ホームで完結投稿）
+  const initRan = useRef(false);
   const [postOpen, setPostOpen] = useState(false);
   const [postMood, setPostMood] = useState(0);
   const [postContent, setPostContent] = useState("");
@@ -65,10 +66,24 @@ export default function HomePage() {
         .order("created_at", { ascending: false }).limit(FETCH_LIMIT);
       data = fb.data;
     }
-    if (data) setPosts(data as PostWithProfile[]);
+    if (data) {
+      const arr = data as PostWithProfile[];
+      setPosts(arr);
+      // 今日の記録者数をタイムラインから派生（JST 基準・ユーザー重複排除）
+      const todayJstStr = todayJST();
+      const uniqUsers = new Set(
+        arr
+          .filter(p => new Date(p.created_at).toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" }) === todayJstStr)
+          .map(p => p.user_id),
+      );
+      setTodayCount(uniqUsers.size);
+    }
   };
 
   useEffect(() => {
+    // StrictMode の二重実行や親再レンダによる useEffect 再呼び出しを 1 回に制限
+    if (initRan.current) return;
+    initRan.current = true;
     (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -136,14 +151,8 @@ export default function HomePage() {
           }
         } catch { /* ignore */ }
 
-        // 全員の今日の記録数（peer 効果バッジ用）
-        try {
-          const { count } = await supabase.from("posts")
-            .select("id", { count: "exact", head: true })
-            .gte("created_at", dayStart.toISOString())
-            .lt("created_at", dayEnd.toISOString());
-          if (typeof count === "number") setTodayCount(count);
-        } catch { /* ignore */ }
+        // peer 効果バッジ（今日の記録者数）は fetchPosts の結果から派生させる
+        // → 追加の HEAD count クエリを撤去して 503 を回避
 
         // サーバー再計算は 2 秒後に遅延実行（体感速度を優先）
         setTimeout(() => {
