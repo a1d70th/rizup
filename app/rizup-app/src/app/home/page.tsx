@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import PostCard from "@/components/PostCard";
-import MyCharacter, { AnimalKind } from "@/components/MyCharacter";
+import type { AnimalKind } from "@/components/MyCharacter";
 import Image from "next/image";
 import Link from "next/link";
 import { SkeletonTimeline } from "@/components/Skeleton";
@@ -41,8 +41,8 @@ export default function HomePage() {
   const [refreshing, setRefreshing] = useState(false);
   const [pull, setPull] = useState(0);
   const startY = useRef<number | null>(null);
-  const [charAnimal, setCharAnimal] = useState<AnimalKind | null>(null);
-  const [charName, setCharName] = useState<string>("");
+  const [, setCharAnimal] = useState<AnimalKind | null>(null);
+  const [, setCharName] = useState<string>("");
   const [lastWritten, setLastWritten] = useState<Date | null>(null);
   const [justPosted, setJustPosted] = useState(false);
   const [milestoneModal, setMilestoneModal] = useState<{ days: number; message: string } | null>(null);
@@ -260,10 +260,9 @@ export default function HomePage() {
   // マイルストーン到達チェック
   useEffect(() => {
     if (streak <= 0) return;
-    const companion = charName && charName.trim() ? charName : "もも";
     const milestones: Record<number, string> = {
-      3: `3日続いた！${companion}が喜んでるよ🌱`,
-      7: "1週間！すごい、本当にすごいよ✨",
+      3: "3日続いた！すごい第一歩🌱",
+      7: "1週間！本当によくやってるよ✨",
       14: "2週間続けた。これは本物だ🔥",
       30: "1ヶ月！あなたは変わった🌟",
     };
@@ -274,7 +273,7 @@ export default function HomePage() {
       localStorage.setItem(key, new Date().toISOString());
       setMilestoneModal({ days: streak, message: msg });
     }
-  }, [streak, charName]);
+  }, [streak]);
 
   const refresh = async () => { setRefreshing(true); await fetchPosts(); setRefreshing(false); };
 
@@ -354,144 +353,78 @@ export default function HomePage() {
             {refreshing ? "更新中…" : pull > 60 ? "離して更新" : "↓ 引っ張って更新"}
           </div>
         )}
-        {/* 初回ユーザー誘導バナー（キャラ未設定時のみ） */}
-        {!loading && !charAnimal && (
-          <div className="max-w-md mx-auto px-4 pt-3">
-            <Link
-              href="/character-setup"
-              className="block bg-gradient-to-r from-mint to-[#4ecba0] text-white rounded-2xl px-5 py-4 shadow-lg shadow-mint/30 active:scale-[.98] transition">
-              <p className="text-base font-extrabold">🌱 キャラを選んでスタート</p>
-              <p className="text-[12px] opacity-90 mt-0.5">まずは相棒の動物を選ぼう。30秒で終わるよ</p>
-            </Link>
-          </div>
-        )}
         <div className="max-w-md mx-auto px-4 py-2">
-          {/* My Character：村の住人・毎日の相棒 */}
-          <div className={`bg-gradient-to-b from-[#ecfdf5] to-white dark:from-[#0d2818] dark:to-[#1a1a1a] rounded-2xl border border-mint/20 dark:border-[#2a3a34] shadow-sm px-4 py-8 mb-3 flex flex-col items-center relative ${happyAnim ? "animate-pet" : ""}`}>
-            <MyCharacter
-              streak={streak}
-              name={charName}
-              animal={charAnimal || "rabbit"}
-              lastWritten={lastWritten}
-              size={160}
-              mood={justPosted || happyAnim ? 'good' : (daysSinceLastPost >= 2 && daysSinceLastPost < 999) ? 'bad' : 'neutral'}
-            />
-            {justPosted && (
-              <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                {["🌸", "✨", "⭐", "🌷", "💫", "🌟", "🎉", "🌿"].map((emoji, i) => {
-                  const angle = (i / 8) * Math.PI * 2;
-                  return (
-                    <span key={i} className="particle text-lg absolute"
-                      style={{
-                        left: '50%', top: '40%',
-                        '--tx': `${Math.cos(angle) * 60}px`,
-                        '--ty': `${Math.sin(angle) * 60}px`,
-                        animationDelay: `${i * 0.05}s`,
-                      } as React.CSSProperties}>
-                      {emoji}
-                    </span>
-                  );
-                })}
+          {/* シンプルなヒーローカード: streak + 投稿 CTA */}
+          <div className={`bg-gradient-to-b from-[#ecfdf5] to-white dark:from-[#0d2818] dark:to-[#1a1a1a] rounded-2xl border border-mint/20 dark:border-[#2a3a34] shadow-sm px-5 py-6 mb-3 flex flex-col items-center relative ${happyAnim ? "animate-pet" : ""}`}>
+            {/* 大きな streak */}
+            {streak > 0 ? (
+              <div className="flex items-baseline gap-2 text-mint">
+                <span className="text-4xl">🔥</span>
+                <span className="text-[44px] font-extrabold leading-none">{streak}</span>
+                <span className="text-lg font-extrabold">日連続</span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-4xl">🌱</span>
+                <p className="text-lg font-extrabold text-mint">今日、最初の一歩を</p>
               </div>
             )}
-            {!charAnimal ? (
-              <Link href="/character-setup" className="mt-2 text-[11px] font-bold text-mint border border-mint rounded-full px-3 py-1 hover:bg-mint-light transition">
-                🌱 相棒を選ぶ
-              </Link>
-            ) : (
-              <Link href="/character-setup?edit=1" className="mt-2 text-[10px] font-bold text-text-light hover:text-mint transition underline-offset-2 hover:underline">
-                ✏️ 名前・動物を変更
-              </Link>
-            )}
-            {/* プログレスバー: 次のステージまで（🥚 あと◯日で◯◯に変身！） */}
-            {(() => {
-              const thresholds = [0, 3, 7, 21, 45, 75, 100];
-              const stageNames = ["", "赤ちゃん", "子供", "大人", "村人", "村長", "伝説"];
-              const currentStageIdx = thresholds.findIndex((t, i) => i < thresholds.length - 1 && streak >= t && streak < thresholds[i + 1]);
-              if (currentStageIdx === -1 || currentStageIdx >= thresholds.length - 1) return null;
-              const nextThreshold = thresholds[currentStageIdx + 1];
-              const currentThreshold = thresholds[currentStageIdx];
-              const remaining = nextThreshold - streak;
-              const progress = (streak - currentThreshold) / (nextThreshold - currentThreshold);
-              const nextName = stageNames[currentStageIdx + 1] || "";
-              if (!nextName) return null;
-              return (
-                <div className="w-full mt-3 px-2">
-                  <p className="text-[12px] font-extrabold text-center text-text-mid dark:text-gray-200 mb-1.5">
-                    🥚 あと{remaining}日で{nextName}に変身！
-                  </p>
-                  <div className="w-full bg-gray-100 dark:bg-[#2a2a2a] rounded-full h-2 overflow-hidden">
-                    <div className="rounded-full h-2 transition-all duration-700"
-                      style={{ width: `${Math.max(Math.round(progress * 100), 4)}%`, background: "linear-gradient(90deg, #6ecbb0, #4ecba0)" }} />
-                  </div>
-                </div>
-              );
-            })()}
+
             {/* ストリーク危機バナー（22:00〜23:59・今日未投稿） */}
             {(() => {
               const hour = new Date().getHours();
               const remaining = 24 - hour;
-              if (hour >= 22 && hour <= 23 && !morningDone && !eveningDone) {
-                const companion = charName && charName.trim() ? charName : "もも";
+              if (hour >= 22 && hour <= 23 && !morningDone && !eveningDone && streak > 0) {
                 return (
-                  <div className="w-full mt-2 bg-amber-50 dark:bg-[#2a2515] border border-amber-200 dark:border-[#4a3a20] rounded-xl px-4 py-3 animate-fade-in flex flex-col items-center gap-2">
+                  <div className="w-full mt-3 bg-amber-50 dark:bg-[#2a2515] border border-amber-200 dark:border-[#4a3a20] rounded-xl px-4 py-3 animate-fade-in flex flex-col items-center gap-2">
                     <p className="text-xs font-extrabold text-amber-700 dark:text-amber-300 text-center">
-                      ⏰ あと{remaining}時間で連続が途切れちゃう...{companion}が待ってるよ
+                      ⏰ あと{remaining}時間で連続が途切れちゃう
                     </p>
-                    <Link href="/journal"
-                      className="bg-amber-500 text-white text-xs font-extrabold px-5 py-2 rounded-full shadow-md active:scale-95 transition">
-                      今すぐ書く
-                    </Link>
                   </div>
                 );
               }
               return null;
             })()}
-            {/* 書いてくれたね！メッセージ */}
+
+            {/* 感謝メッセージ */}
             {thanks && (
-              <p className="mt-2 text-sm font-extrabold text-mint animate-fade-in">
+              <p className="mt-3 text-sm font-extrabold text-mint animate-fade-in">
                 書いてくれてありがとう🌱
               </p>
             )}
             {justPosted && !thanks && (
-              <p className="mt-2 text-sm font-extrabold text-mint animate-fade-in">
-                書いてくれたね！ありがとう🌱
+              <p className="mt-3 text-sm font-extrabold text-mint animate-fade-in">
+                今日もお疲れさま🌱
               </p>
             )}
             {!justPosted && !thanks && daysSinceLastPost >= 2 && daysSinceLastPost < 999 && (
-              <p className="mt-2 text-sm font-extrabold text-mint animate-fade-in">
-                おかえり！待ってたよ🌱
+              <p className="mt-3 text-sm font-extrabold text-mint animate-fade-in">
+                おかえり。また会えて嬉しい🌿
               </p>
             )}
-            {/* 大きな streak バッジ */}
-            {streak > 0 && (
-              <div className="mt-4 flex items-baseline gap-1 text-mint">
-                <span className="text-2xl">🔥</span>
-                <span className="text-[24px] font-extrabold leading-none">{streak}</span>
-                <span className="text-sm font-extrabold">日連続！</span>
-              </div>
-            )}
-            {/* 今日の記録者数（peer effect） */}
+
+            {/* 今日の記録者数 */}
             {todayCount > 0 && (
-              <p className="mt-1 text-[12px] font-bold text-orange">
-                🔥 今日 {todayCount}人 が記録したよ
+              <p className="mt-3 text-[13px] font-bold text-orange">
+                🔥 今日 {todayCount}人 が書いたよ
               </p>
             )}
-            {/* メインアクション: ホーム内モーダルで投稿 */}
+
+            {/* メインアクション: 投稿モーダル */}
             {!morningDone ? (
               <button
                 onClick={() => { setPostMood(0); setPostContent(""); setPostOpen(true); }}
-                className="mt-4 w-full max-w-xs bg-mint text-white text-base font-extrabold px-6 py-4 rounded-full shadow-lg shadow-mint/30 active:scale-95 transition">
+                className="mt-5 w-full max-w-xs bg-mint text-white text-base font-extrabold px-6 py-4 rounded-full shadow-lg shadow-mint/30 active:scale-95 transition">
                 📝 今日のひとことを書く
               </button>
             ) : !eveningDone ? (
               <button
                 onClick={() => { setPostMood(0); setPostContent(""); setPostOpen(true); }}
-                className="mt-4 w-full max-w-xs bg-[#f4976c] text-white text-base font-extrabold px-6 py-4 rounded-full shadow-lg shadow-orange/30 active:scale-95 transition">
+                className="mt-5 w-full max-w-xs bg-[#f4976c] text-white text-base font-extrabold px-6 py-4 rounded-full shadow-lg shadow-orange/30 active:scale-95 transition">
                 🌙 今日の振り返りを書く
               </button>
             ) : (
-              <p className="mt-3 text-xs font-bold text-text-mid">今日はもう書いたよ。ゆっくり休んでね🌙</p>
+              <p className="mt-4 text-sm font-bold text-text-mid">今日はもう書いたよ。ゆっくり休んでね🌙</p>
             )}
           </div>
 

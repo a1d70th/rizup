@@ -5,8 +5,7 @@ import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
-import MiniCharacter from "@/components/MiniCharacter";
-import { AnimalKind } from "@/components/MyCharacter";
+import type { AnimalKind } from "@/components/MyCharacter";
 import { compressImage } from "@/lib/image-compress";
 import { dailyCompoundScore } from "@/lib/compound";
 import CountUp from "@/components/CountUp";
@@ -71,7 +70,7 @@ export default function JournalPage() {
   const [crisis, setCrisis] = useState(false);
   const [suspended, setSuspended] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const [charAnimal, setCharAnimal] = useState<AnimalKind | null>(null);
+  const [, setCharAnimal] = useState<AnimalKind | null>(null);
   const [currentStreak, setCurrentStreak] = useState(0);
 
   // 夜モード用: 今朝の投稿
@@ -448,11 +447,8 @@ export default function JournalPage() {
         </div>
 
         <div className="flex items-center gap-3 mb-5">
-          <div className="shrink-0 w-12 h-12 rounded-full bg-white dark:bg-[#1a1a1a] ring-2 ring-mint/40 flex items-center justify-center shadow-sm">
-            <MiniCharacter animal={charAnimal || "rabbit"} size={40} />
-          </div>
           <div className="flex-1">
-            <p className="font-extrabold">{mode === "morning" ? "おはよう！☀️" : "おつかれさま🌙"}</p>
+            <p className="font-extrabold text-lg">{mode === "morning" ? "おはよう！☀️" : "おつかれさま🌙"}</p>
             <p className="text-xs text-text-mid">
               {mode === "morning" ? "気分をタップするだけでOK" : "今日の振り返り。朝の目標は達成できた？"}
             </p>

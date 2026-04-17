@@ -7,7 +7,6 @@ import { supabase } from "@/lib/supabase";
 const baseItems = [
   { href: "/home", icon: "\u{1F3E0}", label: "ホーム" },
   { href: "/journal", icon: "\u{1F4DD}", label: "ジャーナル" },
-  { href: "/village", icon: "\u{1F333}", label: "森" },
   { href: "/growth", icon: "\u{1F4C8}", label: "成長" },
   { href: "/profile", icon: "\u{1F464}", label: "マイページ" },
 ];
