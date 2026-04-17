@@ -9,6 +9,7 @@ import type { AnimalKind } from "@/components/MyCharacter";
 import Image from "next/image";
 import Link from "next/link";
 import { SkeletonTimeline } from "@/components/Skeleton";
+import InstallBanner from "@/components/InstallBanner";
 import { safeInsertPost } from "@/lib/safe-insert";
 import { showToast } from "@/components/Toast";
 
@@ -521,6 +522,7 @@ export default function HomePage() {
           </div>
         </div>
       )}
+      <InstallBanner />
       <BottomNav />
     </main>
   );

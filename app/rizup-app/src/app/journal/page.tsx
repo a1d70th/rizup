@@ -37,6 +37,13 @@ export default function JournalPage() {
   const [content, setContent] = useState("");
   const [gratitudes, setGratitudes] = useState(["", "", ""]);
   const [sleepHours, setSleepHours] = useState("");
+  const [bedtime, setBedtime] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
+      return localStorage.getItem(`rizup_bedtime_${today}`) || "";
+    } catch { return ""; }
+  });
   const [morningGoal, setMorningGoal] = useState("");
   const [eveningWin, setEveningWin] = useState("");
   // 朝活チャレンジ: 起床時刻（朝モード）
@@ -497,22 +504,79 @@ export default function JournalPage() {
           </div>
         )}
 
-        {/* 朝モード: 今日起きた時刻 */}
+        {/* 朝モード: 朝活チャレンジ（入眠・起床・睡眠） */}
         {mode === "morning" && (
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3 flex items-center gap-3">
-            <span className="text-2xl">⏰</span>
-            <div className="flex-1">
-              <p className="text-sm font-bold dark:text-gray-100">今日起きた時刻</p>
-              <p className="text-[11px] text-text-mid">30日チャレンジ・記録するだけでOK</p>
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-xl">🌅</span>
+              <p className="text-sm font-extrabold dark:text-gray-100">みんなの朝活チャレンジ</p>
             </div>
-            <input
-              type="time"
-              value={wakeTime}
-              onChange={e => saveWakeTime(e.target.value)}
-              aria-label="起床時刻"
-              className="border-2 border-gray-100 dark:border-[#2a2a2a] rounded-xl px-3 py-2 text-base font-extrabold bg-white dark:bg-[#111111] text-orange outline-none focus:border-orange"
-              style={{ minWidth: 110 }}
-            />
+            <div className="grid grid-cols-3 gap-2">
+              {/* 入眠時刻 */}
+              <label className="flex flex-col">
+                <span className="text-[11px] font-bold text-text-mid mb-1">🌙 入眠</span>
+                <input
+                  type="time"
+                  value={bedtime}
+                  onChange={e => {
+                    const v = e.target.value;
+                    setBedtime(v);
+                    try {
+                      const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
+                      if (v) localStorage.setItem(`rizup_bedtime_${today}`, v);
+                      else localStorage.removeItem(`rizup_bedtime_${today}`);
+                    } catch {}
+                    // 入眠と起床が揃ったら睡眠時間を自動計算
+                    if (v && wakeTime) {
+                      const [bH, bM] = v.split(":").map(Number);
+                      const [wH, wM] = wakeTime.split(":").map(Number);
+                      let mins = (wH * 60 + wM) - (bH * 60 + bM);
+                      if (mins <= 0) mins += 24 * 60;
+                      setSleepHours((mins / 60).toFixed(1));
+                    }
+                  }}
+                  aria-label="昨夜の入眠時刻"
+                  className="w-full border-2 border-gray-100 dark:border-[#2a2a2a] rounded-xl px-2 py-2 text-[15px] font-extrabold bg-white dark:bg-[#111111] text-orange outline-none focus:border-orange"
+                />
+              </label>
+              {/* 起床時刻 */}
+              <label className="flex flex-col">
+                <span className="text-[11px] font-bold text-text-mid mb-1">☀️ 起床</span>
+                <input
+                  type="time"
+                  value={wakeTime}
+                  onChange={e => {
+                    const v = e.target.value;
+                    saveWakeTime(v);
+                    if (v && bedtime) {
+                      const [bH, bM] = bedtime.split(":").map(Number);
+                      const [wH, wM] = v.split(":").map(Number);
+                      let mins = (wH * 60 + wM) - (bH * 60 + bM);
+                      if (mins <= 0) mins += 24 * 60;
+                      setSleepHours((mins / 60).toFixed(1));
+                    }
+                  }}
+                  aria-label="起床時刻"
+                  className="w-full border-2 border-gray-100 dark:border-[#2a2a2a] rounded-xl px-2 py-2 text-[15px] font-extrabold bg-white dark:bg-[#111111] text-orange outline-none focus:border-orange"
+                />
+              </label>
+              {/* 睡眠時間 */}
+              <label className="flex flex-col">
+                <span className="text-[11px] font-bold text-text-mid mb-1">⏱ 睡眠</span>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number" min="0" max="24" step="0.5"
+                    value={sleepHours}
+                    onChange={e => setSleepHours(e.target.value)}
+                    aria-label="睡眠時間（時間）"
+                    placeholder="7"
+                    className="w-full border-2 border-gray-100 dark:border-[#2a2a2a] rounded-xl px-2 py-2 text-[15px] font-extrabold bg-white dark:bg-[#111111] text-orange outline-none focus:border-orange"
+                    style={{ WebkitAppearance: "none" }} />
+                  <span className="text-[11px] font-bold text-text-mid">h</span>
+                </div>
+              </label>
+            </div>
+            <p className="text-[10px] text-text-light mt-2">入眠・起床を入れると睡眠時間を自動計算するよ</p>
           </div>
         )}
 
@@ -700,21 +764,21 @@ export default function JournalPage() {
           </div>
         )}
 
-        {/* スペーサー: 固定ボタンの裏に隠れないよう */}
-        <div aria-hidden="true" className="h-28" />
+        {/* スペーサー: 固定ボタン + BottomNav の裏に隠れないよう（iOS safe-area 分を多めに） */}
+        <div aria-hidden="true" className="h-40 sm:h-36" />
       </div>
 
       {/* 固定投稿ボタン（気分選択済み or 夜モード時に常時表示） */}
       {(mood !== 0 || mode === "evening") && (
         <div
-          className="fixed left-0 right-0 bottom-16 z-40 px-4 pointer-events-none"
-          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+          className="fixed left-0 right-0 z-40 px-4 pointer-events-none"
+          style={{ bottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))" }}
         >
           <div className="max-w-md mx-auto pointer-events-auto">
             <button onClick={handlePost}
               disabled={loading || mood === 0}
               aria-label="ジャーナルを投稿"
-              className="w-full bg-mint text-white font-extrabold py-4 rounded-full shadow-xl shadow-mint/40 disabled:opacity-40 text-base flex items-center justify-center gap-2">
+              className="w-full bg-mint text-white font-extrabold py-3.5 sm:py-4 rounded-full shadow-xl shadow-mint/40 disabled:opacity-40 text-[15px] sm:text-base flex items-center justify-center gap-2">
               {loading ? "投稿中..." : mode === "morning"
                 ? (wantWrite ? <><span>☀️</span><span>朝のひとことを送る</span></> : <><span>✨</span><span>このまま送る</span></>)
                 : <><span>🌙</span><span>夜のふりかえりを送る</span></>}
