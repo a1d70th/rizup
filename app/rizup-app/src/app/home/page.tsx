@@ -12,7 +12,7 @@ import { SkeletonTimeline } from "@/components/Skeleton";
 import { safeInsertPost } from "@/lib/safe-insert";
 import { showToast } from "@/components/Toast";
 
-const FETCH_LIMIT = 500;
+const FETCH_LIMIT = 20;
 
 interface PostWithProfile {
   id: string; user_id: string; type: string; content: string;
@@ -150,11 +150,13 @@ export default function HomePage() {
           if (typeof count === "number") setTodayCount(count);
         } catch { /* ignore */ }
 
-        // サーバー再計算は非同期で（レンダリングをブロックしない）
-        fetch("/api/check-progress", { method: "POST" })
-          .then(r => r.json())
-          .then(d => { if (typeof d?.streak === "number") setStreak(d.streak); })
-          .catch(() => {});
+        // サーバー再計算は 2 秒後に遅延実行（体感速度を優先）
+        setTimeout(() => {
+          fetch("/api/check-progress", { method: "POST" })
+            .then(r => r.json())
+            .then(d => { if (typeof d?.streak === "number") setStreak(d.streak); })
+            .catch(() => {});
+        }, 2000);
 
         await fetchPosts();
       } catch (e) { console.error("[Home]", e); }
