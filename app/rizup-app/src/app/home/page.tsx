@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import BottomNav from "@/components/BottomNav";
 import PostCard from "@/components/PostCard";
@@ -8,7 +9,7 @@ import MyCharacter, { AnimalKind } from "@/components/MyCharacter";
 import Image from "next/image";
 import Link from "next/link";
 import { SkeletonTimeline } from "@/components/Skeleton";
-import { findTodayPost, safeInsertPost } from "@/lib/safe-insert";
+import { safeInsertPost } from "@/lib/safe-insert";
 import { showToast } from "@/components/Toast";
 
 const FETCH_LIMIT = 500;
@@ -27,11 +28,12 @@ const todayJST = () => new Date().toLocaleDateString("en-CA", { timeZone: "Asia/
 
 
 export default function HomePage() {
+  const router = useRouter();
   const [posts, setPosts] = useState<PostWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [todayCount, setTodayCount] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
   const [streak, setStreak] = useState(0);
-  const [, setHabits] = useState({ done: 0, total: 0 });
   const [morningDone, setMorningDone] = useState(false);
   const [eveningDone, setEveningDone] = useState(false);
   const [, setMorningMood] = useState<number>(0);
@@ -67,69 +69,98 @@ export default function HomePage() {
   };
 
   useEffect(() => {
-    const today = todayJST();
     (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          setUserId(user.id);
-          const { data: p } = await supabase.from("profiles")
-            .select("streak, is_admin, character_animal, character_name").eq("id", user.id).single();
-          let animalLocal: AnimalKind | null = null;
-          let nameLocal = "";
-          if (p) {
-            setStreak(p.streak || 0);
-            if (p.is_admin) setIsAdmin(true);
-            if (p.character_animal) { animalLocal = p.character_animal as AnimalKind; }
-            if (p.character_name) { nameLocal = p.character_name; }
-          }
-          // fallback to localStorage if profile columns not yet migrated
-          if (typeof window !== "undefined") {
-            try {
-              const la = localStorage.getItem("rizup_character_animal") as AnimalKind | null;
-              const ln = localStorage.getItem("rizup_character_name");
-              if (la && !animalLocal) animalLocal = la;
-              if (ln && !nameLocal) nameLocal = ln;
-            } catch { /* ignore */ }
-          }
-          // 過去テストで紛れ込んだ不正値を除去（名前フィールドではなく役職が保存されていた場合）
-          const BAD_NAMES = new Set(["アシスタントマネージャー", "マネージャー", "アシスタント", "undefined", "null"]);
-          if (nameLocal && BAD_NAMES.has(nameLocal.trim())) {
-            nameLocal = "";
-            try { localStorage.removeItem("rizup_character_name"); } catch {}
-            try { await supabase.from("profiles").update({ character_name: null }).eq("id", user.id); } catch {}
-          }
-          if (animalLocal) setCharAnimal(animalLocal);
-          if (nameLocal) setCharName(nameLocal);
-          // 最新の投稿日（lastWritten）
-          try {
-            const { data: lp } = await supabase.from("posts")
-              .select("created_at").eq("user_id", user.id)
-              .order("created_at", { ascending: false }).limit(1).maybeSingle();
-            if (lp?.created_at) setLastWritten(new Date(lp.created_at));
-          } catch { /* ignore */ }
-          const morningPost = await findTodayPost(supabase, user.id, "morning");
-          setMorningDone(!!morningPost);
-          if (morningPost?.mood) setMorningMood(morningPost.mood);
-          setEveningDone(!!(await findTodayPost(supabase, user.id, "evening")));
-          try {
-            const { data: h } = await supabase.from("habits")
-              .select("id").eq("user_id", user.id).is("archived_at", null);
-            if (h) {
-              const { data: logs } = await supabase.from("habit_logs")
-                .select("habit_id").eq("user_id", user.id).eq("logged_date", today);
-              setHabits({ done: (logs || []).length, total: h.length });
-            }
-          } catch { /* ignore */ }
-          fetch("/api/check-progress", { method: "POST" })
-            .then(r => r.json()).then(d => { if (d.streak !== undefined) setStreak(d.streak); })
-            .catch(() => {});
+        if (!user) { await fetchPosts(); setLoading(false); return; }
+        setUserId(user.id);
+
+        // ── プロフィール取得（カラム未マイグレ環境でも落ちないよう多段フォールバック） ──
+        type Prof = { streak?: number; is_admin?: boolean; character_animal?: string; character_name?: string | null };
+        let p: Prof | null = null;
+        const tryColumns = async (cols: string): Promise<Prof | null> => {
+          const { data, error } = await supabase.from("profiles").select(cols).eq("id", user.id).maybeSingle();
+          if (error) return null;
+          return data as unknown as Prof;
+        };
+        p = await tryColumns("streak, is_admin, character_animal, character_name");
+        if (!p) p = await tryColumns("streak, is_admin");
+        if (!p) p = await tryColumns("id");
+
+        let animalLocal: AnimalKind | null = null;
+        let nameLocal = "";
+        if (p) {
+          if (typeof p.streak === "number") setStreak(p.streak || 0);
+          if (p.is_admin) setIsAdmin(true);
+          if (p.character_animal) animalLocal = p.character_animal as AnimalKind;
+          if (p.character_name) nameLocal = p.character_name;
         }
+        // localStorage フォールバック（DB カラム未マイグレでも UI は動く）
+        try {
+          const la = localStorage.getItem("rizup_character_animal") as AnimalKind | null;
+          const ln = localStorage.getItem("rizup_character_name");
+          if (la && !animalLocal) animalLocal = la;
+          if (ln && !nameLocal) nameLocal = ln;
+        } catch { /* ignore */ }
+        // 不正値（役職名など）を除去
+        const BAD_NAMES = new Set(["アシスタントマネージャー", "マネージャー", "アシスタント", "undefined", "null"]);
+        if (nameLocal && BAD_NAMES.has(nameLocal.trim())) {
+          nameLocal = "";
+          try { localStorage.removeItem("rizup_character_name"); } catch {}
+          try { await supabase.from("profiles").update({ character_name: null }).eq("id", user.id); } catch {}
+        }
+        if (animalLocal) setCharAnimal(animalLocal);
+        if (nameLocal) setCharName(nameLocal);
+
+        // 初回ユーザー → キャラ選択へ自動誘導
+        if (!animalLocal) {
+          router.replace("/character-setup");
+          return;
+        }
+
+        // ── 今日分データをまとめて 1クエリで取得（JST 0:00〜翌0:00） ──
+        const nowJst = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
+        const dayStart = new Date(nowJst); dayStart.setHours(0, 0, 0, 0);
+        const dayEnd = new Date(dayStart); dayEnd.setDate(dayEnd.getDate() + 1);
+
+        // 自分の今日の投稿（朝/夜判定用）
+        try {
+          const { data: myToday } = await supabase.from("posts")
+            .select("id, type, mood, created_at")
+            .eq("user_id", user.id)
+            .gte("created_at", dayStart.toISOString())
+            .lt("created_at", dayEnd.toISOString())
+            .order("created_at", { ascending: false });
+          if (myToday) {
+            const morning = myToday.find(p => p.type === "morning");
+            const evening = myToday.find(p => p.type === "evening");
+            setMorningDone(!!morning);
+            setEveningDone(!!evening);
+            if (morning?.mood) setMorningMood(morning.mood);
+            if (myToday.length > 0) setLastWritten(new Date(myToday[0].created_at));
+          }
+        } catch { /* ignore */ }
+
+        // 全員の今日の記録数（peer 効果バッジ用）
+        try {
+          const { count } = await supabase.from("posts")
+            .select("id", { count: "exact", head: true })
+            .gte("created_at", dayStart.toISOString())
+            .lt("created_at", dayEnd.toISOString());
+          if (typeof count === "number") setTodayCount(count);
+        } catch { /* ignore */ }
+
+        // サーバー再計算は非同期で（レンダリングをブロックしない）
+        fetch("/api/check-progress", { method: "POST" })
+          .then(r => r.json())
+          .then(d => { if (typeof d?.streak === "number") setStreak(d.streak); })
+          .catch(() => {});
+
         await fetchPosts();
       } catch (e) { console.error("[Home]", e); }
       setLoading(false);
     })();
-  }, []);
+  }, [router]);
 
   // Quick-post 送信ハンドラ
   const submitQuickPost = async () => {
@@ -413,6 +444,20 @@ export default function HomePage() {
             {!justPosted && !thanks && daysSinceLastPost >= 2 && daysSinceLastPost < 999 && (
               <p className="mt-2 text-sm font-extrabold text-mint animate-fade-in">
                 おかえり！待ってたよ🌱
+              </p>
+            )}
+            {/* 大きな streak バッジ */}
+            {streak > 0 && (
+              <div className="mt-4 flex items-baseline gap-1 text-mint">
+                <span className="text-2xl">🔥</span>
+                <span className="text-[24px] font-extrabold leading-none">{streak}</span>
+                <span className="text-sm font-extrabold">日連続！</span>
+              </div>
+            )}
+            {/* 今日の記録者数（peer effect） */}
+            {todayCount > 0 && (
+              <p className="mt-1 text-[12px] font-bold text-orange">
+                🔥 今日 {todayCount}人 が記録したよ
               </p>
             )}
             {/* メインアクション: ホーム内モーダルで投稿 */}
