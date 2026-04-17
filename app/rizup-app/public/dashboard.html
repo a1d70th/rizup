@@ -357,6 +357,72 @@
   footer{text-align:center;color:var(--sub);font-size:13px;padding:40px 0 8px}
   small.hint{display:block;color:var(--sub);font-size:13px;margin-top:10px}
 
+  /* ── 折りたたみセクション（auto collapsible） ───────── */
+  section.card.collapsible > h2{
+    cursor:pointer;user-select:none;
+    display:flex;align-items:center;gap:12px;
+    margin:-4px -4px 0;padding:4px;border-radius:8px;
+    transition:background .15s;
+  }
+  section.card.collapsible > h2:hover{background:rgba(16,185,129,.05)}
+  section.card.collapsible > h2 .chev{
+    margin-left:auto;font-size:12px;color:var(--sub);
+    width:28px;height:28px;display:inline-grid;place-items:center;
+    border:1px solid var(--border-2);border-radius:999px;
+    transition:transform .2s ease,color .15s,border-color .15s;
+    flex-shrink:0;
+  }
+  section.card.collapsible.open > h2 .chev{transform:rotate(180deg);color:var(--accent);border-color:var(--accent)}
+  section.card.collapsible > .auto-body{
+    overflow:hidden;
+    max-height:0;
+    opacity:0;
+    transition:max-height .3s ease,opacity .2s ease,margin-top .2s ease;
+    margin-top:0;
+  }
+  section.card.collapsible.open > .auto-body{
+    max-height:3000px;
+    opacity:1;
+    margin-top:18px;
+  }
+  /* summary-like meta は開閉時のみ表示変える */
+  section.card.collapsible:not(.open) > h2 .section-meta{color:var(--accent);font-weight:700}
+  @media (max-width:720px){
+    section.card.collapsible > h2 .section-meta{display:none}
+  }
+
+  details.card{padding:0;overflow:hidden;transition:background .15s}
+  details.card > summary{
+    list-style:none;cursor:pointer;
+    padding:20px 24px;display:flex;align-items:center;gap:12px;
+    user-select:none;
+  }
+  details.card > summary::-webkit-details-marker{display:none}
+  details.card > summary::before{
+    content:"";display:inline-block;width:5px;height:22px;border-radius:3px;background:var(--accent);
+  }
+  details.card > summary .title{
+    font-size:1.4rem;font-weight:800;color:var(--text);flex:1;
+  }
+  details.card > summary .summary-meta{
+    font-size:13px;color:var(--sub);font-weight:600;
+  }
+  details.card > summary .chev{
+    font-size:14px;color:var(--sub);transition:transform .2s ease;
+    width:28px;height:28px;display:grid;place-items:center;
+    border:1px solid var(--border-2);border-radius:999px;
+  }
+  details.card[open] > summary .chev{transform:rotate(180deg)}
+  details.card > summary:hover .chev{border-color:var(--accent);color:var(--accent)}
+  details.card > .details-body{padding:0 24px 24px}
+  details.card > summary + .details-body{padding-top:4px}
+  @media (max-width:720px){
+    details.card > summary{padding:16px 18px;gap:10px}
+    details.card > summary .title{font-size:1.15rem}
+    details.card > summary .summary-meta{display:none}
+    details.card > .details-body{padding:0 18px 18px}
+  }
+
   /* routine strip shown inline in card (non-fixed) */
   .routine{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
   .routine div{
@@ -400,7 +466,7 @@
   </header>
 
   <!-- ── 今日のフォーカス（詳細カード／編集用） ───────── -->
-  <section class="card">
+  <section class="card" data-default-open data-key="today-focus">
     <h2>🔥 今日のフォーカス <span class="section-meta">5タスクまで・自動保存</span></h2>
     <div class="bar-label" style="margin-bottom:14px">
       <span style="font-size:14px;color:var(--sub)">今日の達成率</span>
@@ -516,7 +582,7 @@
   </section>
 
   <!-- ── SECTION 4: 収益ダッシュボード ───────────────── -->
-  <section class="card">
+  <section class="card" data-default-open data-key="revenue">
     <h2>💰 収益ダッシュボード <span class="section-meta">数値は全てクリックで編集</span></h2>
     <div class="grid-3" style="margin-bottom:18px">
       <div class="kpi">
@@ -600,7 +666,7 @@
   </section>
 
   <!-- ── MEDIA: 3メディア集客（全事業の集客基盤） ───── -->
-  <section class="card">
+  <section class="card" data-default-open data-key="media">
     <h2>📣 メディア集客 <span class="section-meta">スレッズ × note × YouTube</span></h2>
     <p style="font-size:13px;color:var(--accent);font-weight:700;margin:0 0 14px">
       全事業の集客基盤。毎日投稿が最優先。
@@ -650,6 +716,45 @@
 (() => {
   "use strict";
   const LS_KEY = "rizup_exec_dashboard_v1";
+
+  // ── 折りたたみ: 各セクションをコンパクト化 ──
+  const COLLAPSE_STATE = "rizup_dash_collapse_v1";
+  let collapseSaved = {};
+  try { collapseSaved = JSON.parse(localStorage.getItem(COLLAPSE_STATE) || "{}"); } catch {}
+  document.querySelectorAll("section.card").forEach((sec, idx) => {
+    if (sec.classList.contains("focus-fixed") || sec.hasAttribute("data-no-collapse")) return;
+    const h2 = sec.querySelector("h2");
+    if (!h2) return;
+    sec.classList.add("collapsible");
+    const key = sec.getAttribute("data-key") || ("sec_" + idx);
+    sec.setAttribute("data-key", key);
+    // 本文を auto-body に包む
+    const body = document.createElement("div");
+    body.className = "auto-body";
+    while (h2.nextSibling) body.appendChild(h2.nextSibling);
+    sec.appendChild(body);
+    // 初期状態: data-default-open or 保存状態
+    const defaultOpen = sec.hasAttribute("data-default-open");
+    const saved = collapseSaved[key];
+    const isOpen = saved === undefined ? defaultOpen : saved;
+    if (isOpen) sec.classList.add("open");
+    // シェブロン
+    const chev = document.createElement("span");
+    chev.className = "chev";
+    chev.setAttribute("aria-hidden", "true");
+    chev.textContent = "▼";
+    h2.appendChild(chev);
+    // クリックでトグル
+    h2.addEventListener("click", (e) => {
+      // 編集セルなど interactive には反応させない
+      if (e.target.closest("[contenteditable],input,textarea,button,a")) return;
+      sec.classList.toggle("open");
+      try {
+        collapseSaved[key] = sec.classList.contains("open");
+        localStorage.setItem(COLLAPSE_STATE, JSON.stringify(collapseSaved));
+      } catch {}
+    });
+  });
 
   const today = new Date();
   const todayStr = today.toLocaleDateString("en-CA");
