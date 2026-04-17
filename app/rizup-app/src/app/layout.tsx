@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     title: "Rizup",
     startupImage: [
       { url: "/icons/icon-512.png", media: "(device-width: 390px)" },
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   other: {
     "mobile-web-app-capable": "yes",
     "apple-mobile-web-app-capable": "yes",
-    "apple-mobile-web-app-status-bar-style": "default",
+    "apple-mobile-web-app-status-bar-style": "black-translucent",
     "apple-mobile-web-app-title": "Rizup",
   },
 };
@@ -84,8 +84,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png" />
         <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
         <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512.png" />
-        <meta name="theme-color" content="#6ecbb0" media="(prefers-color-scheme: light)" />
-        <meta name="theme-color" content="#0f1512" media="(prefers-color-scheme: dark)" />
+        <meta name="theme-color" content="#10b981" />
+        <meta name="theme-color" content="#10b981" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#10b981" media="(prefers-color-scheme: dark)" />
         {/* Apple Splash Screens（全iPhone/iPad解像度） */}
         <link rel="apple-touch-startup-image" href="/icons/icon-512.png" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />
         <link rel="apple-touch-startup-image" href="/icons/icon-512.png" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" />

@@ -1,0 +1,953 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>株式会社Rizup — 経営ダッシュボード</title>
+<style>
+  :root{
+    --bg:#0a0a0a;
+    --card:#111111;
+    --card-2:#181818;
+    --accent:#10b981;
+    --accent-2:#34d399;
+    --accent-dim:rgba(16,185,129,.14);
+    --accent-edit-bg:#1a2a1a;
+    --text:#f5f5f5;
+    --sub:#888888;
+    --border:#1f1f1f;
+    --border-2:#2a2a2a;
+    --red:#ef4444;
+    --red-dim:rgba(239,68,68,.14);
+    --yellow:#f59e0b;
+    --yellow-dim:rgba(245,158,11,.14);
+    --orange:#f59e0b;
+    --blue:#60a5fa;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--text);
+    font-family:"M PLUS Rounded 1c",-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI",sans-serif;
+    line-height:1.65;
+    font-size:15px;
+    /* 固定ヘッダー分の余白 */
+    padding:88px 16px 80px;
+  }
+  .wrap{max-width:1100px;margin:0 auto}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* ── 編集可能数値（直感的な視覚表現） ── */
+  [contenteditable="true"]{
+    cursor:pointer;
+    border-bottom:1px dotted var(--accent);
+    padding:1px 4px;border-radius:4px;
+    transition:background .15s,border-bottom .15s;
+    min-width:12px;display:inline-block;
+  }
+  [contenteditable="true"]:hover{background:rgba(16,185,129,.08)}
+  [contenteditable="true"]:focus{
+    outline:none;
+    background:var(--accent-edit-bg);
+    border-bottom:2px solid var(--accent);
+    cursor:text;
+  }
+  textarea[contenteditable],textarea.memo{
+    border-bottom:none !important;
+  }
+
+  /* ── Header ── */
+  header.top{
+    display:flex;justify-content:space-between;align-items:flex-end;gap:16px;
+    padding:12px 4px 20px;border-bottom:1px solid var(--border);margin-bottom:28px;
+  }
+  header.top .brand h1{margin:0 0 4px;font-size:1.6rem;font-weight:800;letter-spacing:.02em}
+  header.top .brand h1 span{color:var(--accent)}
+  header.top .brand .sub{font-size:14px;color:var(--sub)}
+  header.top .brand .mission{margin-top:8px;font-size:14px;color:var(--accent);font-weight:700}
+  header.top .clock{text-align:right}
+  header.top .clock .date{font-size:14px;color:var(--sub)}
+  header.top .clock .time{font-size:22px;font-weight:800;color:var(--text);letter-spacing:.05em;font-variant-numeric:tabular-nums}
+
+  /* ── Section card ── */
+  section.card{
+    background:var(--card);border:1px solid var(--border);border-radius:16px;
+    padding:24px;margin-bottom:28px;
+  }
+  section.card h2{
+    margin:0 0 18px;font-size:1.4rem;font-weight:800;color:var(--text);
+    display:flex;align-items:center;gap:12px;
+  }
+  section.card h2::before{
+    content:"";display:inline-block;width:5px;height:22px;border-radius:3px;background:var(--accent);
+  }
+  .section-meta{font-size:13px;color:var(--sub);margin-left:auto;font-weight:600}
+
+  /* ── Grid ── */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  @media (max-width:720px){
+    .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+  }
+
+  /* ── Fixed today focus (top-screen bar) ── */
+  .focus-fixed{
+    position:fixed;
+    top:0;left:0;right:0;
+    background:#0a0a0a;
+    border-bottom:2px solid var(--accent);
+    box-shadow:0 4px 24px rgba(0,0,0,.9);
+    z-index:9999;
+    padding:12px 24px;
+  }
+  .focus-inner{
+    max-width:1100px;margin:0 auto;
+    display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  }
+  .focus-inner .focus-title{
+    font-size:14px;font-weight:800;color:var(--accent);
+    white-space:nowrap;
+  }
+  .focus-inner .focus-bar{flex:1;min-width:140px;max-width:260px;display:flex;align-items:center;gap:10px}
+  .focus-inner .focus-pct{font-size:14px;font-weight:800;color:var(--accent);min-width:44px;text-align:right}
+  .focus-inner .focus-checks{display:flex;flex-wrap:wrap;gap:6px 14px;flex:1 1 420px}
+  .focus-inner .focus-chk{
+    display:flex;align-items:center;gap:8px;
+    background:#111;border:1px solid var(--border-2);border-radius:999px;
+    padding:6px 12px;min-height:36px;cursor:pointer;
+    font-size:14px;user-select:none;
+  }
+  .focus-inner .focus-chk:hover{border-color:var(--accent)}
+  .focus-inner .focus-chk input[type=checkbox]{
+    width:20px;height:20px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;
+  }
+  .focus-inner .focus-chk .t{font-size:14px}
+  .focus-inner .focus-chk input:checked ~ .t{text-decoration:line-through;opacity:.5;color:var(--accent)}
+  .focus-inner .btn-detail{
+    background:transparent;border:1px solid var(--border-2);color:var(--sub);
+    border-radius:999px;padding:6px 12px;font-size:12px;cursor:pointer;
+    min-height:36px;font-family:inherit;
+  }
+  @media (max-width:720px){
+    body{padding-top:150px}
+    .focus-inner{flex-direction:column;align-items:stretch}
+    .focus-inner .focus-bar{max-width:none;width:100%}
+    .focus-inner .focus-checks{flex-direction:column;gap:6px}
+    .focus-inner .focus-chk{justify-content:flex-start}
+  }
+
+  /* ── Bars (progress) ── */
+  .bar{
+    background:var(--card-2);border:1px solid var(--border-2);border-radius:999px;
+    height:12px;overflow:hidden;flex:1;position:relative;
+  }
+  .bar>span{
+    display:block;height:100%;
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
+    transition:width .5s ease;
+    border-radius:999px;
+  }
+  .bar-label{
+    display:flex;align-items:center;gap:10px;
+  }
+  .bar-label .bar{flex:1}
+  .bar-label .pct{
+    font-size:14px;font-weight:800;color:var(--accent);min-width:44px;text-align:right;
+  }
+
+  /* ── Buttons (min 44px) ── */
+  button,.btn{
+    min-height:44px;font-family:inherit;font-size:14px;cursor:pointer;
+  }
+  input,textarea,select{
+    min-height:44px;font-family:inherit;font-size:14px;
+  }
+  input[type=checkbox]{min-height:20px;width:20px;height:20px}
+  .memo{
+    width:100%;background:var(--card);border:1px solid var(--border-2);
+    color:var(--text);border-radius:10px;padding:12px;resize:vertical;
+    font-size:14px;outline:none;line-height:1.6;min-height:70px;
+  }
+  .memo:focus{border-color:var(--accent)}
+
+  /* ── Checkbox list (bigger) ── */
+  .check-list{display:flex;flex-direction:column;gap:8px}
+  label.check-item{
+    display:flex;align-items:center;gap:12px;
+    padding:10px 12px;border-radius:10px;cursor:pointer;
+    min-height:44px;transition:background .15s;
+  }
+  label.check-item:hover{background:var(--card-2)}
+  label.check-item input[type=checkbox]{
+    width:20px;height:20px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;
+  }
+  label.check-item .t{flex:1;font-size:14px;color:var(--text);line-height:1.5}
+  label.check-item input[type=checkbox]:checked ~ .t{
+    text-decoration:line-through;opacity:.5;color:var(--accent);
+  }
+
+  /* ── Vision cards ── */
+  .v-card{border-radius:14px;padding:20px;border:1px solid var(--border-2)}
+  .v-card.vision{background:linear-gradient(180deg,rgba(16,185,129,.08),var(--card-2));border-color:rgba(16,185,129,.35)}
+  .v-card.anti{background:linear-gradient(180deg,rgba(239,68,68,.06),var(--card-2));border-color:rgba(239,68,68,.32)}
+  .v-card h3{margin:0 0 14px;font-size:15px;font-weight:800;letter-spacing:.05em}
+  .v-card.vision h3{color:var(--accent)}
+  .v-card.anti h3{color:var(--red)}
+  .v-card ul{margin:0;padding-left:22px;color:var(--text);font-size:15px}
+  .v-card ul li{margin-bottom:8px;line-height:1.6}
+
+  /* ── Timeline roadmap ── */
+  .timeline-wrap{overflow-x:auto;margin:-4px;padding:4px}
+  .timeline{display:flex;gap:14px;min-width:760px;position:relative}
+  .timeline::before{
+    content:"";position:absolute;left:40px;right:40px;top:34px;height:2px;
+    background:linear-gradient(90deg,var(--accent) 0%,var(--accent) 25%,var(--border-2) 25%,var(--border-2) 100%);
+    z-index:0;
+  }
+  .phase{flex:1;position:relative;min-width:200px}
+  .phase .dot{
+    width:22px;height:22px;border-radius:999px;background:var(--card);
+    border:3px solid var(--border-2);margin:24px auto 12px;position:relative;z-index:1;
+  }
+  .phase.current .dot{border-color:var(--accent);background:var(--accent);box-shadow:0 0 0 8px rgba(16,185,129,.2)}
+  .phase.done .dot{border-color:var(--accent);background:var(--accent)}
+  .phase .here{
+    position:absolute;top:-4px;left:50%;transform:translateX(-50%);
+    font-size:11px;font-weight:800;color:var(--accent);
+    background:var(--accent-dim);padding:4px 10px;border-radius:999px;white-space:nowrap;
+    border:1px solid var(--accent);
+  }
+  .phase-body{background:var(--card-2);border:1px solid var(--border-2);border-radius:12px;padding:14px}
+  .phase.current .phase-body{border-color:var(--accent)}
+  .phase-body .title{font-size:13px;color:var(--sub);font-weight:700;margin-bottom:4px}
+  .phase-body h4{margin:0 0 6px;font-size:16px;font-weight:800}
+  .phase-body .period{font-size:13px;color:var(--accent);font-weight:700;margin-bottom:10px}
+  .phase-body ul{margin:0;padding-left:20px;font-size:14px;color:var(--text)}
+  .phase-body ul li{margin-bottom:4px;color:var(--sub);line-height:1.55}
+
+  /* ── Business portfolio cards ── */
+  .biz-card{background:var(--card-2);border:1px solid var(--border-2);border-radius:14px;padding:16px}
+  .biz-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px}
+  .biz-head h4{margin:0;font-size:16px;font-weight:800;flex:1;line-height:1.4}
+  .pill{font-size:12px;font-weight:800;padding:5px 10px;border-radius:999px;white-space:nowrap}
+  .pill.mint{background:var(--accent-dim);color:var(--accent)}
+  .pill.red{background:var(--red-dim);color:var(--red)}
+  .pill.yellow{background:var(--yellow-dim);color:var(--yellow)}
+  .pill.sub{background:var(--card);color:var(--sub);border:1px solid var(--border-2)}
+  .biz-kv{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:14px;color:var(--sub);margin-bottom:12px}
+  .biz-kv b{color:var(--text);font-weight:700}
+
+  /* ── KPI / Revenue ── */
+  .kpi{background:var(--card-2);border:1px solid var(--border-2);border-radius:12px;padding:14px 16px}
+  .kpi .label{font-size:13px;color:var(--sub);font-weight:700}
+  .kpi .value{font-size:24px;font-weight:800;color:var(--text);margin-top:4px}
+  .kpi .value.accent{color:var(--accent)}
+  .kpi .value.warn{color:var(--yellow)}
+  .kpi .sub{font-size:12px;color:var(--sub);margin-top:4px}
+
+  .chart{display:flex;align-items:flex-end;gap:6px;height:160px;padding:6px 0;border-bottom:1px solid var(--border)}
+  .chart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .chart .bar-v{width:78%;background:linear-gradient(180deg,var(--accent),#047857);border-radius:6px 6px 0 0;min-height:2px;transition:height .5s ease}
+  .chart .mlabel{font-size:12px;color:var(--sub)}
+
+  /* ── 3-axis ── */
+  .axis-card{background:var(--card-2);border:1px solid var(--border-2);border-radius:14px;padding:16px}
+  .axis-card h3{margin:0 0 12px;font-size:15px;font-weight:800}
+  .axis-card h3.emoji{display:flex;align-items:center;gap:8px}
+  .axis-kv{display:grid;grid-template-columns:1fr auto;gap:6px 16px;font-size:14px}
+  .axis-kv .k{color:var(--sub)}
+  .axis-kv .v{font-weight:800;color:var(--text)}
+
+  /* ── Org chart ── */
+  .org{display:flex;flex-direction:column;align-items:center;gap:0;position:relative}
+  .org .ceo{
+    background:linear-gradient(180deg,rgba(16,185,129,.18),var(--card-2));
+    border:2px solid var(--accent);border-radius:14px;padding:14px 20px;text-align:center;min-width:240px;
+  }
+  .org .ceo b{color:var(--accent)}
+  .org .vline{width:2px;height:28px;background:var(--accent)}
+  .org .hline{height:2px;background:var(--accent);width:92%;max-width:780px}
+  .org .v-stubs{
+    position:relative;width:92%;max-width:780px;height:20px;
+  }
+  .org .v-stubs::before,
+  .org .v-stubs::after{content:""}
+  .staff-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;width:100%;margin-top:0}
+  @media (max-width:720px){.staff-row{grid-template-columns:repeat(2,1fr)}}
+  .staff{
+    background:var(--card-2);border:1px solid var(--border-2);border-radius:14px;
+    padding:16px;display:flex;flex-direction:column;gap:8px;min-width:180px;
+    position:relative;
+  }
+  .staff::before{
+    content:"";position:absolute;top:-20px;left:50%;transform:translateX(-50%);
+    width:2px;height:20px;background:var(--accent);
+  }
+  .staff h4{margin:0;font-size:16px;font-weight:800;color:var(--text)}
+  .staff .role{font-size:11px;font-weight:800;color:var(--accent);letter-spacing:.1em}
+  .staff .dom{font-size:13px;color:var(--sub)}
+  .staff .kv{font-size:13px;color:var(--sub);line-height:1.55}
+  .staff .kv b{color:var(--text);font-weight:700}
+  .staff button{
+    margin-top:auto;background:var(--orange);color:#0a0a0a;border:none;
+    border-radius:10px;padding:10px 14px;font-size:14px;font-weight:800;cursor:pointer;
+    font-family:inherit;min-height:44px;transition:background .15s,transform .15s;
+  }
+  .staff button:hover{background:#fbbf24}
+  .staff button:active{transform:scale(.98)}
+  .staff textarea.tmpl{
+    width:100%;background:var(--card);border:1px solid var(--border-2);color:var(--text);
+    border-radius:10px;padding:12px;font-size:13px;min-height:110px;display:none;
+    font-family:inherit;outline:none;line-height:1.6;
+  }
+  .staff.open textarea.tmpl{display:block}
+
+  /* ── Weekly tracker ── */
+  .week{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
+  @media (max-width:540px){.week{grid-template-columns:repeat(4,1fr)}}
+  .week .day{
+    background:var(--card-2);border:1px solid var(--border-2);border-radius:12px;padding:12px 10px;
+    display:flex;flex-direction:column;gap:8px;cursor:pointer;transition:background .15s,border-color .15s;
+    min-height:110px;
+  }
+  .week .day.done{background:var(--accent-dim);border-color:var(--accent)}
+  .week .day .wd{font-size:12px;font-weight:800;color:var(--sub)}
+  .week .day.done .wd{color:var(--accent)}
+  .week .day.today{box-shadow:0 0 0 2px rgba(16,185,129,.4)}
+  .week .day .num{font-size:18px;font-weight:800}
+  .week .day textarea{
+    width:100%;background:transparent;border:none;color:var(--text);font-size:14px;
+    resize:none;outline:none;min-height:44px;font-family:inherit;padding:0;
+  }
+
+  footer{text-align:center;color:var(--sub);font-size:13px;padding:40px 0 8px}
+  small.hint{display:block;color:var(--sub);font-size:13px;margin-top:10px}
+
+  /* routine strip shown inline in card (non-fixed) */
+  .routine{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+  .routine div{
+    background:var(--card-2);border:1px solid var(--border-2);border-radius:12px;
+    padding:10px 14px;font-size:14px;color:var(--sub);min-height:44px;display:flex;align-items:center;
+  }
+  .routine div b{color:var(--text)}
+</style>
+</head>
+<body>
+
+<!-- ── FIXED TOP FOCUS BAR（常時追従） ──────────────────── -->
+<div class="focus-fixed">
+  <div class="focus-inner">
+    <div class="focus-title">🔥 今日</div>
+    <div class="focus-bar">
+      <div class="bar"><span id="todayBar" style="width:0%"></span></div>
+      <div class="focus-pct" id="todayPct">0%</div>
+    </div>
+    <div class="focus-checks" id="focusChecks"><!-- JS --></div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ── HEADER ────────────────────────────────────── -->
+  <header class="top">
+    <div class="brand">
+      <h1>株式会社<span>Rizup</span> — 経営ダッシュボード</h1>
+      <div class="sub">代表：児玉 翔平（Sho）</div>
+      <div class="mission">Mission: 自分に縁する人を、全員輝かせる。</div>
+    </div>
+    <div class="clock">
+      <div class="date" id="clockDate">—</div>
+      <div class="time" id="clockTime">--:--:--</div>
+    </div>
+  </header>
+
+  <!-- ── 今日のフォーカス（詳細カード／編集用） ───────── -->
+  <section class="card">
+    <h2>🔥 今日のフォーカス <span class="section-meta">5タスクまで・自動保存</span></h2>
+    <div class="bar-label" style="margin-bottom:14px">
+      <span style="font-size:14px;color:var(--sub)">今日の達成率</span>
+      <div class="bar"><span id="todayBar2" style="width:0%"></span></div>
+      <span class="pct" id="todayPct2">0%</span>
+    </div>
+    <div class="check-list" id="todayList"><!-- JS --></div>
+    <div class="routine">
+      <div>🌅 <b>朝</b>：スレッズ投稿・Rizup開発2h</div>
+      <div>☀️ <b>昼</b>：転職活動・Rizup開発2h</div>
+      <div>🌙 <b>夜</b>：note執筆・振り返り</div>
+    </div>
+    <small class="hint">※ 項目はクリックで編集可。チェックは自動保存。日付が変われば自動リセット。</small>
+  </section>
+
+  <!-- ── SECTION 1: ビジョンボード ───────────────────── -->
+  <section class="card">
+    <h2>🎯 ビジョンボード <span class="section-meta">毎朝見て動機を確認</span></h2>
+    <div class="grid-2">
+      <div class="v-card vision">
+        <h3>VISION 2027 — なりたい未来</h3>
+        <ul>
+          <li>Rizupユーザー10万人</li>
+          <li>年収1000万円を自分の力で作る</li>
+          <li>自分に縁する人を全員幸せにする</li>
+          <li>個人でも会社でも生きられる力を持つ</li>
+          <li>最高の仲間と最高の仕事をする</li>
+        </ul>
+      </div>
+      <div class="v-card anti">
+        <h3>ANTI-VISION — 絶対にならない未来</h3>
+        <ul>
+          <li>納得できない指示に従い続ける</li>
+          <li>仲間なしで孤独に働く</li>
+          <li>お金のために心を殺して働く</li>
+          <li>場当たり的に毎日を過ごす</li>
+          <li>自分の可能性を信じられなくなる</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION 2: タイムライン ─────────────────────── -->
+  <section class="card">
+    <h2>🗺 ロードマップ <span class="section-meta">現在地：PHASE 1</span></h2>
+    <div class="timeline-wrap">
+      <div class="timeline">
+        <div class="phase current">
+          <div class="here">現在地</div>
+          <div class="dot"></div>
+          <div class="phase-body">
+            <div class="title">PHASE 1</div>
+            <h4>足元を固める</h4>
+            <div class="period">2026年4月〜5月</div>
+            <ul>
+              <li>転職内定1社</li>
+              <li>note公開・スレッズ100フォロワー</li>
+              <li>Stripe設定・Rizup課金開始</li>
+              <li>月収3万円達成</li>
+            </ul>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="dot"></div>
+          <div class="phase-body">
+            <div class="title">PHASE 2</div>
+            <h4>発信を育てる</h4>
+            <div class="period">2026年6月〜7月</div>
+            <ul>
+              <li>転職先勤務開始</li>
+              <li>Rizup登録50人</li>
+              <li>スレッズ500フォロワー</li>
+              <li>月収10万円</li>
+            </ul>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="dot"></div>
+          <div class="phase-body">
+            <div class="title">PHASE 3</div>
+            <h4>二刀流で稼ぐ</h4>
+            <div class="period">2026年8月〜10月</div>
+            <ul>
+              <li>Rizup Pro 100人</li>
+              <li>採用コンサル副業開始</li>
+              <li>月収30万円</li>
+            </ul>
+          </div>
+        </div>
+        <div class="phase">
+          <div class="dot"></div>
+          <div class="phase-body">
+            <div class="title">PHASE 4</div>
+            <h4>複利で拡大</h4>
+            <div class="period">2026年11月〜2027年4月</div>
+            <ul>
+              <li>年収600万円台回復</li>
+              <li>Rizup月30万円</li>
+              <li>事業3本稼働</li>
+              <li>ユーザー500人</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SECTION 3: 事業ポートフォリオ ───────────────── -->
+  <section class="card">
+    <h2>🏢 事業ポートフォリオ <span class="section-meta">8事業・進捗は編集可</span></h2>
+    <div class="grid-2" id="bizGrid"><!-- JS --></div>
+    <small class="hint">※ 進捗(%)をクリックで編集 → Enter/Tab で確定。全入力は自動保存。</small>
+  </section>
+
+  <!-- ── SECTION 4: 収益ダッシュボード ───────────────── -->
+  <section class="card">
+    <h2>💰 収益ダッシュボード <span class="section-meta">数値は全てクリックで編集</span></h2>
+    <div class="grid-3" style="margin-bottom:18px">
+      <div class="kpi">
+        <div class="label">今月目標</div>
+        <div class="value">¥<span contenteditable="true" data-key="rev_target">200000</span></div>
+        <div class="sub">2026年4月</div>
+      </div>
+      <div class="kpi">
+        <div class="label">今月実績</div>
+        <div class="value warn">¥<span contenteditable="true" data-key="rev_actual">0</span></div>
+        <div class="sub">手動更新</div>
+      </div>
+      <div class="kpi">
+        <div class="label">達成率</div>
+        <div class="value accent" id="revPct">0%</div>
+        <div class="bar" style="margin-top:8px"><span id="revBar" style="width:0%"></span></div>
+      </div>
+    </div>
+    <div class="grid-4" style="margin-bottom:18px">
+      <div class="kpi"><div class="label">Rizup Pro</div><div class="value">¥<span contenteditable="true" data-key="src_rizup">0</span></div></div>
+      <div class="kpi"><div class="label">note</div><div class="value">¥<span contenteditable="true" data-key="src_note">0</span></div></div>
+      <div class="kpi"><div class="label">クラウドワークス</div><div class="value">¥<span contenteditable="true" data-key="src_cw">0</span></div></div>
+      <div class="kpi"><div class="label">採用コンサル</div><div class="value">¥<span contenteditable="true" data-key="src_hr">0</span></div></div>
+    </div>
+    <div class="kpi" style="margin-bottom:18px"><div class="label">その他</div><div class="value">¥<span contenteditable="true" data-key="src_other">0</span></div></div>
+
+    <h3 style="margin:18px 0 10px;font-size:14px;font-weight:800;color:var(--sub)">累計収益グラフ（月別・棒の下の数値をクリックで編集）</h3>
+    <div class="chart" id="chart"><!-- JS --></div>
+    <small class="hint">※ 入力した数値に応じて棒グラフが自動で伸びます。</small>
+  </section>
+
+  <!-- ── SECTION 5: Shoの3軸管理 ───────────────────── -->
+  <section class="card">
+    <h2>🧭 Shoの3軸管理 <span class="section-meta">起業 × 転職 × 足元のお金</span></h2>
+    <div class="grid-3">
+
+      <div class="axis-card">
+        <h3 class="emoji">🚀 起業（Rizup）</h3>
+        <div class="check-list" id="axisBizList"></div>
+        <textarea class="memo" data-key="memo_biz" placeholder="起業に関するメモ（自由記入）"></textarea>
+      </div>
+
+      <div class="axis-card">
+        <h3 class="emoji">💼 転職活動</h3>
+        <div class="axis-kv">
+          <span class="k">応募社数</span><span class="v" contenteditable="true" data-key="job_applied">0</span>
+          <span class="k">書類通過</span><span class="v" contenteditable="true" data-key="job_passed">0</span>
+          <span class="k">面接中</span><span class="v" contenteditable="true" data-key="job_interview">0</span>
+          <span class="k">内定</span><span class="v" contenteditable="true" data-key="job_offer">0</span>
+        </div>
+        <textarea class="memo" data-key="memo_job" placeholder="転職活動に関するメモ（自由記入）"></textarea>
+      </div>
+
+      <div class="axis-card">
+        <h3 class="emoji">💴 足元のお金</h3>
+        <div class="axis-kv">
+          <span class="k">今月収入</span><span class="v">¥<span contenteditable="true" data-key="cash_income">0</span></span>
+          <span class="k">CW応募中</span><span class="v"><span contenteditable="true" data-key="cash_cw_open">3</span>件</span>
+          <span class="k">入金予定</span><span class="v">¥<span contenteditable="true" data-key="cash_incoming">6000</span></span>
+        </div>
+        <textarea class="memo" data-key="memo_cash" placeholder="お金に関するメモ（自由記入）"></textarea>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── SECTION 6: 組織図 ───────────────────────────── -->
+  <section class="card">
+    <h2>👥 組織図 <span class="section-meta">社員に指示を出せる</span></h2>
+    <div class="org">
+      <div class="ceo">
+        <div style="font-size:11px;color:var(--sub);font-weight:800;letter-spacing:.12em">CEO / 代表取締役</div>
+        <div style="font-size:18px;font-weight:800;margin-top:4px"><b>児玉 翔平</b>（Sho）</div>
+        <div style="font-size:13px;color:var(--sub);margin-top:4px">全事業の意思決定・最終判断</div>
+      </div>
+      <div class="vline"></div>
+      <div class="hline"></div>
+      <div class="staff-row" id="staffRow"></div>
+    </div>
+    <small class="hint">※「📨 指示を出す」でClaude Code 用テンプレが展開。そのままコピペで使えます。</small>
+  </section>
+
+  <!-- ── SECTION 8: 週間トラッカー ──────────────────── -->
+  <section class="card">
+    <h2>📅 週間トラッカー <span class="section-meta"><span id="weekPct">0%</span> 達成</span></h2>
+    <div class="week" id="weekGrid"></div>
+    <small class="hint">※ 日付カードをクリックで完了トグル。メモ欄は自動保存。</small>
+  </section>
+
+  <footer>
+    株式会社 Rizup — 経営ダッシュボード v1.1 · すべての入力は端末内 (localStorage) に保存されます
+  </footer>
+</div>
+
+<script>
+(() => {
+  "use strict";
+  const LS_KEY = "rizup_exec_dashboard_v1";
+
+  const today = new Date();
+  const todayStr = today.toLocaleDateString("en-CA");
+  const defaultState = {
+    lastDate: todayStr,
+
+    todayTasks: [
+      { t:"Stripe設定を進める", done:false },
+      { t:"スレッズ投稿", done:false },
+      { t:"note記事公開", done:false },
+      { t:"Rizup改善タスク1本", done:false },
+      { t:"振り返りジャーナル", done:false },
+    ],
+
+    biz: [
+      { n:1, title:"Rizupアプリ",                phase:"PHASE1・最優先", pct:60, model:"¥480/月サブスク",       goal:"Stripe設定・streak修正・50登録",     status:{label:"🔄 開発中",  tone:"yellow"} },
+      { n:2, title:"等身大メディア（スレッズ×note）", phase:"PHASE1・最優先", pct:20, model:"有料マガジン・スポンサー", goal:"note公開・スレッズ開始",               status:{label:"🔄 着手中",  tone:"yellow"} },
+      { n:3, title:"AI×採用コンサル",               phase:"PHASE2",        pct:0,  model:"¥50,000/月/社",         goal:"転職後3ヶ月で1社目獲得",              status:{label:"⏳ 準備中",  tone:"sub"} },
+      { n:4, title:"チームビルディング研修",         phase:"PHASE3",        pct:0,  model:"¥300,000/回",          goal:"実績を積んだら展開",                   status:{label:"⏳ 準備中",  tone:"sub"} },
+      { n:5, title:"強み診断AI（Rizup組み込み）",    phase:"PHASE2",        pct:0,  model:"¥1,980/回",            goal:"Rizup v7で実装",                       status:{label:"⏳ 設計中",  tone:"sub"} },
+      { n:6, title:"転職×メンタルコーチング",        phase:"PHASE2",        pct:10, model:"¥29,800/月/人",        goal:"自身の転職完了後に開始",               status:{label:"⏳ 準備中",  tone:"sub"} },
+      { n:7, title:"英語×AI活用スクール",            phase:"PHASE4",        pct:0,  model:"¥9,800/月",            goal:"1年後に展開",                          status:{label:"💤 未着手",  tone:"sub"} },
+      { n:8, title:"Rizup for Business",           phase:"PHASE4",        pct:0,  model:"¥500/人/月×企業契約",   goal:"個人版が安定したら展開",               status:{label:"💤 未着手",  tone:"sub"} },
+    ],
+
+    rev_target: 200000, rev_actual: 0,
+    src_rizup: 0, src_note: 0, src_cw: 0, src_hr: 0, src_other: 0,
+    chart: [0,0,0,0,0,0,0,0,0,0,0,0],
+    chartLabels: ["4月","5月","6月","7月","8月","9月","10月","11月","12月","1月","2月","3月"],
+
+    axisBizTasks: [
+      { t:"Stripe設定完了",      done:false },
+      { t:"note記事公開",         done:false },
+      { t:"スレッズ初投稿",       done:false },
+      { t:"streak バグ修正",     done:true  },
+      { t:"Rizup登録者10人達成", done:false },
+    ],
+    memo_biz:"", memo_job:"", memo_cash:"",
+    job_applied:0, job_passed:0, job_interview:0, job_offer:0,
+    cash_income:0, cash_cw_open:3, cash_incoming:6000,
+
+    staff: [
+      { key:"kai",  role:"CMO",  name:"Kai",  dom:"リサーチ・市場調査",    result:"competitor-sheet.md 更新済",   next:"Week4 の競合機能差分を3件抽出" },
+      { key:"rei",  role:"CCO",  name:"Rei",  dom:"スレッズ・note・LP",    result:"threads-week2.md 21本ストック", next:"note 記事の公開版を最終整形" },
+      { key:"leo",  role:"CSO",  name:"Leo",  dom:"ロードマップ・事業戦略", result:"crowdworks 応募7件",          next:"スカウト返信フォロー + 提案2件追加" },
+      { key:"haru", role:"秘書", name:"Haru", dom:"CLAUDE.md・タスク管理", result:"CLAUDE.md を v6.3 に更新",     next:"週次レポート雛形を用意" },
+    ],
+
+    week:null, weekStart:null,
+  };
+
+  const load = () => {
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) return structuredClone(defaultState);
+      const s = JSON.parse(raw);
+      return { ...structuredClone(defaultState), ...s,
+               todayTasks: s.todayTasks || defaultState.todayTasks,
+               biz: s.biz || defaultState.biz,
+               chart: s.chart || defaultState.chart,
+               axisBizTasks: s.axisBizTasks || defaultState.axisBizTasks,
+               staff: s.staff || defaultState.staff };
+    } catch { return structuredClone(defaultState); }
+  };
+  const save = () => { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch {} };
+
+  const state = load();
+
+  if (state.lastDate !== todayStr) {
+    state.todayTasks = state.todayTasks.map(x => ({ ...x, done:false }));
+    state.lastDate = todayStr;
+    save();
+  }
+
+  const mondayOf = (d) => {
+    const dt = new Date(d); const day = (dt.getDay() + 6) % 7;
+    dt.setHours(0,0,0,0); dt.setDate(dt.getDate() - day); return dt;
+  };
+  const thisMonday = mondayOf(today);
+  const thisMondayStr = thisMonday.toLocaleDateString("en-CA");
+  if (state.weekStart !== thisMondayStr || !state.week) {
+    state.weekStart = thisMondayStr;
+    state.week = Array.from({length:7}, (_,i) => {
+      const d = new Date(thisMonday); d.setDate(d.getDate() + i);
+      return { date: d.toLocaleDateString("en-CA"), done:false, memo:"" };
+    });
+    save();
+  }
+
+  // ── Clock ─────────────────────────────────────────
+  const clockDate = document.getElementById("clockDate");
+  const clockTime = document.getElementById("clockTime");
+  const tickClock = () => {
+    const n = new Date();
+    const wd = ["日","月","火","水","木","金","土"][n.getDay()];
+    clockDate.textContent = `${n.getFullYear()}年${n.getMonth()+1}月${n.getDate()}日 (${wd})`;
+    const h = String(n.getHours()).padStart(2,"0");
+    const m = String(n.getMinutes()).padStart(2,"0");
+    const s = String(n.getSeconds()).padStart(2,"0");
+    clockTime.textContent = `${h}:${m}:${s}`;
+  };
+  tickClock(); setInterval(tickClock, 1000);
+
+  // ── Helpers ───────────────────────────────────────
+  const el = (tag, attrs={}, children=[]) => {
+    const e = document.createElement(tag);
+    for (const k in attrs) {
+      if (k === "class") e.className = attrs[k];
+      else if (k === "html") e.innerHTML = attrs[k];
+      else if (k.startsWith("on")) e.addEventListener(k.slice(2), attrs[k]);
+      else if (attrs[k] === true) e.setAttribute(k,"");
+      else if (attrs[k] !== false && attrs[k] != null) e.setAttribute(k, attrs[k]);
+    }
+    (Array.isArray(children)?children:[children]).forEach(c => {
+      if (c == null) return;
+      e.appendChild(typeof c === "string" ? document.createTextNode(c) : c);
+    });
+    return e;
+  };
+  const parseNum = (str, fallback=0) => {
+    const n = parseFloat(String(str).replace(/[^\d.-]/g,""));
+    return Number.isFinite(n) ? n : fallback;
+  };
+  const fmtInt = (n) => Number(n || 0).toLocaleString("ja-JP");
+
+  // ── Wire contenteditable numeric / memo fields ────
+  document.querySelectorAll("[data-key]").forEach(node => {
+    const key = node.getAttribute("data-key");
+    const isTextarea = node.tagName === "TEXTAREA";
+    if (key in state) {
+      if (isTextarea) node.value = state[key];
+      else node.textContent = typeof state[key] === "number" ? fmtInt(state[key]) : state[key];
+    }
+    const commit = () => {
+      const v = isTextarea ? node.value : node.textContent;
+      if (typeof state[key] === "number" || /^(rev_|src_|job_|cash_)/.test(key)) {
+        const n = parseNum(v, 0);
+        state[key] = n;
+        if (!isTextarea) node.textContent = fmtInt(n);
+      } else {
+        state[key] = v;
+      }
+      save(); renderRevenue();
+    };
+    if (isTextarea) {
+      node.addEventListener("input", () => { state[key] = node.value; save(); });
+    } else {
+      node.addEventListener("blur", commit);
+      node.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); node.blur(); }
+      });
+    }
+  });
+
+  // ── Today focus (both the fixed bar AND the card) ──
+  const todayList = document.getElementById("todayList");
+  const focusChecks = document.getElementById("focusChecks");
+  const todayBar = document.getElementById("todayBar");
+  const todayBar2 = document.getElementById("todayBar2");
+  const todayPct = document.getElementById("todayPct");
+  const todayPct2 = document.getElementById("todayPct2");
+
+  const updateTodayBar = () => {
+    const done = state.todayTasks.filter(t => t.done).length;
+    const pct = Math.round(done / state.todayTasks.length * 100);
+    [todayBar, todayBar2].forEach(b => b.style.width = pct + "%");
+    [todayPct, todayPct2].forEach(p => p.textContent = pct + "%");
+  };
+
+  const renderTodayTasks = () => {
+    // Detailed edit list (card)
+    todayList.innerHTML = "";
+    focusChecks.innerHTML = "";
+    state.todayTasks.forEach((task, i) => {
+      // Card row
+      const cb = el("input", { type:"checkbox", id:`tf_${i}`, onchange: () => {
+        task.done = cb.checked; save(); updateTodayBar(); syncFixed();
+      }});
+      cb.checked = task.done;
+      const span = el("span", { class:"t", contenteditable:"true" }, task.t);
+      span.addEventListener("blur", () => {
+        task.t = span.textContent.trim() || task.t; span.textContent = task.t; save(); syncFixed();
+      });
+      span.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); span.blur(); }});
+      todayList.appendChild(el("label", { class:"check-item", for:`tf_${i}` }, [cb, span]));
+
+      // Fixed bar row
+      const fcb = el("input", { type:"checkbox", onchange: () => {
+        task.done = fcb.checked; cb.checked = fcb.checked; save(); updateTodayBar(); syncFixed();
+      }});
+      fcb.checked = task.done;
+      const fSpan = el("span", { class:"t" }, task.t);
+      focusChecks.appendChild(el("label", { class:"focus-chk" }, [fcb, fSpan]));
+    });
+    updateTodayBar();
+  };
+  // Sync: text edits in card should update labels in fixed bar, and vice versa
+  const syncFixed = () => {
+    Array.from(focusChecks.children).forEach((label, i) => {
+      const t = label.querySelector(".t");
+      if (t) t.textContent = state.todayTasks[i]?.t || "";
+      const cbx = label.querySelector("input[type=checkbox]");
+      if (cbx) cbx.checked = !!state.todayTasks[i]?.done;
+    });
+    Array.from(todayList.children).forEach((label, i) => {
+      const cbx = label.querySelector("input[type=checkbox]");
+      if (cbx) cbx.checked = !!state.todayTasks[i]?.done;
+    });
+  };
+  renderTodayTasks();
+
+  // ── Businesses ────────────────────────────────────
+  const bizGrid = document.getElementById("bizGrid");
+  const renderBiz = () => {
+    bizGrid.innerHTML = "";
+    state.biz.forEach((b, i) => {
+      const pctSpan = el("span", { contenteditable:"true" }, String(b.pct));
+      const bar = el("span", { style:`width:${b.pct}%` });
+      pctSpan.addEventListener("blur", () => {
+        let n = parseNum(pctSpan.textContent, b.pct);
+        n = Math.max(0, Math.min(100, Math.round(n)));
+        b.pct = n; pctSpan.textContent = String(n); bar.style.width = n + "%"; save();
+      });
+      pctSpan.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); pctSpan.blur(); }});
+
+      const card = el("div", { class:"biz-card" }, [
+        el("div", { class:"biz-head" }, [
+          el("h4", {}, `事業${"①②③④⑤⑥⑦⑧"[i] || b.n}：${b.title}`),
+          el("span", { class:`pill ${b.status.tone}` }, b.status.label),
+        ]),
+        el("div", { class:"biz-kv" }, [
+          el("span", {}, [document.createTextNode("フェーズ："), el("b", {}, b.phase)]),
+          el("span", {}, [document.createTextNode("収益モデル："), el("b", {}, b.model)]),
+          el("span", {}, [document.createTextNode("目標："), el("b", {}, b.goal)]),
+        ]),
+        el("div", { class:"bar-label" }, [
+          el("div", { class:"bar" }, bar),
+          el("span", { class:"pct" }, [pctSpan, document.createTextNode("%")]),
+        ]),
+      ]);
+      bizGrid.appendChild(card);
+    });
+  };
+  renderBiz();
+
+  // ── Revenue ───────────────────────────────────────
+  const revPct = document.getElementById("revPct");
+  const revBar = document.getElementById("revBar");
+  const chart = document.getElementById("chart");
+  const renderRevenue = () => {
+    const target = Math.max(1, parseNum(state.rev_target, 1));
+    const actual = parseNum(state.rev_actual, 0);
+    const pct = Math.max(0, Math.min(100, Math.round(actual / target * 100)));
+    revPct.textContent = pct + "%";
+    revBar.style.width = pct + "%";
+  };
+  const renderChart = () => {
+    chart.innerHTML = "";
+    const max = Math.max(10000, ...state.chart.map(v => parseNum(v,0)));
+    state.chart.forEach((v, i) => {
+      const bar = el("div", { class:"bar-v", style:`height:${Math.max(2, parseNum(v,0)/max*140)}px` });
+      const valSpan = el("span", { contenteditable:"true" }, String(v));
+      valSpan.style.fontSize = "12px";
+      valSpan.addEventListener("blur", () => {
+        const n = parseNum(valSpan.textContent, 0);
+        state.chart[i] = n; valSpan.textContent = String(n); save(); renderChart();
+      });
+      valSpan.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); valSpan.blur(); }});
+      chart.appendChild(el("div", { class:"col" }, [bar, el("div", { class:"mlabel" }, state.chartLabels[i]), valSpan]));
+    });
+  };
+  renderRevenue();
+  renderChart();
+
+  // ── Axis biz task list ────────────────────────────
+  const axisBizList = document.getElementById("axisBizList");
+  const renderAxisBizTasks = () => {
+    axisBizList.innerHTML = "";
+    state.axisBizTasks.forEach((task, i) => {
+      const cb = el("input", { type:"checkbox", id:`ab_${i}`, onchange: () => { task.done = cb.checked; save(); }});
+      cb.checked = task.done;
+      const span = el("span", { class:"t", contenteditable:"true" }, task.t);
+      span.addEventListener("blur", () => { task.t = span.textContent.trim() || task.t; span.textContent = task.t; save(); });
+      span.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); span.blur(); }});
+      axisBizList.appendChild(el("label", { class:"check-item", for:`ab_${i}` }, [cb, span]));
+    });
+  };
+  renderAxisBizTasks();
+
+  // ── Organization (staff) ──────────────────────────
+  const staffRow = document.getElementById("staffRow");
+  const renderStaff = () => {
+    staffRow.innerHTML = "";
+    state.staff.forEach((s) => {
+      const tmpl = el("textarea", { class:"tmpl", spellcheck:"false" });
+      const btn = el("button", { onclick: () => {
+        const card = btn.closest(".staff");
+        const isOpen = card.classList.toggle("open");
+        if (isOpen) {
+          tmpl.value =
+`以下を${s.name}（${s.role} / ${s.dom}）として実行してください。
+承認不要・即着手。
+
+## MISSION
+${s.next}
+
+## 文脈
+- 現在のフェーズ：PHASE 1（足元を固める）
+- 直近の成果：${s.result}
+- 本人（Sho）の今月目標：¥200,000・Rizup登録10名
+
+## 成果物
+- 実ファイルを編集 or 新規作成
+- 完了時は変更ファイル一覧と要約を短く報告
+
+## 備考
+CLAUDE.md / company/rizup-dashboard.html を参照して文脈を補完してよい。`;
+          setTimeout(() => { tmpl.focus(); tmpl.select(); }, 50);
+        }
+      }}, "📨 指示を出す");
+      const nextSpan = el("span", { contenteditable:"true" }, s.next);
+      nextSpan.addEventListener("blur", () => { s.next = nextSpan.textContent.trim(); save(); });
+      nextSpan.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); nextSpan.blur(); }});
+      const resultSpan = el("span", { contenteditable:"true" }, s.result);
+      resultSpan.addEventListener("blur", () => { s.result = resultSpan.textContent.trim(); save(); });
+      resultSpan.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); resultSpan.blur(); }});
+
+      staffRow.appendChild(el("div", { class:"staff" }, [
+        el("div", { class:"role" }, s.role),
+        el("h4", {}, s.name),
+        el("div", { class:"dom" }, s.dom),
+        el("div", { class:"kv" }, [document.createTextNode("最新成果："), el("b", {}, resultSpan)]),
+        el("div", { class:"kv" }, [document.createTextNode("次のタスク："), el("b", {}, nextSpan)]),
+        btn,
+        tmpl,
+      ]));
+    });
+  };
+  renderStaff();
+
+  // ── Weekly tracker ────────────────────────────────
+  const weekGrid = document.getElementById("weekGrid");
+  const weekPctSpan = document.getElementById("weekPct");
+  const renderWeek = () => {
+    weekGrid.innerHTML = "";
+    state.week.forEach((day, i) => {
+      const d = new Date(day.date + "T00:00:00");
+      const wd = ["月","火","水","木","金","土","日"][i];
+      const isToday = day.date === todayStr;
+      const memo = el("textarea", { placeholder:"一言メモ", onclick:(e)=>e.stopPropagation() });
+      memo.value = day.memo || "";
+      memo.addEventListener("input", () => { day.memo = memo.value; save(); });
+      const card = el("div", { class:`day ${day.done ? "done":""} ${isToday ? "today":""}`, onclick: (e) => {
+        if (e.target === memo) return;
+        day.done = !day.done; save(); renderWeek();
+      }}, [
+        el("div", { class:"wd" }, `${wd} (${d.getMonth()+1}/${d.getDate()})`),
+        el("div", { class:"num" }, day.done ? "✅" : (isToday ? "📝" : "—")),
+        memo,
+      ]);
+      weekGrid.appendChild(card);
+    });
+    const done = state.week.filter(d => d.done).length;
+    weekPctSpan.textContent = Math.round(done/state.week.length*100) + "%";
+  };
+  renderWeek();
+
+  document.addEventListener("blur", save, true);
+})();
+</script>
+</body>
+</html>
