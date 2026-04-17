@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import Image from "next/image";
 
 function initialOf(name?: string | null): string {
   const raw = (name || "").trim();
@@ -37,7 +36,7 @@ function Avatar({ url, size = 48, name }: { url?: string | null; size?: number; 
         height: size,
         background: "linear-gradient(135deg, #10b981 0%, #059669 60%, #047857 100%)",
       }}
-      aria-label={`${name || "ユーザー"}のアバター`}
+      aria-label={`${name || "匿名"}のアバター`}
     >
       {/* ハイライト光沢 */}
       <span
@@ -76,13 +75,10 @@ function Avatar({ url, size = 48, name }: { url?: string | null; size?: number; 
   );
 }
 
-const moodEmojis = ["", "😔", "😐", "🙂", "😊", "🤩"];
-const moodColor = ["", "text-gray-400", "text-gray-500", "text-mint", "text-mint", "text-orange"];
-
 const reactionTypes = [
-  { type: "cheer", emoji: "🌱", label: "応援してる", color: "mint" },
-  { type: "relate", emoji: "🤝", label: "わかるよ", color: "mint" },
-  { type: "amazing", emoji: "✨", label: "すごい！", color: "orange" },
+  { type: "cheer",   emoji: "🌱", label: "応援", color: "mint" },
+  { type: "relate",  emoji: "❤️", label: "いいね", color: "mint" },
+  { type: "amazing", emoji: "✨", label: "すごい", color: "mint" },
 ] as const;
 
 function formatRelativeTime(iso: string): string {
@@ -135,17 +131,16 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
   const [reported, setReported] = useState(false);
   const [displayContent, setDisplayContent] = useState(post.content);
   const [expanded, setExpanded] = useState(false);
-  const [showFeedback, setShowFeedback] = useState(false);
   const [showStrengthGift, setShowStrengthGift] = useState(false);
   const [strengthText, setStrengthText] = useState("");
   const [strengthSent, setStrengthSent] = useState(false);
 
   const isOwner = userId && post.user_id === userId;
   const canDelete = isOwner || isAdmin;
-  // 旧シードデータの "Sho" / "sho" はアバター下の名前を非表示に
-  const rawName = (post.profiles?.name || "ユーザー").trim();
+  // 旧シード "Sho" や未設定ユーザーは名前非表示（「ユーザー」は出さない）
+  const rawName = (post.profiles?.name || "").trim();
   const isShoSeed = /^sho$/i.test(rawName);
-  const name = isShoSeed ? "" : (rawName || "ユーザー");
+  const name = isShoSeed ? "" : rawName;
   const streakDays = post.profiles?.streak ?? 0;
   const time = formatRelativeTime(post.created_at);
   const isMorning = post.type === "morning";
@@ -360,11 +355,6 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
         <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full ${badgeCls} shrink-0`}>
           {isMorning ? "☀️ 朝" : "🌙 夜"}
         </span>
-        {post.compound_score_today != null && (
-          <span className="text-[11px] font-extrabold text-orange bg-orange-light rounded-full px-2 py-1 shrink-0">
-            +{post.compound_score_today}
-          </span>
-        )}
         {(isOwner || isAdmin) && (
           <div className="relative shrink-0">
             <button
@@ -420,11 +410,6 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
         </div>
       )}
 
-      {/* Mood */}
-      <div className={`px-4 text-[13px] font-bold ${moodColor[post.mood] || "text-gray-400"}`}>
-        {moodEmojis[post.mood]} 気分 {post.mood}/5
-      </div>
-
       {/* Body */}
       {editing ? (
         <div className="px-4 py-3">
@@ -452,7 +437,7 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
       ) : (
         <div className="px-4 pt-2 pb-3">
           <p
-            className="text-[15.5px] text-text dark:text-gray-100 leading-[1.75] whitespace-pre-wrap break-words"
+            className="text-base text-text dark:text-gray-100 leading-[1.85] whitespace-pre-wrap break-words"
             style={
               !expanded && isLong
                 ? {
@@ -460,8 +445,9 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
                     WebkitLineClamp: CLAMP_LINES,
                     WebkitBoxOrient: "vertical",
                     overflow: "hidden",
+                    fontWeight: 600,
                   }
-                : undefined
+                : { fontWeight: 600 }
             }
           >
             {safeContent}
@@ -489,47 +475,27 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
         </div>
       )}
 
-      {/* AI Feedback（デフォルト折りたたみ） */}
-      {post.ai_feedback && (
-        <div className="mx-4 mb-3">
-          <button
-            onClick={() => setShowFeedback(s => !s)}
-            className="w-full flex items-center gap-1.5 text-[12px] font-extrabold text-mint hover:underline py-1"
-            aria-expanded={showFeedback}
-          >
-            <Image src="/icons/icon-192.png" alt="Rizup" width={18} height={18} className="rounded-full" />
-            <span>Rizup のフィードバックを見る</span>
-            <span className="ml-auto text-[10px]">{showFeedback ? "▲" : "▼"}</span>
-          </button>
-          {showFeedback && (
-            <div className="mt-1.5 bg-gradient-to-br from-mint-light to-white dark:from-[#1f2a26] dark:to-[#1a1a1a] rounded-2xl p-3 border border-mint/10 dark:border-mint/20 animate-fade-in">
-              <p className="text-[13.5px] text-text dark:text-gray-100 leading-relaxed">{post.ai_feedback}</p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Reactions — 大きなタップ領域 */}
+      {/* Reactions — 絵文字のみのシンプル表示 */}
       <div className="flex gap-2 px-4 pb-3">
         {reactionTypes.map((r) => {
           const reacted = myReactions.has(r.type);
-          const base = r.color === "orange" ? "orange" : "mint";
           return (
             <button
               key={r.type}
               onClick={() => handleReact(r.type)}
               aria-label={`${r.label} ${counts[r.type]}件`}
-              className={`flex-1 h-[44px] min-h-[44px] flex items-center justify-center gap-1 px-2 py-2 rounded-2xl text-[14px] font-bold border-2 transition-all active:scale-95 ${
+              className={`flex items-center justify-center gap-1.5 h-11 px-4 rounded-full border transition-all active:scale-90 ${
                 reacted
-                  ? base === "orange"
-                    ? "bg-orange-light border-orange text-orange shadow-sm ring-1 ring-orange/30"
-                    : "bg-mint-light border-mint text-mint shadow-sm ring-1 ring-mint/30"
-                  : "bg-gray-50 border-gray-100 text-text-mid hover:border-mint-mid"
+                  ? "bg-mint-light border-mint shadow-sm"
+                  : "bg-transparent border-gray-100 dark:border-[#2a2a2a] hover:border-mint-mid"
               } ${animating === r.type ? "animate-pop" : ""}`}
             >
-              <span className="text-base">{r.emoji}</span>
-              <span className="truncate">{r.label}</span>
-              <span className={reacted ? "" : "text-text-light"}>{counts[r.type] || ""}</span>
+              <span className="text-lg leading-none">{r.emoji}</span>
+              {counts[r.type] > 0 && (
+                <span className={`text-xs font-bold ${reacted ? "text-mint" : "text-text-light"}`}>
+                  {counts[r.type]}
+                </span>
+              )}
             </button>
           );
         })}
@@ -634,7 +600,7 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
                 🌸
               </div>
               <div className="flex-1 bg-gray-50 rounded-2xl px-3 py-2">
-                <span className="text-[12px] font-extrabold">{c.profiles?.name || "ユーザー"}</span>
+                <span className="text-[12px] font-extrabold">{c.profiles?.name || "匿名"}</span>
                 <p className="text-[13px] text-text-mid leading-relaxed">{c.content}</p>
               </div>
             </div>

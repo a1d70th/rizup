@@ -429,16 +429,6 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* 今日のステータス（シンプル1行） */}
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl border border-gray-100 dark:border-[#2a2a2a] shadow-sm px-4 py-3 mb-3 flex items-center justify-between">
-            <span className="text-sm dark:text-gray-100">
-              {morningDone || eveningDone ? "☀️ 今日のひとこと済み ✅" : "📝 今日のひとことまだ"}
-            </span>
-            <div className="flex items-center gap-1">
-              <span className="streak-fire">🔥</span>
-              <span className="font-extrabold text-orange">{streak}</span>
-            </div>
-          </div>
 
 
           {loading ? (

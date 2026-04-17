@@ -1,7 +1,68 @@
-# Rizup HQ — AI引継ぎファイル（v6.8 / ローンチ最終仕上げ）
+# Rizup HQ — AI引継ぎファイル（v7.3 / タイムライン大掃除）
 
 > 新しいチャットを開いたらまずこのファイルを読んで即作業開始。確認不要。
-> **最終更新：2026-04-17（v6.8 リリース）**
+> **最終更新：2026-04-18（v7.3 リリース）**
+
+---
+
+## 🆕 v7.3（2026-04-18）— タイムライン大掃除 + ヘッダー刷新
+
+**ロゴ（グラデーションタイポ）**
+- `Header.tsx`: SVG Image → CSS グラデの "RIZUP" 文字に変更
+  - `linear-gradient(135deg, #10b981 → #06b6d4)` を -webkit-background-clip:text で文字に流す
+  - `font-weight:900 / letter-spacing:-0.03em / Inter / 1.4rem`
+- PWA スタンドアロンで iOS のステータスバー（時計/バッテリー）と被らないよう
+  `paddingTop: env(safe-area-inset-top)` をヘッダーに付与
+- sticky top-0 z-30 で常時追従
+
+**PostCard 大幅簡素化**
+- 「ユーザー」フォールバックを撤去（名前なしは非表示、アバター alt は「匿名」）
+- 気分 `{mood}/5` の表示行を削除
+- `compound_score` バッジを削除
+- AI feedback の折りたたみブロックを丸ごと削除（不要なノイズだった）
+- リアクションボタン: テキスト(応援してる/わかるよ/すごい！) → 絵文字のみ（🌱 ❤️ ✨）
+  - 数字は > 0 の時だけ小さく表示
+- 本文: `text-base / leading-[1.85] / font-weight:600` に昇格（一番大きく目立つ）
+
+**ホーム**
+- 「☀️ 今日のひとこと済み ✅ / 📝 今日のひとことまだ」の状態バッジ行を撤去（Hero の streak 表示と CTA ボタンで代替）
+
+**テストデータ**
+- `app/rizup-app/supabase/seed-posts.sql` 新規（8件・朝4/夜4）
+- `app/rizup-app/supabase/README_SEED.md`: user_id 差し替え手順と投入手順
+
+## 🚀 ローンチ前チェックリスト（更新）
+
+- [x] **DB**: `src/scripts/run-migration.md` の SQL を Supabase SQL Editor で実行
+- [x] **テストデータ**: `supabase/README_SEED.md` 手順で seed-posts.sql 投入（タイムラインの見栄え確認用）
+- [x] **Stripe**: `.env.local.example` 参照して Vercel に 4 変数を登録
+- [x] **Stripe Dashboard**: Webhook エンドポイント `/api/stripe/webhook` 登録 + signing secret 環境変数反映
+- [ ] **Threads**: @shohei_rizup 初日投稿
+- [ ] **note**: 下書き公開
+- [ ] **PWA実機**: iPhone Safari「ホーム画面に追加」→ 新しい RIZUP ロゴ表示 / ステータスバー被りなし確認
+- [ ] **Pro購入テスト**: /pricing → Checkout → Webhook で plan=pro に更新されるか
+
+---
+
+## ✅ v7.2（2026-04-17）— ロゴリデザイン + Avatar 刷新
+
+- `public/logo-r.svg`: 卵フェイス撤去、ミント3段グラデ + 幾何学カスタム R パス + アクセントドット
+- `public/logo.svg` / `logo-white.svg`: "RIZUP" → "rizup" 小文字、r にグラデ、末尾ドット
+- PostCard Avatar: 単色 → 斜めグラデ + ハイライト + Inter-900
+
+## ✅ v7.1（2026-04-17）— 朝活3項目 + PWA 導線
+
+- ジャーナル朝モードに 🌙入眠/☀️起床/⏱睡眠 の3カラム。睡眠時間自動計算
+- ジャーナル送信ボタンの safe-area 対応
+- InstallBanner を全面書換 + home で mount（beforeinstallprompt / iOS モーダル）
+
+## ✅ v7.0（2026-04-17）— キャラ/卵/森を撤去
+
+- tag: `v6.8-village-backup`、branch: `backup/village-concept-v6.8` で復元可能
+- ホームを Hero (streak) + CTA + タイムライン の 3 ブロックに
+- BottomNav: 🌳 森 タブ削除（4 タブ）
+
+## ✅ v6.2〜v6.8（2026-04-17）— 継続の仕掛け・Stripe・500速度
 
 ---
 
