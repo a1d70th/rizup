@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rizup 社内ダッシュボード</title>
+<style>
+  :root {
+    --bg: #0f1512;
+    --bg-2: #111a17;
+    --card: #172220;
+    --border: #24302c;
+    --text: #f0f3f1;
+    --text-mid: #b5c0bb;
+    --text-dim: #7a8a84;
+    --mint: #6ecbb0;
+    --mint-dim: rgba(110, 203, 176, 0.16);
+    --orange: #f4976c;
+    --red: #ef4444;
+    --red-dim: rgba(239, 68, 68, 0.14);
+    --yellow: #fbbf24;
+    --yellow-dim: rgba(251, 191, 36, 0.14);
+    --green: #22c55e;
+    --green-dim: rgba(34, 197, 94, 0.14);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "M PLUS Rounded 1c", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+    line-height: 1.6;
+    padding: 24px 16px 64px;
+  }
+  .wrap { max-width: 920px; margin: 0 auto; }
+  header {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 12px 4px 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px;
+  }
+  header h1 {
+    margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 0.02em;
+    color: var(--text);
+  }
+  header h1 span { color: var(--mint); }
+  header .updated { font-size: 12px; color: var(--text-dim); }
+
+  section {
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 18px 20px; margin-bottom: 16px;
+  }
+  section h2 {
+    margin: 0 0 14px; font-size: 15px; font-weight: 800;
+    color: var(--text); display: flex; align-items: center; gap: 8px;
+  }
+  section h2::before {
+    content: ""; display: inline-block; width: 4px; height: 16px; border-radius: 2px;
+    background: var(--mint);
+  }
+
+  ul.clean { margin: 0; padding: 0; list-style: none; }
+  ul.clean li {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  ul.clean li:last-child { border-bottom: none; }
+
+  .pill {
+    font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
+    white-space: nowrap;
+  }
+  .pill.done    { background: var(--green-dim);  color: var(--green); }
+  .pill.doing   { background: var(--yellow-dim); color: var(--yellow); }
+  .pill.todo    { background: var(--red-dim);    color: var(--red); }
+  .pill.mint    { background: var(--mint-dim);   color: var(--mint); }
+  .pill.orange  { background: rgba(244,151,108,.14); color: var(--orange); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
+
+  .kpi {
+    display: flex; flex-direction: column; gap: 2px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 14px;
+  }
+  .kpi .label { font-size: 11px; color: var(--text-dim); font-weight: 700; }
+  .kpi .value { font-size: 20px; font-weight: 800; color: var(--text); }
+  .kpi .sub   { font-size: 11px; color: var(--text-mid); }
+
+  .bar {
+    background: var(--bg-2); border-radius: 999px; height: 8px; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .bar > span {
+    display: block; height: 100%; background: linear-gradient(90deg, var(--mint), #4ecba0);
+  }
+
+  .priority {
+    display: flex; align-items: center; gap: 10px; padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .priority:last-child { border-bottom: none; }
+  .priority .n {
+    width: 24px; height: 24px; border-radius: 999px; display: grid; place-items: center;
+    font-size: 12px; font-weight: 800; color: #0f1512; background: var(--mint); flex-shrink: 0;
+  }
+  .priority.red    .n { background: var(--red);    color: #fff; }
+  .priority.yellow .n { background: var(--yellow); color: #0f1512; }
+
+  footer {
+    text-align: center; color: var(--text-dim); font-size: 11px; padding: 24px 0 8px;
+  }
+  a { color: var(--mint); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Rizup <span>社内ダッシュボード</span></h1>
+    <div class="updated">更新：2026-04-17</div>
+  </header>
+
+  <!-- 1. アプリ開発進捗 -->
+  <section>
+    <h2>📱 アプリ開発進捗</h2>
+    <ul class="clean">
+      <li><span class="pill done">完了</span><span>v5.0 キャラ育成基盤（5動物×7段階・村コンセプト）</span></li>
+      <li><span class="pill done">完了</span><span>v5.5 SVGキャラリデザイン</span></li>
+      <li><span class="pill done">完了</span><span>v5.7 キャラ選択・ジャーナルUI修正</span></li>
+      <li><span class="pill done">完了</span><span>v5.9 継続の仕掛け（プログレスバー・ストリーク感情連動）</span></li>
+      <li><span class="pill doing">進行中</span><span>v6.0 マイルストーン演出・streakバグ修正</span></li>
+      <li><span class="pill todo">未着手</span><span>Stripe設定・課金機能</span></li>
+      <li><span class="pill done">完了</span><span>Supabase SQL 本番稼働（v5 スキーマ）</span></li>
+    </ul>
+  </section>
+
+  <!-- 2. 収益状況 -->
+  <section>
+    <h2>💰 収益状況</h2>
+    <div class="grid2" style="margin-bottom:14px;">
+      <div class="kpi">
+        <span class="label">今月目標</span>
+        <span class="value">¥200,000</span>
+        <span class="sub">2026年4月</span>
+      </div>
+      <div class="kpi">
+        <span class="label">現在収益</span>
+        <span class="value" style="color:var(--orange);">¥0</span>
+        <span class="sub">達成率 0%</span>
+      </div>
+    </div>
+    <div class="bar" aria-label="月次進捗 0%"><span style="width:1%"></span></div>
+
+    <ul class="clean" style="margin-top:14px;">
+      <li><span class="pill todo">¥0</span><span>Rizup Pro / Premium（Stripe未設定）</span></li>
+      <li><span class="pill doing">応募中 3件</span><span>クラウドワークス</span></li>
+      <li><span class="pill doing">下書き完成</span><span>note記事（未公開）</span></li>
+    </ul>
+  </section>
+
+  <!-- 3. マーケティング進捗 -->
+  <section>
+    <h2>📣 マーケティング進捗</h2>
+    <ul class="clean">
+      <li><span class="pill todo">未投稿</span><span>スレッズ（@shohei_rizup）</span></li>
+      <li><span class="pill todo">未公開</span><span>note記事</span></li>
+      <li><span class="pill done">公開済み</span><span>LP：<a href="https://rizup.vercel.app" target="_blank" rel="noopener">rizup.vercel.app</a></span></li>
+    </ul>
+  </section>
+
+  <!-- 4. 今日やること -->
+  <section>
+    <h2>🔥 今日やること（優先順位）</h2>
+    <div class="priority red">
+      <span class="n">1</span>
+      <span><strong>スレッズ初投稿</strong> <span style="color:var(--text-dim);font-size:12px;">— 露出ゼロからの脱却</span></span>
+    </div>
+    <div class="priority red">
+      <span class="n">2</span>
+      <span><strong>note記事公開</strong> <span style="color:var(--text-dim);font-size:12px;">— 下書きは完成済み</span></span>
+    </div>
+    <div class="priority yellow">
+      <span class="n">3</span>
+      <span><strong>Stripe設定</strong> <span style="color:var(--text-dim);font-size:12px;">— 商品・Webhook・Vercel環境変数</span></span>
+    </div>
+    <div class="priority yellow">
+      <span class="n">4</span>
+      <span><strong>v6.0 完了後チェック</strong> <span style="color:var(--text-dim);font-size:12px;">— streak 動作・マイルストーン演出</span></span>
+    </div>
+  </section>
+
+  <!-- 5. 社員状況 -->
+  <section>
+    <h2>👥 社員状況</h2>
+    <ul class="clean">
+      <li><span class="pill mint">稼働中</span><span><strong>Kai</strong>（CMO・リサーチ）</span></li>
+      <li><span class="pill mint">稼働中</span><span><strong>Rei</strong>（CCO・マーケ / X・Threads・note）</span></li>
+      <li><span class="pill mint">稼働中</span><span><strong>Leo</strong>（CSO・戦略 / クラウドワークス営業）</span></li>
+      <li><span class="pill mint">稼働中</span><span><strong>Haru</strong>（秘書・進捗管理）</span></li>
+    </ul>
+  </section>
+
+  <footer>
+    Rizup 社内ダッシュボード · 翔平さん専用
+  </footer>
+</div>
+</body>
+</html>

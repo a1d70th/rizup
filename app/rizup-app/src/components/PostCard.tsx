@@ -113,6 +113,14 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
   const isLong = safeContent.length > 140 || safeContent.split("\n").length > CLAMP_LINES;
 
   useEffect(() => {
+    // 先に localStorage から復元（通信前でも押下状態を即反映）
+    try {
+      const raw = localStorage.getItem(`rizup_reactions_${post.id}`);
+      if (raw) {
+        const arr = JSON.parse(raw) as string[];
+        if (Array.isArray(arr)) setMyReactions(new Set(arr));
+      }
+    } catch { /* ignore */ }
     const load = async () => {
       try {
         const { data: allReactions } = await supabase
@@ -128,6 +136,9 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
           });
           setCounts(c);
           setMyReactions(mine);
+          try {
+            localStorage.setItem(`rizup_reactions_${post.id}`, JSON.stringify(Array.from(mine)));
+          } catch { /* ignore */ }
         }
       } catch { /* reactions テーブル未作成時は無視 */ }
       try {
@@ -151,18 +162,28 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
     setAnimating(type);
     setTimeout(() => setAnimating(null), 400);
 
+    const persistMine = (s: Set<string>) => {
+      try {
+        localStorage.setItem(`rizup_reactions_${post.id}`, JSON.stringify(Array.from(s)));
+      } catch { /* ignore */ }
+    };
     try {
       if (myReactions.has(type)) {
         await supabase.from("reactions").delete().match({ post_id: post.id, user_id: userId, type });
         setMyReactions((prev) => {
           const s = new Set(prev);
           s.delete(type);
+          persistMine(s);
           return s;
         });
         setCounts((prev) => ({ ...prev, [type]: Math.max(0, (prev[type] || 0) - 1) }));
       } else {
         await supabase.from("reactions").insert({ post_id: post.id, user_id: userId, type });
-        setMyReactions((prev) => new Set(prev).add(type));
+        setMyReactions((prev) => {
+          const s = new Set(prev).add(type);
+          persistMine(s);
+          return s;
+        });
         setCounts((prev) => ({ ...prev, [type]: (prev[type] || 0) + 1 }));
         if (post.user_id !== userId) {
           try {
@@ -458,11 +479,11 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
               key={r.type}
               onClick={() => handleReact(r.type)}
               aria-label={`${r.label} ${counts[r.type]}件`}
-              className={`flex-1 min-h-[44px] flex items-center justify-center gap-1 px-2 py-2.5 rounded-2xl text-[13px] font-bold border transition-all active:scale-95 ${
+              className={`flex-1 h-[44px] min-h-[44px] flex items-center justify-center gap-1 px-2 py-2 rounded-2xl text-[14px] font-bold border-2 transition-all active:scale-95 ${
                 reacted
                   ? base === "orange"
-                    ? "bg-orange-light border-orange text-orange shadow-sm"
-                    : "bg-mint-light border-mint text-mint shadow-sm"
+                    ? "bg-orange-light border-orange text-orange shadow-sm ring-1 ring-orange/30"
+                    : "bg-mint-light border-mint text-mint shadow-sm ring-1 ring-mint/30"
                   : "bg-gray-50 border-gray-100 text-text-mid hover:border-mint-mid"
               } ${animating === r.type ? "animate-pop" : ""}`}
             >

@@ -262,12 +262,22 @@ export default function JournalPage() {
       const feedback = feedbacks[Math.floor(Math.random() * feedbacks.length)];
       await supabase.from("posts").update({ ai_feedback: feedback }).eq("id", data.id);
 
-      // 非同期: ポジティブ度・streak
+      // 非同期: ポジティブ度
       fetch("/api/analyze/score", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ postId: data.id, content: allText }),
       }).catch(() => {});
-      fetch("/api/check-progress", { method: "POST" }).catch(() => {});
+      // streak 更新は同期で取得（投稿直後に正しい値を表示するため）
+      try {
+        const res = await fetch("/api/check-progress", { method: "POST" });
+        const json = await res.json();
+        if (typeof json?.streak === "number") {
+          setCurrentStreak(json.streak);
+        }
+      } catch {
+        // フォールバック: 当日既に投稿済みでなければ +1 を推定
+        setCurrentStreak(s => s + 1);
+      }
 
       // 強み抽出（非同期・失敗してもUXに影響しない）
       fetch("/api/strength-detect", {
@@ -448,7 +458,7 @@ export default function JournalPage() {
           <div className="flex gap-4 justify-center">
             {moodOptions.map(m => (
               <button key={m.value} onClick={() => { setMood(m.value); setWantWrite(false); }}
-                className={`flex flex-col items-center gap-3 px-10 py-6 rounded-2xl border-2 transition-all ${
+                className={`flex flex-col items-center gap-3 px-10 py-6 min-h-[80px] rounded-2xl border-2 transition-all ${
                   mood === m.value ? m.color + " scale-105 shadow-lg" : "bg-gray-50 dark:bg-[#2a2a3a] border-gray-200 dark:border-[#3a3a4a] opacity-50"
                 }`}>
                 <span className="text-5xl">{m.emoji}</span>
@@ -458,20 +468,26 @@ export default function JournalPage() {
           </div>
         </div>
 
-        {/* 気分選択後：このまま送る or 一言追加する */}
+        {/* 気分選択後：一言追加する のみ（送信ボタンは sticky） */}
         {mood !== 0 && !wantWrite && (
           <div className="flex flex-col gap-3 mb-3 animate-fade-in">
-            <button onClick={handlePost}
-              disabled={loading}
-              className="w-full bg-mint text-white font-extrabold py-5 rounded-2xl shadow-xl shadow-mint/40 text-lg active:scale-95 transition flex items-center justify-center gap-2">
-              {loading ? "送信中..." : <><span>✨</span><span>このまま送る</span></>}
-            </button>
             <button onClick={() => setWantWrite(true)}
               className="w-full bg-white dark:bg-[#252535] border-2 border-gray-100 dark:border-[#3a3a4a] text-text-mid font-bold py-3.5 rounded-2xl text-sm active:scale-95 transition">
               💬 一言追加する
             </button>
           </div>
         )}
+
+        {/* スキップ導線 */}
+        <div className="text-center mb-2">
+          <button
+            onClick={() => router.push("/home")}
+            className="text-emerald-400 font-bold underline-offset-2 hover:underline py-2"
+            style={{ fontSize: 16 }}
+          >
+            今日は書かなくていい
+          </button>
+        </div>
 
         {/* 一言入力（wantWrite時のみ表示） */}
         {mood !== 0 && wantWrite && (
@@ -592,8 +608,8 @@ export default function JournalPage() {
         <div aria-hidden="true" className="h-28" />
       </div>
 
-      {/* 固定投稿ボタン（wantWrite時 or 夜モード時のみ表示） */}
-      {(wantWrite || mode === "evening") && (
+      {/* 固定投稿ボタン（気分選択済み or 夜モード時に常時表示） */}
+      {(mood !== 0 || mode === "evening") && (
         <div
           className="fixed left-0 right-0 bottom-16 z-40 px-4 pointer-events-none"
           style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
@@ -602,8 +618,10 @@ export default function JournalPage() {
             <button onClick={handlePost}
               disabled={loading || mood === 0}
               aria-label="ジャーナルを投稿"
-              className="w-full bg-mint text-white font-bold py-4 rounded-full shadow-xl shadow-mint/40 disabled:opacity-40 text-base">
-              {loading ? "投稿中..." : mode === "morning" ? "☀️ 朝のひとことを送る" : "🌙 夜のふりかえりを送る"}
+              className="w-full bg-mint text-white font-extrabold py-4 rounded-full shadow-xl shadow-mint/40 disabled:opacity-40 text-base flex items-center justify-center gap-2">
+              {loading ? "投稿中..." : mode === "morning"
+                ? (wantWrite ? <><span>☀️</span><span>朝のひとことを送る</span></> : <><span>✨</span><span>このまま送る</span></>)
+                : <><span>🌙</span><span>夜のふりかえりを送る</span></>}
             </button>
           </div>
         </div>
