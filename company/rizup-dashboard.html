@@ -24,8 +24,8 @@
     --orange:#f59e0b;
     --blue:#60a5fa;
   }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0}
+  *{box-sizing:border-box;min-width:0}
+  html,body{margin:0;padding:0;overflow-x:hidden;max-width:100vw}
   body{
     background:var(--bg);color:var(--text);
     font-family:"M PLUS Rounded 1c",-apple-system,BlinkMacSystemFont,"Hiragino Sans","Yu Gothic UI",sans-serif;
@@ -290,29 +290,32 @@
   .axis-kv .v{font-weight:800;color:var(--text)}
 
   /* ── Org chart ── */
-  .org{display:flex;flex-direction:column;align-items:center;gap:0;position:relative}
+  .org{display:flex;flex-direction:column;align-items:center;gap:0;position:relative;width:100%;overflow:hidden}
   .org .ceo{
     background:linear-gradient(180deg,rgba(16,185,129,.18),var(--card-2));
-    border:2px solid var(--accent);border-radius:14px;padding:14px 20px;text-align:center;min-width:240px;
+    border:2px solid var(--accent);border-radius:14px;padding:14px 20px;text-align:center;
+    width:100%;max-width:320px;
   }
   .org .ceo b{color:var(--accent)}
   .org .vline{width:2px;height:28px;background:var(--accent)}
   .org .hline{height:2px;background:var(--accent);width:92%;max-width:780px}
-  .org .v-stubs{
-    position:relative;width:92%;max-width:780px;height:20px;
+  .staff-row{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;width:100%;margin-top:0}
+  @media (max-width:860px){.staff-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:480px){
+    .staff-row{grid-template-columns:1fr}
+    .org .hline,.org .vline{display:none}
   }
-  .org .v-stubs::before,
-  .org .v-stubs::after{content:""}
-  .staff-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;width:100%;margin-top:0}
-  @media (max-width:720px){.staff-row{grid-template-columns:repeat(2,1fr)}}
   .staff{
     background:var(--card-2);border:1px solid var(--border-2);border-radius:14px;
-    padding:16px;display:flex;flex-direction:column;gap:8px;min-width:180px;
+    padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0;max-width:100%;
     position:relative;
   }
   .staff::before{
     content:"";position:absolute;top:-20px;left:50%;transform:translateX(-50%);
     width:2px;height:20px;background:var(--accent);
+  }
+  @media (max-width:480px){
+    .staff::before{display:none}
   }
   .staff h4{margin:0;font-size:16px;font-weight:800;color:var(--text)}
   .staff .role{font-size:11px;font-weight:800;color:var(--accent);letter-spacing:.1em}
@@ -596,6 +599,41 @@
     <small class="hint">※「📨 指示を出す」でClaude Code 用テンプレが展開。そのままコピペで使えます。</small>
   </section>
 
+  <!-- ── MEDIA: 3メディア集客（全事業の集客基盤） ───── -->
+  <section class="card">
+    <h2>📣 メディア集客 <span class="section-meta">スレッズ × note × YouTube</span></h2>
+    <p style="font-size:13px;color:var(--accent);font-weight:700;margin:0 0 14px">
+      全事業の集客基盤。毎日投稿が最優先。
+    </p>
+    <div class="grid-3" id="mediaGrid"><!-- JS --></div>
+  </section>
+
+  <!-- ── WEEK-PLAN: 曜日別タスク ─────────────────────── -->
+  <section class="card">
+    <h2>📅 週間スケジュール <span class="section-meta">曜日ごとの固定タスク</span></h2>
+    <div class="grid-2" id="weekPlanGrid"><!-- JS: 7曜日のチェックリスト --></div>
+  </section>
+
+  <!-- ── ROUTINE: 朝昼夜ルーティン ───────────────────── -->
+  <section class="card">
+    <h2>⏱ 毎日のルーティン <span class="section-meta">朝 → 昼 → 夜</span></h2>
+    <div class="grid-3" id="routineGrid"><!-- JS --></div>
+  </section>
+
+  <!-- ── CALENDAR: Google Calendar ──────────────────── -->
+  <section class="card">
+    <h2>📆 カレンダー <span class="section-meta">今週の予定・メモ</span></h2>
+    <p style="font-size:13px;color:var(--sub);margin:0 0 12px">
+      スマホの Google カレンダーで予定を管理。下のボタンからすぐにアクセスできます。
+    </p>
+    <a href="https://calendar.google.com" target="_blank" rel="noopener"
+       style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#0a0a0a;font-weight:800;padding:12px 20px;border-radius:10px;min-height:44px;font-size:14px;text-decoration:none;margin-bottom:16px">
+      📅 Google カレンダーを開く
+    </a>
+    <p style="font-size:13px;color:var(--sub);margin:0 0 10px;font-weight:700">今週の予定メモ（手動入力）</p>
+    <div class="grid-2" id="calendarGrid"><!-- JS: 月〜日の7マス --></div>
+  </section>
+
   <!-- ── SECTION 8: 週間トラッカー ──────────────────── -->
   <section class="card">
     <h2>📅 週間トラッカー <span class="section-meta"><span id="weekPct">0%</span> 達成</span></h2>
@@ -635,7 +673,77 @@
       { n:6, title:"転職×メンタルコーチング",        phase:"PHASE2",        pct:10, model:"¥29,800/月/人",        goal:"自身の転職完了後に開始",               status:{label:"⏳ 準備中",  tone:"sub"} },
       { n:7, title:"英語×AI活用スクール",            phase:"PHASE4",        pct:0,  model:"¥9,800/月",            goal:"1年後に展開",                          status:{label:"💤 未着手",  tone:"sub"} },
       { n:8, title:"Rizup for Business",           phase:"PHASE4",        pct:0,  model:"¥500/人/月×企業契約",   goal:"個人版が安定したら展開",               status:{label:"💤 未着手",  tone:"sub"} },
+      { n:9, title:"グローバルコミュニティ（英語版 Rizup）", phase:"PHASE4", pct:0, model:"$4.99/月・グローバル展開", goal:"TOEIC850 の英語力を活用・アジア市場から", status:{label:"💤 未着手",  tone:"sub"} },
     ],
+
+    // メディア
+    media: {
+      threads: { posts:0, followers:13, goal:100 },
+      note:    { posts:0, followers:4,  goal:50  },
+      youtube: { subs:0, status:"フォロワー100人後に開始" },
+    },
+
+    // 曜日別タスク
+    weekPlan: {
+      mon: [
+        { t:"スレッズ投稿", done:false },
+        { t:"Rizup開発",    done:false },
+        { t:"転職活動",     done:false },
+      ],
+      tue: [
+        { t:"note記事執筆", done:false },
+        { t:"Rizup開発",    done:false },
+        { t:"転職活動",     done:false },
+      ],
+      wed: [
+        { t:"スレッズ投稿", done:false },
+        { t:"Rizup開発",    done:false },
+        { t:"CW応募",       done:false },
+      ],
+      thu: [
+        { t:"YouTubeショート準備", done:false },
+        { t:"Rizup開発",           done:false },
+      ],
+      fri: [
+        { t:"スレッズ投稿",   done:false },
+        { t:"note記事",       done:false },
+        { t:"週次振り返り",   done:false },
+      ],
+      sat: [
+        { t:"Rizup開発集中",      done:false },
+        { t:"コミュニティ管理",   done:false },
+      ],
+      sun: [
+        { t:"翌週計画",               done:false },
+        { t:"ダッシュボード更新",     done:false },
+      ],
+    },
+    weekPlanStart: null,
+
+    // ルーティン（朝昼夜）
+    routine: {
+      morning: [
+        { t:"6時起床",           done:false },
+        { t:"散歩30分",           done:false },
+        { t:"スレッズ投稿（5分）", done:false },
+        { t:"Rizup開発2h",        done:false },
+      ],
+      noon: [
+        { t:"転職活動1h",    done:false },
+        { t:"Rizup開発2h",   done:false },
+        { t:"note執筆30分",  done:false },
+      ],
+      night: [
+        { t:"筋トレ30分",           done:false },
+        { t:"振り返りジャーナル",   done:false },
+        { t:"翌日タスク確認",       done:false },
+        { t:"22時就寝",             done:false },
+      ],
+    },
+
+    // 今週のカレンダーメモ（月〜日）
+    calendarMemos: { mon:"", tue:"", wed:"", thu:"", fri:"", sat:"", sun:"" },
+    calendarStart: null,
 
     rev_target: 200000, rev_actual: 0,
     src_rizup: 0, src_note: 0, src_cw: 0, src_hr: 0, src_other: 0,
@@ -673,7 +781,11 @@
                biz: s.biz || defaultState.biz,
                chart: s.chart || defaultState.chart,
                axisBizTasks: s.axisBizTasks || defaultState.axisBizTasks,
-               staff: s.staff || defaultState.staff };
+               staff: s.staff || defaultState.staff,
+               media: { ...defaultState.media, ...(s.media || {}) },
+               weekPlan: s.weekPlan || defaultState.weekPlan,
+               routine: s.routine || defaultState.routine,
+               calendarMemos: { ...defaultState.calendarMemos, ...(s.calendarMemos || {}) } };
     } catch { return structuredClone(defaultState); }
   };
   const save = () => { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch {} };
@@ -1014,6 +1126,167 @@ CLAUDE.md / company/rizup-dashboard.html を参照して文脈を補完してよ
     weekPctSpan.textContent = Math.round(done/state.week.length*100) + "%";
   };
   renderWeek();
+
+  // ── 曜日別タスク・カレンダーメモの週次リセット ──
+  const WEEK_KEYS = ["mon","tue","wed","thu","fri","sat","sun"];
+  const WEEK_LABELS = { mon:"月", tue:"火", wed:"水", thu:"木", fri:"金", sat:"土", sun:"日" };
+  if (state.weekPlanStart !== thisMondayStr) {
+    state.weekPlanStart = thisMondayStr;
+    WEEK_KEYS.forEach(k => {
+      (state.weekPlan?.[k] || []).forEach(t => t.done = false);
+    });
+    save();
+  }
+  if (state.calendarStart !== thisMondayStr) {
+    state.calendarStart = thisMondayStr;
+    WEEK_KEYS.forEach(k => { state.calendarMemos[k] = ""; });
+    save();
+  }
+  // ── 今日の曜日キー ──
+  const todayKey = WEEK_KEYS[(today.getDay() + 6) % 7];
+
+  // ── メディア ──
+  const mediaGrid = document.getElementById("mediaGrid");
+  const renderMedia = () => {
+    if (!mediaGrid) return;
+    mediaGrid.innerHTML = "";
+    const cards = [
+      { key:"threads", name:"スレッズ", emoji:"🧵", metric:"followers", metricLabel:"フォロワー",
+        posts:state.media.threads.posts, metricVal:state.media.threads.followers,
+        goal:state.media.threads.goal, active:true,
+        postField:"posts", metricField:"followers" },
+      { key:"note", name:"note", emoji:"📝", metric:"followers", metricLabel:"フォロワー",
+        posts:state.media.note.posts, metricVal:state.media.note.followers,
+        goal:state.media.note.goal, active:true,
+        postField:"posts", metricField:"followers" },
+      { key:"youtube", name:"YouTube", emoji:"📺", metric:"subs", metricLabel:"登録者",
+        posts:null, metricVal:state.media.youtube.subs,
+        goal:null, active:false, hint:state.media.youtube.status,
+        postField:null, metricField:"subs" },
+    ];
+    cards.forEach(c => {
+      const postsSpan = c.postField ? el("span", { contenteditable:"true" }, String(c.posts ?? 0)) : null;
+      const metricSpan = el("span", { contenteditable:"true" }, String(c.metricVal ?? 0));
+      const bar = c.goal ? el("span", {}, "") : null;
+      const pct = c.goal ? Math.min(100, Math.round((c.metricVal / c.goal) * 100)) : 0;
+      if (bar) bar.style.width = pct + "%";
+      const commit = () => {
+        if (postsSpan) state.media[c.key][c.postField] = parseNum(postsSpan.textContent, 0);
+        state.media[c.key][c.metricField] = parseNum(metricSpan.textContent, 0);
+        save(); renderMedia();
+      };
+      [postsSpan, metricSpan].filter(Boolean).forEach(s => {
+        s.addEventListener("blur", commit);
+        s.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); s.blur(); }});
+      });
+      const body = [
+        el("div", { class:"biz-head" }, [
+          el("h4", {}, `${c.emoji} ${c.name}`),
+          c.active ? el("span", { class:"pill mint" }, "稼働中") : el("span", { class:"pill sub" }, "準備中"),
+        ]),
+      ];
+      if (c.postField) body.push(el("div", { class:"biz-kv" }, [
+        el("span", {}, [document.createTextNode("今月投稿数："), el("b", {}, postsSpan)]),
+        el("span", {}, [document.createTextNode(`${c.metricLabel}：`), el("b", {}, metricSpan)]),
+        el("span", {}, [document.createTextNode("今月目標："), el("b", {}, String(c.goal))]),
+      ]));
+      else body.push(el("div", { class:"biz-kv" }, [
+        el("span", {}, [document.createTextNode(`${c.metricLabel}：`), el("b", {}, metricSpan)]),
+        el("span", {}, [document.createTextNode("状態："), el("b", {}, c.hint || "")]),
+      ]));
+      if (bar) body.push(el("div", { class:"bar-label" }, [
+        el("div", { class:"bar" }, bar),
+        el("span", { class:"pct" }, String(pct) + "%"),
+      ]));
+      const card = el("div", { class:"biz-card", style: c.active ? "" : "opacity:.55" }, body);
+      mediaGrid.appendChild(card);
+    });
+  };
+  renderMedia();
+
+  // ── 曜日別タスク ──
+  const weekPlanGrid = document.getElementById("weekPlanGrid");
+  const renderWeekPlan = () => {
+    if (!weekPlanGrid) return;
+    weekPlanGrid.innerHTML = "";
+    WEEK_KEYS.forEach(k => {
+      const isToday = k === todayKey;
+      const list = state.weekPlan?.[k] || [];
+      const chk = el("div", { class:"check-list" }, list.map((task, i) => {
+        const cb = el("input", { type:"checkbox", id:`wp_${k}_${i}`, onchange: () => { task.done = cb.checked; save(); }});
+        cb.checked = task.done;
+        const span = el("span", { class:"t" }, task.t);
+        return el("label", { class:"check-item", for:`wp_${k}_${i}` }, [cb, span]);
+      }));
+      const card = el("div", {
+        class:"axis-card",
+        style: isToday ? "border-color:var(--accent);box-shadow:0 0 0 2px rgba(16,185,129,.3)" : "",
+      }, [
+        el("h3", {}, `${WEEK_LABELS[k]}曜日${isToday ? "（今日）" : ""}`),
+        chk,
+      ]);
+      weekPlanGrid.appendChild(card);
+    });
+  };
+  renderWeekPlan();
+
+  // ── ルーティン（朝昼夜） ──
+  const routineGrid = document.getElementById("routineGrid");
+  const renderRoutine = () => {
+    if (!routineGrid) return;
+    routineGrid.innerHTML = "";
+    const groups = [
+      { key:"morning", emoji:"🌅", title:"朝ルーティン" },
+      { key:"noon",    emoji:"☀️", title:"昼ルーティン" },
+      { key:"night",   emoji:"🌙", title:"夜ルーティン" },
+    ];
+    groups.forEach(g => {
+      const list = state.routine?.[g.key] || [];
+      const chk = el("div", { class:"check-list" }, list.map((task, i) => {
+        const cb = el("input", { type:"checkbox", id:`rt_${g.key}_${i}`, onchange: () => { task.done = cb.checked; save(); }});
+        cb.checked = task.done;
+        const span = el("span", { class:"t", contenteditable:"true" }, task.t);
+        span.addEventListener("blur", () => { task.t = span.textContent.trim() || task.t; span.textContent = task.t; save(); });
+        span.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); span.blur(); }});
+        return el("label", { class:"check-item", for:`rt_${g.key}_${i}` }, [cb, span]);
+      }));
+      routineGrid.appendChild(el("div", { class:"axis-card" }, [
+        el("h3", { class:"emoji" }, `${g.emoji} ${g.title}`),
+        chk,
+      ]));
+    });
+  };
+  renderRoutine();
+
+  // ── カレンダーメモ（月〜日） ──
+  const calendarGrid = document.getElementById("calendarGrid");
+  const renderCalendar = () => {
+    if (!calendarGrid) return;
+    calendarGrid.innerHTML = "";
+    WEEK_KEYS.forEach(k => {
+      const isToday = k === todayKey;
+      const memo = el("textarea", {
+        class:"memo", placeholder:`${WEEK_LABELS[k]}曜日の予定...`,
+        style:"min-height:60px"
+      });
+      memo.value = state.calendarMemos[k] || "";
+      memo.addEventListener("input", () => { state.calendarMemos[k] = memo.value; save(); });
+      calendarGrid.appendChild(el("div", {
+        class:"axis-card",
+        style: (isToday ? "border-color:var(--accent);" : "") + "padding:12px",
+      }, [
+        el("h3", { style:"margin:0 0 8px" }, `${WEEK_LABELS[k]}曜日${isToday ? "（今日）" : ""}`),
+        memo,
+      ]));
+    });
+  };
+  renderCalendar();
+
+  // ── 固定ヘッダーが被らないよう body.padding-top を実寸で確保（window.load でも再計算） ──
+  window.addEventListener("load", () => {
+    const h = focusFixed.getBoundingClientRect().height;
+    document.body.style.paddingTop = (h + 8) + "px";
+  });
 
   document.addEventListener("blur", save, true);
 })();
