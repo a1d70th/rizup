@@ -14,24 +14,64 @@ function Avatar({ url, size = 48, name }: { url?: string | null; size?: number; 
   const [err, setErr] = useState(false);
   const isUrl = url?.startsWith("http") && !err;
   const initial = initialOf(name);
-  return isUrl ? (
+  if (isUrl) {
     // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={url!}
-      alt={name || ""}
-      width={size}
-      height={size}
-      className="rounded-full object-cover bg-mint shrink-0 ring-2 ring-white dark:ring-[#1a1a1a] shadow-sm"
-      style={{ width: size, height: size }}
-      onError={() => setErr(true)}
-    />
-  ) : (
+    return (
+      <img
+        src={url!}
+        alt={name || ""}
+        width={size}
+        height={size}
+        className="rounded-full object-cover bg-mint shrink-0 ring-2 ring-white dark:ring-[#1a1a1a] shadow-sm"
+        style={{ width: size, height: size }}
+        onError={() => setErr(true)}
+      />
+    );
+  }
+  const fontSize = Math.round(size * 0.46);
+  return (
     <div
-      className="rounded-full flex items-center justify-center shrink-0 ring-2 ring-white dark:ring-[#1a1a1a] shadow-sm text-white font-extrabold"
-      style={{ width: size, height: size, fontSize: 16, background: "#6ecbb0" }}
+      className="relative rounded-full shrink-0 ring-2 ring-white dark:ring-[#1a1a1a] shadow-md overflow-hidden"
+      style={{
+        width: size,
+        height: size,
+        background: "linear-gradient(135deg, #10b981 0%, #059669 60%, #047857 100%)",
+      }}
       aria-label={`${name || "ユーザー"}のアバター`}
     >
-      {initial}
+      {/* ハイライト光沢 */}
+      <span
+        aria-hidden="true"
+        className="absolute inset-0"
+        style={{
+          background: "linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 55%)",
+        }}
+      />
+      {/* 右上のアクセントドット */}
+      <span
+        aria-hidden="true"
+        className="absolute"
+        style={{
+          top: size * 0.1,
+          right: size * 0.1,
+          width: size * 0.12,
+          height: size * 0.12,
+          borderRadius: "50%",
+          background: "rgba(167, 243, 208, 0.8)",
+        }}
+      />
+      {/* イニシャル */}
+      <span
+        className="absolute inset-0 flex items-center justify-center text-white font-black tracking-tight"
+        style={{
+          fontSize,
+          fontFamily: "'Inter','SF Pro Display','Helvetica Neue',-apple-system,system-ui,sans-serif",
+          letterSpacing: "-0.02em",
+          textShadow: "0 1px 2px rgba(0,0,0,0.15)",
+        }}
+      >
+        {initial}
+      </span>
     </div>
   );
 }

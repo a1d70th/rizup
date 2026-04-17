@@ -1,23 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" rx="112" fill="#6ecbb0"/>
-  <!-- 卵本体 -->
-  <ellipse cx="256" cy="280" rx="110" ry="140" fill="white"/>
-  <!-- 水玉模様 -->
-  <circle cx="210" cy="240" r="14" fill="#d4f0e7" opacity="0.5"/>
-  <circle cx="290" cy="220" r="10" fill="#d4f0e7" opacity="0.5"/>
-  <circle cx="230" cy="330" r="12" fill="#d4f0e7" opacity="0.5"/>
-  <circle cx="300" cy="310" r="9" fill="#d4f0e7" opacity="0.4"/>
-  <!-- 左目 -->
-  <circle cx="228" cy="265" r="14" fill="#3a3a3a"/>
-  <circle cx="232" cy="260" r="5" fill="white"/>
-  <circle cx="225" cy="270" r="2" fill="white" opacity="0.6"/>
-  <!-- 右目 -->
-  <circle cx="284" cy="265" r="14" fill="#3a3a3a"/>
-  <circle cx="288" cy="260" r="5" fill="white"/>
-  <circle cx="281" cy="270" r="2" fill="white" opacity="0.6"/>
-  <!-- ほっぺ -->
-  <ellipse cx="200" cy="290" rx="18" ry="12" fill="#ff9eb5" opacity="0.4"/>
-  <ellipse cx="312" cy="290" rx="18" ry="12" fill="#ff9eb5" opacity="0.4"/>
-  <!-- にっこり口 -->
-  <path d="M 242 300 Q 256 318 270 300" stroke="#c4a882" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="60%" stop-color="#0e9b6f"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="55%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#shine)"/>
+
+  <!-- 幾何学的な R（カスタムパス） -->
+  <g filter="url(#softShadow)">
+    <rect x="140" y="110" width="60" height="292" rx="14" fill="#ffffff"/>
+    <path d="M 200 110 L 310 110 Q 392 110 392 200 Q 392 290 310 290 L 200 290 Z" fill="#ffffff"/>
+    <path d="M 200 168 L 308 168 Q 336 168 336 200 Q 336 232 308 232 L 200 232 Z" fill="url(#bg)"/>
+    <path d="M 272 250 L 408 402 L 340 402 L 208 250 Z" fill="#ffffff"/>
+  </g>
+
+  <!-- アクセント -->
+  <circle cx="434" cy="80" r="20" fill="#a7f3d0" opacity="0.85"/>
+  <circle cx="434" cy="80" r="10" fill="#ffffff"/>
 </svg>

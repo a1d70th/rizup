@@ -765,14 +765,14 @@ export default function JournalPage() {
         )}
 
         {/* スペーサー: 固定ボタン + BottomNav の裏に隠れないよう（iOS safe-area 分を多めに） */}
-        <div aria-hidden="true" className="h-40 sm:h-36" />
+        <div aria-hidden="true" className="h-44" />
       </div>
 
       {/* 固定投稿ボタン（気分選択済み or 夜モード時に常時表示） */}
       {(mood !== 0 || mode === "evening") && (
         <div
           className="fixed left-0 right-0 z-40 px-4 pointer-events-none"
-          style={{ bottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px))" }}
+          style={{ bottom: "calc(5.75rem + env(safe-area-inset-bottom, 0px))" }}
         >
           <div className="max-w-md mx-auto pointer-events-auto">
             <button onClick={handlePost}
