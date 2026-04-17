@@ -45,6 +45,10 @@ export default function HomePage() {
   const [milestoneModal, setMilestoneModal] = useState<{ days: number; message: string } | null>(null);
   const [snackGiven, setSnackGiven] = useState(false);
   const [munching, setMunching] = useState(false);
+  // 朝活チャレンジ: 起床時刻ログ（localStorage）
+  const [wakeToday, setWakeToday] = useState<string | null>(null);
+  const [wakeStreak, setWakeStreak] = useState(0);
+  const [wakeLog, setWakeLog] = useState<{ date: string; time: string }[]>([]);
 
   const fetchPosts = async () => {
     const first = await supabase.from("posts")
@@ -118,9 +122,48 @@ export default function HomePage() {
         const snackKey = `rizup_snack_${today}`;
         setSnackGiven(!!localStorage.getItem(snackKey));
       } catch {}
+      // 朝活チャレンジ: 過去30日の起床ログを読み込む
+      try {
+        const raw = localStorage.getItem("rizup_wake_log") || "[]";
+        const log: { date: string; time: string }[] = JSON.parse(raw);
+        const sorted = log.filter(r => r && r.date && r.time).slice(-30);
+        setWakeLog(sorted);
+        const t = sorted.find(r => r.date === today);
+        if (t) setWakeToday(t.time);
+        // 連続記録日数（今日 or 昨日起点）
+        const todayD = new Date(today);
+        let streak = 0;
+        const dateSet = new Set(sorted.map(r => r.date));
+        const cursor = new Date(todayD);
+        // 今日なしなら昨日から数える（今日まだ起きてないケースを拾う）
+        if (!dateSet.has(today)) cursor.setDate(cursor.getDate() - 1);
+        for (let i = 0; i < 60; i++) {
+          const k = cursor.toLocaleDateString("en-CA");
+          if (dateSet.has(k)) { streak++; cursor.setDate(cursor.getDate() - 1); }
+          else break;
+        }
+        setWakeStreak(streak);
+      } catch { /* ignore */ }
       setLoading(false);
     })();
   }, []);
+
+  // 朝活チャレンジ: 今日の起床時刻を記録
+  const recordWake = () => {
+    try {
+      const now = new Date();
+      const today = todayJST();
+      const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+      const raw = localStorage.getItem("rizup_wake_log") || "[]";
+      const log: { date: string; time: string }[] = JSON.parse(raw);
+      const filtered = log.filter(r => r.date !== today);
+      const next = [...filtered, { date: today, time }].slice(-60);
+      localStorage.setItem("rizup_wake_log", JSON.stringify(next));
+      setWakeLog(next);
+      setWakeToday(time);
+      setWakeStreak(s => (wakeToday ? s : s + 1));
+    } catch { /* ignore */ }
+  };
 
   // URL パラメータから posted=true を検知
   useEffect(() => {
@@ -355,6 +398,51 @@ export default function HomePage() {
                 今日の振り返りを書く 🌙
               </Link>
             ) : null}
+          </div>
+
+          {/* 朝活チャレンジ — みんなで変わる30日 */}
+          <div className="bg-gradient-to-br from-[#fff7ed] to-white dark:from-[#2a1f0f] dark:to-[#1a1a1a] rounded-2xl border border-orange/30 shadow-sm px-4 py-4 mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <p className="text-sm font-extrabold text-orange">🌅 朝活チャレンジ</p>
+                <p className="text-[11px] text-text-mid">みんなで変わる30日</p>
+              </div>
+              {wakeStreak > 0 && (
+                <span className="text-[11px] font-extrabold text-orange bg-orange-light rounded-full px-3 py-1">
+                  🔥 {wakeStreak}日連続
+                </span>
+              )}
+            </div>
+            {wakeToday ? (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-2xl">⏰</span>
+                <span className="font-extrabold">今日は {wakeToday} に起きた！</span>
+              </div>
+            ) : (
+              <button
+                onClick={recordWake}
+                className="w-full bg-orange text-white font-extrabold py-3 rounded-full shadow-md shadow-orange/30 active:scale-95 transition text-sm">
+                ⏰ 今日起きた時刻を記録する
+              </button>
+            )}
+            {wakeLog.length > 0 && (
+              <div className="mt-3 border-t border-orange/10 pt-2">
+                <p className="text-[11px] font-bold text-text-mid mb-1.5">📜 最近の起床</p>
+                <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+                  {wakeLog.slice(-7).reverse().map((r) => {
+                    const d = new Date(r.date + "T00:00:00");
+                    const md = `${d.getMonth() + 1}/${d.getDate()}`;
+                    return (
+                      <div key={r.date}
+                        className="shrink-0 bg-white dark:bg-[#1a1a1a] border border-orange/20 rounded-xl px-3 py-1.5 text-center">
+                        <div className="text-[9px] text-text-mid">{md}</div>
+                        <div className="text-[13px] font-extrabold text-orange">{r.time}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 今日のステータス（シンプル1行） */}

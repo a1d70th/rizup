@@ -38,7 +38,8 @@ export default function JournalPage() {
   const [content, setContent] = useState("");
   const [gratitudes, setGratitudes] = useState(["", "", ""]);
   const [sleepHours, setSleepHours] = useState("");
-  const [morningGoal] = useState("");
+  const [morningGoal, setMorningGoal] = useState("");
+  const [eveningWin, setEveningWin] = useState("");
   const [loading, setLoading] = useState(false);
   const [aiFeedback, setAiFeedback] = useState<string | null>(null);
   const [posted, setPosted] = useState(false);
@@ -201,9 +202,17 @@ export default function JournalPage() {
       }
     }
 
+    // 夜モード: 「今日できたこと」を本文に前置き
+    const combinedContent = (() => {
+      if (mode === "evening" && eveningWin.trim()) {
+        return `✅ 今日できたこと：${eveningWin.trim()}${content ? "\n\n" + content : ""}`;
+      }
+      return content || (mode === "morning" ? morningGoal : "");
+    })();
+
     // posts insert
     const payload: Record<string, unknown> = {
-      user_id: userId, type: mode, content: content || (mode === "morning" ? morningGoal : ""),
+      user_id: userId, type: mode, content: combinedContent,
       mood, image_url: imageUrl,
     };
     if (mode === "morning") {
@@ -449,6 +458,38 @@ export default function JournalPage() {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* 朝モード: 今日の目標を一言（5〜9時推奨） */}
+        {mode === "morning" && (
+          <div className="bg-gradient-to-br from-orange-light to-yellow-50 dark:from-[#2a2515] dark:to-[#2a2a1a] rounded-2xl p-4 border border-orange/30 mb-3">
+            <p className="text-sm font-bold text-orange mb-1">🎯 今日の目標を一言</p>
+            <p className="text-[11px] text-text-mid mb-2">朝5〜9時に書くと、一日の解像度がぐっと上がるよ</p>
+            <input
+              type="text"
+              value={morningGoal}
+              onChange={e => setMorningGoal(e.target.value)}
+              placeholder="例：散歩を15分する / 苦手な電話を1本かける"
+              maxLength={80}
+              className="w-full border-2 border-orange/30 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-orange bg-white dark:bg-[#1a1a1a]"
+            />
+          </div>
+        )}
+
+        {/* 夜モード: 今日できたこと一言（21〜24時推奨） */}
+        {mode === "evening" && (
+          <div className="bg-gradient-to-br from-mint-light to-blue-50 dark:from-[#0d2818] dark:to-[#1a2028] rounded-2xl p-4 border border-mint/30 mb-3">
+            <p className="text-sm font-bold text-mint mb-1">🌙 今日できたこと一言</p>
+            <p className="text-[11px] text-text-mid mb-2">どんなに小さくてもOK。書いた瞬間、それは「できたこと」になる</p>
+            <input
+              type="text"
+              value={eveningWin}
+              onChange={e => setEveningWin(e.target.value)}
+              placeholder="例：朝、布団を畳めた / 3分だけでも本を開いた"
+              maxLength={80}
+              className="w-full border-2 border-mint/30 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint bg-white dark:bg-[#1a1a1a]"
+            />
           </div>
         )}
 
