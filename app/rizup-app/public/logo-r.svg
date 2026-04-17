@@ -1,32 +1,75 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <!-- 深いダーク背景 -->
+    <radialGradient id="bg" cx="30%" cy="25%" r="90%">
+      <stop offset="0%" stop-color="#1a2330"/>
+      <stop offset="60%" stop-color="#0a0f14"/>
+      <stop offset="100%" stop-color="#05080c"/>
+    </radialGradient>
+
+    <!-- ミント → シアン のメインアクセント -->
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#10b981"/>
-      <stop offset="60%" stop-color="#0e9b6f"/>
-      <stop offset="100%" stop-color="#047857"/>
+      <stop offset="55%" stop-color="#14c4b6"/>
+      <stop offset="100%" stop-color="#06b6d4"/>
     </linearGradient>
+
+    <!-- R の立体感用の薄いハイライト -->
     <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
-      <stop offset="55%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="50%" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
-    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.22"/>
+
+    <!-- R の縁をほんのり光らせるフィルター -->
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
     </filter>
   </defs>
 
-  <!-- 背景 -->
+  <!-- 背景（ダーク + ラジアルハイライト） -->
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <rect width="512" height="512" rx="112" fill="url(#shine)"/>
 
-  <!-- 幾何学的な R（カスタムパス） -->
-  <g filter="url(#softShadow)">
-    <rect x="140" y="110" width="60" height="292" rx="14" fill="#ffffff"/>
-    <path d="M 200 110 L 310 110 Q 392 110 392 200 Q 392 290 310 290 L 200 290 Z" fill="#ffffff"/>
-    <path d="M 200 168 L 308 168 Q 336 168 336 200 Q 336 232 308 232 L 200 232 Z" fill="url(#bg)"/>
-    <path d="M 272 250 L 408 402 L 340 402 L 208 250 Z" fill="#ffffff"/>
+  <!-- 上部の光沢 -->
+  <rect width="512" height="256" rx="112" fill="url(#shine)"/>
+
+  <!-- 右上の薄い光のリング（抽象アクセント） -->
+  <circle cx="430" cy="82" r="36" fill="none" stroke="url(#accent)" stroke-width="2" opacity="0.35"/>
+  <circle cx="430" cy="82" r="10" fill="url(#accent)" opacity="0.9"/>
+
+  <!-- 左下の微細な幾何パターン -->
+  <g opacity="0.08" stroke="#10b981" stroke-width="1.2" fill="none">
+    <line x1="60" y1="460" x2="140" y2="460"/>
+    <line x1="60" y1="440" x2="120" y2="440"/>
+    <line x1="60" y1="420" x2="100" y2="420"/>
   </g>
 
-  <!-- アクセント -->
-  <circle cx="434" cy="80" r="20" fill="#a7f3d0" opacity="0.85"/>
-  <circle cx="434" cy="80" r="10" fill="#ffffff"/>
+  <!-- メインの R（カスタムパス・グラデ塗り・グロー） -->
+  <g filter="url(#glow)">
+    <!-- 縦の幹 -->
+    <rect x="144" y="108" width="62" height="300" rx="14" fill="url(#accent)"/>
+    <!-- ボウル（上部の丸み） -->
+    <path d="M 206 108
+             L 318 108
+             Q 402 108 402 200
+             Q 402 292 318 292
+             L 206 292 Z"
+          fill="url(#accent)"/>
+    <!-- ボウルの内側をくり抜く -->
+    <path d="M 206 166
+             L 316 166
+             Q 346 166 346 200
+             Q 346 234 316 234
+             L 206 234 Z"
+          fill="url(#bg)"/>
+    <!-- 斜めの脚 -->
+    <path d="M 276 250
+             L 416 410
+             L 344 410
+             L 208 250 Z"
+          fill="url(#accent)"/>
+  </g>
 </svg>

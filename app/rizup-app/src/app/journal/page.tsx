@@ -511,10 +511,10 @@ export default function JournalPage() {
               <span className="text-xl">🌅</span>
               <p className="text-sm font-extrabold dark:text-gray-100">みんなの朝活チャレンジ</p>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="flex flex-col gap-2">
               {/* 入眠時刻 */}
-              <label className="flex flex-col">
-                <span className="text-[11px] font-bold text-text-mid mb-1">🌙 入眠</span>
+              <div className="flex items-center gap-3 py-1">
+                <span className="text-[13px] font-bold text-text-mid w-16 shrink-0">🌙 入眠</span>
                 <input
                   type="time"
                   value={bedtime}
@@ -526,7 +526,6 @@ export default function JournalPage() {
                       if (v) localStorage.setItem(`rizup_bedtime_${today}`, v);
                       else localStorage.removeItem(`rizup_bedtime_${today}`);
                     } catch {}
-                    // 入眠と起床が揃ったら睡眠時間を自動計算
                     if (v && wakeTime) {
                       const [bH, bM] = v.split(":").map(Number);
                       const [wH, wM] = wakeTime.split(":").map(Number);
@@ -536,12 +535,13 @@ export default function JournalPage() {
                     }
                   }}
                   aria-label="昨夜の入眠時刻"
-                  className="w-full border-2 border-gray-100 dark:border-[#2a2a2a] rounded-xl px-2 py-2 text-[15px] font-extrabold bg-white dark:bg-[#111111] text-orange outline-none focus:border-orange"
+                  className="flex-1 border-2 border-gray-100 dark:border-[#2a2a2a] rounded-xl px-3 py-2 text-[15px] font-extrabold bg-white dark:bg-[#111111] text-orange outline-none focus:border-orange"
+                  style={{ WebkitAppearance: "none", minWidth: 0 }}
                 />
-              </label>
+              </div>
               {/* 起床時刻 */}
-              <label className="flex flex-col">
-                <span className="text-[11px] font-bold text-text-mid mb-1">☀️ 起床</span>
+              <div className="flex items-center gap-3 py-1">
+                <span className="text-[13px] font-bold text-text-mid w-16 shrink-0">☀️ 起床</span>
                 <input
                   type="time"
                   value={wakeTime}
@@ -557,26 +557,26 @@ export default function JournalPage() {
                     }
                   }}
                   aria-label="起床時刻"
-                  className="w-full border-2 border-gray-100 dark:border-[#2a2a2a] rounded-xl px-2 py-2 text-[15px] font-extrabold bg-white dark:bg-[#111111] text-orange outline-none focus:border-orange"
+                  className="flex-1 border-2 border-gray-100 dark:border-[#2a2a2a] rounded-xl px-3 py-2 text-[15px] font-extrabold bg-white dark:bg-[#111111] text-orange outline-none focus:border-orange"
+                  style={{ WebkitAppearance: "none", minWidth: 0 }}
                 />
-              </label>
+              </div>
               {/* 睡眠時間 */}
-              <label className="flex flex-col">
-                <span className="text-[11px] font-bold text-text-mid mb-1">⏱ 睡眠</span>
-                <div className="flex items-center gap-1">
-                  <input
-                    type="number" min="0" max="24" step="0.5"
-                    value={sleepHours}
-                    onChange={e => setSleepHours(e.target.value)}
-                    aria-label="睡眠時間（時間）"
-                    placeholder="7"
-                    className="w-full border-2 border-gray-100 dark:border-[#2a2a2a] rounded-xl px-2 py-2 text-[15px] font-extrabold bg-white dark:bg-[#111111] text-orange outline-none focus:border-orange"
-                    style={{ WebkitAppearance: "none" }} />
-                  <span className="text-[11px] font-bold text-text-mid">h</span>
-                </div>
-              </label>
+              <div className="flex items-center gap-3 py-1">
+                <span className="text-[13px] font-bold text-text-mid w-16 shrink-0">⏱ 睡眠</span>
+                <input
+                  type="number" min="0" max="24" step="0.5"
+                  value={sleepHours}
+                  onChange={e => setSleepHours(e.target.value)}
+                  aria-label="睡眠時間（時間）"
+                  placeholder="7"
+                  inputMode="decimal"
+                  className="flex-1 border-2 border-gray-100 dark:border-[#2a2a2a] rounded-xl px-3 py-2 text-[15px] font-extrabold bg-white dark:bg-[#111111] text-orange outline-none focus:border-orange"
+                  style={{ WebkitAppearance: "none", minWidth: 0 }} />
+                <span className="text-[13px] font-bold text-text-mid w-4 text-left shrink-0">h</span>
+              </div>
             </div>
-            <p className="text-[10px] text-text-light mt-2">入眠・起床を入れると睡眠時間を自動計算するよ</p>
+            <p className="text-[11px] text-text-light mt-3">入眠・起床を入れると睡眠時間を自動計算するよ</p>
           </div>
         )}
 

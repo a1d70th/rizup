@@ -7,7 +7,7 @@ const OUT_DIR = path.resolve("public/icons");
 if (!fs.existsSync(OUT_DIR)) fs.mkdirSync(OUT_DIR, { recursive: true });
 
 const SIZES = [16, 32, 72, 96, 128, 144, 152, 167, 180, 192, 384, 512];
-const BG = { r: 110, g: 203, b: 176, alpha: 1 };
+const BG = { r: 10, g: 15, b: 20, alpha: 1 };
 
 async function makeIcon(size, filename) {
   await sharp(SRC, { density: 512 })
