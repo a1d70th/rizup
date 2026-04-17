@@ -100,42 +100,71 @@
     border-bottom:2px solid var(--accent);
     box-shadow:0 4px 24px rgba(0,0,0,.9);
     z-index:9999;
-    padding:12px 24px;
+    padding:10px 16px;
+    transition:padding .2s ease;
   }
+  .focus-fixed.collapsed{padding:6px 12px}
   .focus-inner{
     max-width:1100px;margin:0 auto;
-    display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    display:flex;align-items:center;gap:14px;flex-wrap:nowrap;
+    min-height:44px;
   }
   .focus-inner .focus-title{
     font-size:14px;font-weight:800;color:var(--accent);
     white-space:nowrap;
   }
-  .focus-inner .focus-bar{flex:1;min-width:140px;max-width:260px;display:flex;align-items:center;gap:10px}
-  .focus-inner .focus-pct{font-size:14px;font-weight:800;color:var(--accent);min-width:44px;text-align:right}
-  .focus-inner .focus-checks{display:flex;flex-wrap:wrap;gap:6px 14px;flex:1 1 420px}
-  .focus-inner .focus-chk{
+  .focus-inner .focus-bar{
+    flex:1;min-width:0;display:flex;align-items:center;gap:10px;
+  }
+  .focus-inner .focus-pct{
+    font-size:14px;font-weight:800;color:var(--accent);min-width:44px;text-align:right;
+    white-space:nowrap;
+  }
+  .focus-inner .focus-count{
+    font-size:12px;color:var(--sub);white-space:nowrap;font-weight:700;
+  }
+  .focus-inner .focus-toggle{
+    background:transparent;border:1px solid var(--border-2);color:var(--text);
+    border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800;cursor:pointer;
+    min-height:32px;min-width:40px;font-family:inherit;flex-shrink:0;
+    display:inline-flex;align-items:center;justify-content:center;gap:4px;
+    line-height:1;
+  }
+  .focus-inner .focus-toggle:hover{border-color:var(--accent);color:var(--accent)}
+  .focus-inner .focus-toggle .arrow{transition:transform .2s ease;display:inline-block}
+  .focus-fixed.collapsed .focus-toggle .arrow{transform:rotate(-180deg)}
+  /* 展開時のチェック一覧（別行） */
+  .focus-checks-wrap{
+    max-width:1100px;margin:10px auto 0;
+    display:flex;flex-wrap:wrap;gap:6px 10px;
+    max-height:260px;overflow-y:auto;
+    transition:max-height .25s ease, margin-top .25s ease, opacity .2s ease;
+  }
+  .focus-fixed.collapsed .focus-checks-wrap{
+    max-height:0;margin-top:0;overflow:hidden;opacity:0;pointer-events:none;
+  }
+  .focus-chk{
     display:flex;align-items:center;gap:8px;
     background:#111;border:1px solid var(--border-2);border-radius:999px;
     padding:6px 12px;min-height:36px;cursor:pointer;
     font-size:14px;user-select:none;
   }
-  .focus-inner .focus-chk:hover{border-color:var(--accent)}
-  .focus-inner .focus-chk input[type=checkbox]{
+  .focus-chk:hover{border-color:var(--accent)}
+  .focus-chk input[type=checkbox]{
     width:20px;height:20px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;
   }
-  .focus-inner .focus-chk .t{font-size:14px}
-  .focus-inner .focus-chk input:checked ~ .t{text-decoration:line-through;opacity:.5;color:var(--accent)}
-  .focus-inner .btn-detail{
-    background:transparent;border:1px solid var(--border-2);color:var(--sub);
-    border-radius:999px;padding:6px 12px;font-size:12px;cursor:pointer;
-    min-height:36px;font-family:inherit;
-  }
+  .focus-chk .t{font-size:14px}
+  .focus-chk input:checked ~ .t{text-decoration:line-through;opacity:.5;color:var(--accent)}
+
+  /* 展開時の body padding は JS で動的に計算 */
   @media (max-width:720px){
-    body{padding-top:150px}
-    .focus-inner{flex-direction:column;align-items:stretch}
-    .focus-inner .focus-bar{max-width:none;width:100%}
-    .focus-inner .focus-checks{flex-direction:column;gap:6px}
-    .focus-inner .focus-chk{justify-content:flex-start}
+    .focus-fixed{padding:8px 12px}
+    .focus-inner{gap:10px}
+    .focus-inner .focus-title{font-size:13px}
+    .focus-inner .focus-pct{font-size:13px;min-width:40px}
+    .focus-inner .focus-count{display:none}
+    .focus-checks-wrap{max-height:200px}
+    .focus-chk{font-size:13px;padding:5px 10px;min-height:32px}
   }
 
   /* ── Bars (progress) ── */
@@ -336,16 +365,20 @@
 </head>
 <body>
 
-<!-- ── FIXED TOP FOCUS BAR（常時追従） ──────────────────── -->
-<div class="focus-fixed">
+<!-- ── FIXED TOP FOCUS BAR（折りたたみ可能） ──────────────── -->
+<div class="focus-fixed" id="focusFixed">
   <div class="focus-inner">
     <div class="focus-title">🔥 今日</div>
     <div class="focus-bar">
       <div class="bar"><span id="todayBar" style="width:0%"></span></div>
-      <div class="focus-pct" id="todayPct">0%</div>
     </div>
-    <div class="focus-checks" id="focusChecks"><!-- JS --></div>
+    <div class="focus-count" id="focusCount">0/5</div>
+    <div class="focus-pct" id="todayPct">0%</div>
+    <button class="focus-toggle" id="focusToggle" aria-label="今日のタスクを展開/折りたたみ" aria-expanded="false">
+      <span class="arrow">▼</span>
+    </button>
   </div>
+  <div class="focus-checks-wrap" id="focusChecks"><!-- JS --></div>
 </div>
 
 <div class="wrap">
@@ -740,12 +773,48 @@
   const todayBar2 = document.getElementById("todayBar2");
   const todayPct = document.getElementById("todayPct");
   const todayPct2 = document.getElementById("todayPct2");
+  const focusFixed = document.getElementById("focusFixed");
+  const focusToggle = document.getElementById("focusToggle");
+  const focusCount = document.getElementById("focusCount");
+
+  // ── 折りたたみ状態（localStorage で永続化 / モバイルは初期値 collapsed） ──
+  const COLLAPSE_KEY = "rizup_focus_collapsed";
+  const isMobile = () => window.matchMedia("(max-width: 720px)").matches;
+  const loadCollapsed = () => {
+    const saved = localStorage.getItem(COLLAPSE_KEY);
+    if (saved === "1") return true;
+    if (saved === "0") return false;
+    return isMobile();
+  };
+  const applyCollapsed = (collapsed) => {
+    focusFixed.classList.toggle("collapsed", collapsed);
+    focusToggle.setAttribute("aria-expanded", String(!collapsed));
+    // 固定ヘッダー分の body padding を実寸で確保
+    requestAnimationFrame(() => {
+      const h = focusFixed.getBoundingClientRect().height;
+      document.body.style.paddingTop = (h + 8) + "px";
+    });
+  };
+  focusToggle.addEventListener("click", () => {
+    const now = !focusFixed.classList.contains("collapsed");
+    localStorage.setItem(COLLAPSE_KEY, now ? "1" : "0");
+    applyCollapsed(now);
+  });
+  window.addEventListener("resize", () => applyCollapsed(focusFixed.classList.contains("collapsed")));
+  applyCollapsed(loadCollapsed());
 
   const updateTodayBar = () => {
+    const total = state.todayTasks.length;
     const done = state.todayTasks.filter(t => t.done).length;
-    const pct = Math.round(done / state.todayTasks.length * 100);
+    const pct = Math.round(done / total * 100);
     [todayBar, todayBar2].forEach(b => b.style.width = pct + "%");
     [todayPct, todayPct2].forEach(p => p.textContent = pct + "%");
+    if (focusCount) focusCount.textContent = `${done}/${total}`;
+    // レンダ後にヘッダー高さが変わる可能性があるので padding を再調整
+    requestAnimationFrame(() => {
+      const h = focusFixed.getBoundingClientRect().height;
+      document.body.style.paddingTop = (h + 8) + "px";
+    });
   };
 
   const renderTodayTasks = () => {
