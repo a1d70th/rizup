@@ -8,7 +8,8 @@ import MyCharacter, { AnimalKind } from "@/components/MyCharacter";
 import Image from "next/image";
 import Link from "next/link";
 import { SkeletonTimeline } from "@/components/Skeleton";
-import { findTodayPost } from "@/lib/safe-insert";
+import { findTodayPost, safeInsertPost } from "@/lib/safe-insert";
+import { showToast } from "@/components/Toast";
 
 const FETCH_LIMIT = 500;
 
@@ -43,12 +44,13 @@ export default function HomePage() {
   const [lastWritten, setLastWritten] = useState<Date | null>(null);
   const [justPosted, setJustPosted] = useState(false);
   const [milestoneModal, setMilestoneModal] = useState<{ days: number; message: string } | null>(null);
-  const [snackGiven, setSnackGiven] = useState(false);
-  const [munching, setMunching] = useState(false);
-  // 朝活チャレンジ: 起床時刻ログ（localStorage）
-  const [wakeToday, setWakeToday] = useState<string | null>(null);
-  const [wakeStreak, setWakeStreak] = useState(0);
-  const [wakeLog, setWakeLog] = useState<{ date: string; time: string }[]>([]);
+  // Quick-post モーダル（ホームで完結投稿）
+  const [postOpen, setPostOpen] = useState(false);
+  const [postMood, setPostMood] = useState(0);
+  const [postContent, setPostContent] = useState("");
+  const [posting, setPosting] = useState(false);
+  const [thanks, setThanks] = useState(false);
+  const [happyAnim, setHappyAnim] = useState(false);
 
   const fetchPosts = async () => {
     const first = await supabase.from("posts")
@@ -118,51 +120,69 @@ export default function HomePage() {
         }
         await fetchPosts();
       } catch (e) { console.error("[Home]", e); }
-      try {
-        const snackKey = `rizup_snack_${today}`;
-        setSnackGiven(!!localStorage.getItem(snackKey));
-      } catch {}
-      // 朝活チャレンジ: 過去30日の起床ログを読み込む
-      try {
-        const raw = localStorage.getItem("rizup_wake_log") || "[]";
-        const log: { date: string; time: string }[] = JSON.parse(raw);
-        const sorted = log.filter(r => r && r.date && r.time).slice(-30);
-        setWakeLog(sorted);
-        const t = sorted.find(r => r.date === today);
-        if (t) setWakeToday(t.time);
-        // 連続記録日数（今日 or 昨日起点）
-        const todayD = new Date(today);
-        let streak = 0;
-        const dateSet = new Set(sorted.map(r => r.date));
-        const cursor = new Date(todayD);
-        // 今日なしなら昨日から数える（今日まだ起きてないケースを拾う）
-        if (!dateSet.has(today)) cursor.setDate(cursor.getDate() - 1);
-        for (let i = 0; i < 60; i++) {
-          const k = cursor.toLocaleDateString("en-CA");
-          if (dateSet.has(k)) { streak++; cursor.setDate(cursor.getDate() - 1); }
-          else break;
-        }
-        setWakeStreak(streak);
-      } catch { /* ignore */ }
       setLoading(false);
     })();
   }, []);
 
-  // 朝活チャレンジ: 今日の起床時刻を記録
-  const recordWake = () => {
+  // Quick-post 送信ハンドラ
+  const submitQuickPost = async () => {
+    if (!userId || postMood === 0 || posting) return;
+    setPosting(true);
+    const now = new Date();
+    const type = now.getHours() < 15 ? "morning" : "evening";
+    const payload: Record<string, unknown> = {
+      user_id: userId,
+      type,
+      content: postContent.trim(),
+      mood: postMood,
+    };
+    const { data, error } = await safeInsertPost<{ id: string }>(supabase, payload);
+    if (error) {
+      if (error.code === "23505") {
+        showToast("info", "今日はもう投稿済みだよ");
+      } else {
+        showToast("error", `投稿に失敗：${error.message}`);
+      }
+      setPosting(false);
+      return;
+    }
+    // streak 更新（クライアント主導）
     try {
-      const now = new Date();
-      const today = todayJST();
-      const time = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
-      const raw = localStorage.getItem("rizup_wake_log") || "[]";
-      const log: { date: string; time: string }[] = JSON.parse(raw);
-      const filtered = log.filter(r => r.date !== today);
-      const next = [...filtered, { date: today, time }].slice(-60);
-      localStorage.setItem("rizup_wake_log", JSON.stringify(next));
-      setWakeLog(next);
-      setWakeToday(time);
-      setWakeStreak(s => (wakeToday ? s : s + 1));
-    } catch { /* ignore */ }
+      const { data: recent } = await supabase.from("posts")
+        .select("created_at").eq("user_id", userId)
+        .order("created_at", { ascending: false }).limit(120);
+      const toJst = (d: string) => new Date(d).toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
+      const dateSet = new Set((recent || []).map(p => toJst(p.created_at)));
+      const todayJstStr = todayJST();
+      let newStreak = 0;
+      const cursor = new Date(todayJstStr + "T00:00:00");
+      if (!dateSet.has(todayJstStr)) cursor.setDate(cursor.getDate() - 1);
+      for (let i = 0; i < 120; i++) {
+        const k = cursor.toLocaleDateString("en-CA");
+        if (dateSet.has(k)) { newStreak++; cursor.setDate(cursor.getDate() - 1); }
+        else break;
+      }
+      setStreak(newStreak);
+      try { await supabase.from("profiles").update({ streak: newStreak }).eq("id", userId); } catch {}
+    } catch { setStreak(s => s + 1); }
+    if (type === "morning") setMorningDone(true); else setEveningDone(true);
+    // サーバー同期（非同期）
+    fetch("/api/check-progress", { method: "POST" }).catch(() => {});
+    fetch("/api/analyze/score", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId: data?.id, content: postContent.trim() }),
+    }).catch(() => {});
+    // タイムラインを更新
+    await fetchPosts();
+    // UI クローズ＋お祝い演出
+    setPostOpen(false);
+    setPostMood(0);
+    setPostContent("");
+    setPosting(false);
+    setThanks(true);
+    setHappyAnim(true);
+    setTimeout(() => setHappyAnim(false), 1500);
+    setTimeout(() => setThanks(false), 3000);
   };
 
   // URL パラメータから posted=true を検知
@@ -283,14 +303,14 @@ export default function HomePage() {
         )}
         <div className="max-w-md mx-auto px-4 py-2">
           {/* My Character：村の住人・毎日の相棒 */}
-          <div className="bg-gradient-to-b from-[#ecfdf5] to-white dark:from-[#0d2818] dark:to-[#1a1a1a] rounded-2xl border border-mint/20 dark:border-[#2a3a34] shadow-sm px-4 py-8 mb-3 flex flex-col items-center relative">
+          <div className={`bg-gradient-to-b from-[#ecfdf5] to-white dark:from-[#0d2818] dark:to-[#1a1a1a] rounded-2xl border border-mint/20 dark:border-[#2a3a34] shadow-sm px-4 py-8 mb-3 flex flex-col items-center relative ${happyAnim ? "animate-pet" : ""}`}>
             <MyCharacter
               streak={streak}
               name={charName}
               animal={charAnimal || "rabbit"}
               lastWritten={lastWritten}
               size={160}
-              mood={justPosted ? 'good' : munching ? 'good' : snackGiven ? 'good' : (daysSinceLastPost >= 2 && daysSinceLastPost < 999) ? 'bad' : 'neutral'}
+              mood={justPosted || happyAnim ? 'good' : (daysSinceLastPost >= 2 && daysSinceLastPost < 999) ? 'bad' : 'neutral'}
             />
             {justPosted && (
               <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -310,9 +330,13 @@ export default function HomePage() {
                 })}
               </div>
             )}
-            {!charAnimal && (
+            {!charAnimal ? (
               <Link href="/character-setup" className="mt-2 text-[11px] font-bold text-mint border border-mint rounded-full px-3 py-1 hover:bg-mint-light transition">
                 🌱 相棒を選ぶ
+              </Link>
+            ) : (
+              <Link href="/character-setup?edit=1" className="mt-2 text-[10px] font-bold text-text-light hover:text-mint transition underline-offset-2 hover:underline">
+                ✏️ 名前・動物を変更
               </Link>
             )}
             {/* プログレスバー: 次のステージまで（🥚 あと◯日で◯◯に変身！） */}
@@ -359,89 +383,37 @@ export default function HomePage() {
               }
               return null;
             })()}
-            {/* おやつボタン（1日1回） */}
-            {!snackGiven && !justPosted && (
-              <button
-                onClick={() => {
-                  localStorage.setItem(`rizup_snack_${todayJST()}`, 'true');
-                  setSnackGiven(true);
-                  setMunching(true);
-                  setTimeout(() => setMunching(false), 1500);
-                }}
-                className="mt-2 text-[11px] font-bold text-orange border border-orange rounded-full px-3 py-1.5 hover:bg-orange-light transition"
-              >
-                🍪 おやつをあげる
-              </button>
-            )}
-            {munching && (
-              <p className="mt-1 text-sm font-extrabold text-orange animate-fade-in">
-                もぐもぐ... おいしい！🍪
+            {/* 書いてくれたね！メッセージ */}
+            {thanks && (
+              <p className="mt-2 text-sm font-extrabold text-mint animate-fade-in">
+                書いてくれてありがとう🌱
               </p>
             )}
-            {/* ジャーナル誘導（常時表示） */}
-            {justPosted && (
+            {justPosted && !thanks && (
               <p className="mt-2 text-sm font-extrabold text-mint animate-fade-in">
                 書いてくれたね！ありがとう🌱
               </p>
             )}
-            {!justPosted && daysSinceLastPost >= 2 && daysSinceLastPost < 999 && (
+            {!justPosted && !thanks && daysSinceLastPost >= 2 && daysSinceLastPost < 999 && (
               <p className="mt-2 text-sm font-extrabold text-mint animate-fade-in">
                 おかえり！待ってたよ🌱
               </p>
             )}
+            {/* メインアクション: ホーム内モーダルで投稿 */}
             {!morningDone ? (
-              <Link href="/journal" className="mt-3 bg-mint text-white text-sm font-extrabold px-5 py-2.5 rounded-full shadow-md shadow-mint/30 active:scale-95 transition">
-                今日のひとことを書く 📝
-              </Link>
-            ) : !eveningDone ? (
-              <Link href="/journal" className="mt-3 bg-[#f4976c] text-white text-sm font-extrabold px-5 py-2.5 rounded-full shadow-md shadow-orange/30 active:scale-95 transition">
-                今日の振り返りを書く 🌙
-              </Link>
-            ) : null}
-          </div>
-
-          {/* 朝活チャレンジ — みんなで変わる30日 */}
-          <div className="bg-gradient-to-br from-[#fff7ed] to-white dark:from-[#2a1f0f] dark:to-[#1a1a1a] rounded-2xl border border-orange/30 shadow-sm px-4 py-4 mb-3">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <p className="text-sm font-extrabold text-orange">🌅 朝活チャレンジ</p>
-                <p className="text-[11px] text-text-mid">みんなで変わる30日</p>
-              </div>
-              {wakeStreak > 0 && (
-                <span className="text-[11px] font-extrabold text-orange bg-orange-light rounded-full px-3 py-1">
-                  🔥 {wakeStreak}日連続
-                </span>
-              )}
-            </div>
-            {wakeToday ? (
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-2xl">⏰</span>
-                <span className="font-extrabold">今日は {wakeToday} に起きた！</span>
-              </div>
-            ) : (
               <button
-                onClick={recordWake}
-                className="w-full bg-orange text-white font-extrabold py-3 rounded-full shadow-md shadow-orange/30 active:scale-95 transition text-sm">
-                ⏰ 今日起きた時刻を記録する
+                onClick={() => { setPostMood(0); setPostContent(""); setPostOpen(true); }}
+                className="mt-4 w-full max-w-xs bg-mint text-white text-base font-extrabold px-6 py-4 rounded-full shadow-lg shadow-mint/30 active:scale-95 transition">
+                📝 今日のひとことを書く
               </button>
-            )}
-            {wakeLog.length > 0 && (
-              <div className="mt-3 border-t border-orange/10 pt-2">
-                <p className="text-[11px] font-bold text-text-mid mb-1.5">📜 最近の起床</p>
-                <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
-                  {wakeLog.slice(-7).reverse().map((r) => {
-                    const d = new Date(r.date + "T00:00:00");
-                    const md = `${d.getMonth() + 1}/${d.getDate()}`;
-                    return (
-                      <div key={r.date}
-                        className="shrink-0 bg-white dark:bg-[#1a1a1a] border border-orange/20 rounded-xl px-3 py-1.5 text-center">
-                        <div className="text-[9px] text-text-mid">{md}</div>
-                        <div className="text-[13px] font-extrabold text-orange">{r.time}</div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+            ) : !eveningDone ? (
+              <button
+                onClick={() => { setPostMood(0); setPostContent(""); setPostOpen(true); }}
+                className="mt-4 w-full max-w-xs bg-[#f4976c] text-white text-base font-extrabold px-6 py-4 rounded-full shadow-lg shadow-orange/30 active:scale-95 transition">
+                🌙 今日の振り返りを書く
+              </button>
+            ) : (
+              <p className="mt-3 text-xs font-bold text-text-mid">今日はもう書いたよ。ゆっくり休んでね🌙</p>
             )}
           </div>
 
@@ -481,20 +453,63 @@ export default function HomePage() {
           )}
         </div>
       </div>
-      {/* FAB: 新規投稿 */}
-      <Link
-        href="/journal"
-        aria-label="ジャーナルを書く"
-        className="fixed right-4 bottom-20 z-40 w-14 h-14 rounded-full bg-mint text-white shadow-xl shadow-mint/40 flex items-center justify-center text-2xl font-extrabold active:scale-95 transition">
-        ＋
-      </Link>
-      <button
-        onClick={refresh}
-        disabled={refreshing}
-        aria-label="タイムラインを更新"
-        className="fixed right-4 bottom-40 z-40 w-11 h-11 rounded-full bg-white dark:bg-[#1a1a1a] border border-gray-100 dark:border-[#2a2a2a] text-text-mid shadow-lg flex items-center justify-center disabled:opacity-50 active:scale-95 transition">
-        {refreshing ? "…" : "🔄"}
-      </button>
+      {/* Quick-post モーダル（ホームで完結） */}
+      {postOpen && (
+        <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center bg-black/55 backdrop-blur-sm animate-fade-in"
+          onClick={() => !posting && setPostOpen(false)}>
+          <div
+            role="dialog" aria-modal="true" aria-label="今日のひとこと"
+            className="bg-white dark:bg-[#1a1a1a] rounded-t-3xl sm:rounded-3xl w-full max-w-md p-6 shadow-2xl"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-lg font-extrabold dark:text-gray-100">今日のひとこと</p>
+                <p className="text-xs text-text-mid">気分を選んで、送るだけでOK</p>
+              </div>
+              <button onClick={() => setPostOpen(false)} aria-label="閉じる"
+                disabled={posting}
+                className="w-9 h-9 rounded-full text-text-light hover:bg-gray-100 dark:hover:bg-[#2a2a2a] flex items-center justify-center">✕</button>
+            </div>
+            <div className="flex gap-3 justify-center mb-4">
+              {[
+                { v: 4, emoji: "😊", label: "いい感じ", cls: "bg-mint-light border-mint text-mint" },
+                { v: 2, emoji: "😔", label: "しんどい", cls: "bg-[#1a2030] border-[#2a3a50] text-[#8aa0c0]" },
+              ].map(m => (
+                <button key={m.v}
+                  onClick={() => setPostMood(m.v)}
+                  className={`flex-1 flex flex-col items-center gap-2 py-5 rounded-2xl border-2 min-h-[88px] transition-all ${
+                    postMood === m.v
+                      ? m.cls + " scale-105 shadow-md"
+                      : "bg-gray-50 dark:bg-[#2a2a3a] border-gray-200 dark:border-[#3a3a4a] opacity-60"
+                  }`}>
+                  <span className="text-4xl">{m.emoji}</span>
+                  <span className="text-sm font-extrabold">{m.label}</span>
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={postContent}
+              onChange={e => setPostContent(e.target.value)}
+              placeholder="今日一言（任意）"
+              maxLength={500}
+              className="w-full border-2 border-gray-100 dark:border-[#2a2a2a] bg-white dark:bg-[#111111] rounded-xl px-4 py-3 text-sm resize-none h-24 outline-none focus:border-mint mb-4"
+            />
+            <button
+              onClick={submitQuickPost}
+              disabled={postMood === 0 || posting}
+              className="w-full bg-mint text-white font-extrabold py-4 rounded-full shadow-lg shadow-mint/30 disabled:opacity-40 active:scale-95 transition text-base">
+              {posting ? "送信中..." : "送る✨"}
+            </button>
+            <button
+              onClick={() => setPostOpen(false)}
+              disabled={posting}
+              className="w-full mt-2 text-[15px] text-emerald-400 font-bold py-2">
+              今日は書かなくていい
+            </button>
+          </div>
+        </div>
+      )}
       <BottomNav />
     </main>
   );

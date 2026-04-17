@@ -40,6 +40,27 @@ export default function JournalPage() {
   const [sleepHours, setSleepHours] = useState("");
   const [morningGoal, setMorningGoal] = useState("");
   const [eveningWin, setEveningWin] = useState("");
+  // 朝活チャレンジ: 起床時刻（朝モード）
+  const [wakeTime, setWakeTime] = useState<string>(() => {
+    if (typeof window === "undefined") return "";
+    try {
+      const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
+      const raw = localStorage.getItem("rizup_wake_log") || "[]";
+      const log: { date: string; time: string }[] = JSON.parse(raw);
+      return log.find(r => r.date === today)?.time || "";
+    } catch { return ""; }
+  });
+  const saveWakeTime = (t: string) => {
+    setWakeTime(t);
+    if (!t) return;
+    try {
+      const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
+      const raw = localStorage.getItem("rizup_wake_log") || "[]";
+      const log: { date: string; time: string }[] = JSON.parse(raw);
+      const filtered = log.filter(r => r.date !== today);
+      localStorage.setItem("rizup_wake_log", JSON.stringify([...filtered, { date: today, time: t }].slice(-60)));
+    } catch { /* ignore */ }
+  };
   const [loading, setLoading] = useState(false);
   const [aiFeedback, setAiFeedback] = useState<string | null>(null);
   const [posted, setPosted] = useState(false);
@@ -276,17 +297,34 @@ export default function JournalPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ postId: data.id, content: allText }),
       }).catch(() => {});
-      // streak 更新は同期で取得（投稿直後に正しい値を表示するため）
+      // ── streak 更新（クライアント主導＋サーバー同期の二段構え） ──
+      // 1) クライアントで posts から JST 基準の連続日数を再計算
       try {
-        const res = await fetch("/api/check-progress", { method: "POST" });
-        const json = await res.json();
-        if (typeof json?.streak === "number") {
-          setCurrentStreak(json.streak);
+        const { data: recent } = await supabase.from("posts")
+          .select("created_at").eq("user_id", userId)
+          .order("created_at", { ascending: false }).limit(120);
+        const toJst = (d: string) => new Date(d).toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
+        const dateSet = new Set((recent || []).map(p => toJst(p.created_at)));
+        const todayJstStr = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
+        let newStreak = 0;
+        const cursor = new Date(todayJstStr + "T00:00:00");
+        // 今日分が含まれていれば今日から、なければ昨日から遡る
+        if (!dateSet.has(todayJstStr)) cursor.setDate(cursor.getDate() - 1);
+        for (let i = 0; i < 120; i++) {
+          const k = cursor.toLocaleDateString("en-CA");
+          if (dateSet.has(k)) { newStreak++; cursor.setDate(cursor.getDate() - 1); }
+          else break;
         }
+        setCurrentStreak(newStreak);
+        // 2) profiles.streak を直接更新（失敗しても UI は先に正しい値を反映済み）
+        try {
+          await supabase.from("profiles").update({ streak: newStreak }).eq("id", userId);
+        } catch { /* RLS 等で失敗しても UI は先行 */ }
       } catch {
-        // フォールバック: 当日既に投稿済みでなければ +1 を推定
         setCurrentStreak(s => s + 1);
       }
+      // 3) サーバー側で手紙等のロジックも走らせる（UI 反映はしない）
+      fetch("/api/check-progress", { method: "POST" }).catch(() => {});
 
       // 強み抽出（非同期・失敗してもUXに影響しない）
       fetch("/api/strength-detect", {
@@ -410,7 +448,9 @@ export default function JournalPage() {
         </div>
 
         <div className="flex items-center gap-3 mb-5">
-          <MiniCharacter animal={charAnimal} size={40} />
+          <div className="shrink-0 w-12 h-12 rounded-full bg-white dark:bg-[#1a1a1a] ring-2 ring-mint/40 flex items-center justify-center shadow-sm">
+            <MiniCharacter animal={charAnimal || "rabbit"} size={40} />
+          </div>
           <div className="flex-1">
             <p className="font-extrabold">{mode === "morning" ? "おはよう！☀️" : "おつかれさま🌙"}</p>
             <p className="text-xs text-text-mid">
@@ -458,6 +498,25 @@ export default function JournalPage() {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {/* 朝モード: 今日起きた時刻 */}
+        {mode === "morning" && (
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3 flex items-center gap-3">
+            <span className="text-2xl">⏰</span>
+            <div className="flex-1">
+              <p className="text-sm font-bold dark:text-gray-100">今日起きた時刻</p>
+              <p className="text-[11px] text-text-mid">30日チャレンジ・記録するだけでOK</p>
+            </div>
+            <input
+              type="time"
+              value={wakeTime}
+              onChange={e => saveWakeTime(e.target.value)}
+              aria-label="起床時刻"
+              className="border-2 border-gray-100 dark:border-[#2a2a2a] rounded-xl px-3 py-2 text-base font-extrabold bg-white dark:bg-[#111111] text-orange outline-none focus:border-orange"
+              style={{ minWidth: 110 }}
+            />
           </div>
         )}
 

@@ -23,7 +23,15 @@ export async function middleware(request: NextRequest) {
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => { request.cookies.set(name, value); });
           response = NextResponse.next({ request: { headers: request.headers } });
-          cookiesToSet.forEach(({ name, value, options }) => { response.cookies.set(name, value, options); });
+          cookiesToSet.forEach(({ name, value, options }) => {
+            // 認証クッキーの寿命を30日に延長（ログイン摩擦を減らす）
+            const extended = {
+              ...options,
+              maxAge: Math.max(options?.maxAge || 0, 60 * 60 * 24 * 30),
+              sameSite: options?.sameSite ?? "lax",
+            };
+            response.cookies.set(name, value, extended);
+          });
         },
       },
     }

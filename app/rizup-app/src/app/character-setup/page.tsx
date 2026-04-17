@@ -5,12 +5,12 @@ import { supabase } from "@/lib/supabase";
 import MyCharacter, { AnimalKind } from "@/components/MyCharacter";
 import Header from "@/components/Header";
 
-const animals: { kind: AnimalKind; emoji: string; label: string; desc: string }[] = [
-  { kind: "rabbit", emoji: "\u{1F430}", label: "うさぎ", desc: "やさしくて、ふわっと跳ねる" },
-  { kind: "raccoon", emoji: "\u{1F99D}", label: "たぬき", desc: "好奇心いっぱい、夜が得意" },
-  { kind: "cat", emoji: "\u{1F431}", label: "ねこ", desc: "マイペース、静かなあなたに" },
-  { kind: "squirrel", emoji: "\u{1F43F}\u{FE0F}", label: "りす", desc: "コツコツ貯める、小さな幸せ" },
-  { kind: "owl", emoji: "\u{1F989}", label: "ふくろう", desc: "落ち着きと、知恵の相棒" },
+const animals: { kind: AnimalKind; label: string; desc: string }[] = [
+  { kind: "rabbit",   label: "うさぎ",   desc: "やさしくて、ふわっと跳ねる" },
+  { kind: "raccoon",  label: "たぬき",   desc: "好奇心いっぱい、夜が得意" },
+  { kind: "cat",      label: "ねこ",     desc: "マイペース、静かなあなたに" },
+  { kind: "squirrel", label: "りす",     desc: "コツコツ貯める、小さな幸せ" },
+  { kind: "owl",      label: "ふくろう", desc: "落ち着きと、知恵の相棒" },
 ];
 
 
@@ -23,12 +23,20 @@ export default function CharacterSetupPage() {
   const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    // URL ?edit=1 で来た場合は再編集モード（既存値を復元、自動遷移しない）
+    const isEdit = typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("edit") === "1";
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
         const { data: prof } = await supabase.from("profiles")
           .select("character_animal, character_name").eq("id", user.id).maybeSingle();
+        if (isEdit) {
+          if (prof?.character_animal) setAnimal(prof.character_animal as AnimalKind);
+          if (prof?.character_name) setName(prof.character_name);
+          return;
+        }
         if (prof?.character_animal && prof?.character_name) {
           router.replace("/home");
         }
@@ -72,8 +80,12 @@ export default function CharacterSetupPage() {
                       : "border-gray-100 dark:border-[#2a2a2a]"
                   }`}
                 >
-                  <div className="text-4xl mb-2">{a.emoji}</div>
-                  <p className="text-sm font-extrabold dark:text-gray-100">{a.label}</p>
+                  <div className="h-[96px] w-full flex items-start justify-center pointer-events-none overflow-hidden">
+                    <div style={{ marginTop: 0 }}>
+                      <MyCharacter streak={10} animal={a.kind} size={88} />
+                    </div>
+                  </div>
+                  <p className="text-sm font-extrabold dark:text-gray-100 mt-1">{a.label}</p>
                   <p className="text-[10px] text-text-light mt-0.5">{a.desc}</p>
                 </button>
               ))}
