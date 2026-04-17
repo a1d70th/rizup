@@ -1,7 +1,73 @@
-# Rizup HQ — AI引継ぎファイル（v6.0 / 継続の仕掛け完成）
+# Rizup HQ — AI引継ぎファイル（v6.8 / ローンチ最終仕上げ）
 
 > 新しいチャットを開いたらまずこのファイルを読んで即作業開始。確認不要。
-> **最終更新：2026-04-17（v6.0 リリース）**
+> **最終更新：2026-04-17（v6.8 リリース）**
+
+---
+
+## 🚀 ローンチ前チェックリスト（v6.8）
+
+- [x] **DB**: `app/rizup-app/src/scripts/run-migration.md` の SQL を Supabase SQL Editor で実行（400 エラー解消）
+- [x] **Stripe**: `.env.local.example` 参照して Vercel に `STRIPE_SECRET_KEY` / `STRIPE_WEBHOOK_SECRET` / `STRIPE_PRO_PRICE_ID` / `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` を登録
+- [x] **Stripe Dashboard**: Webhook エンドポイント `/api/stripe/webhook` を追加し、signing secret を環境変数に反映
+- [ ] **Threads**: @shohei_rizup 初日投稿
+- [ ] **note**: 下書き公開
+- [ ] **PWA実機**: iPhone Safari で「ホーム画面に追加」→ ミントアイコン確認
+- [ ] **Pro購入テスト**: /pricing → Checkout → Webhook で plan=pro に更新されるか確認
+
+---
+
+## 🆕 v6.8（2026-04-17 夜）— ローンチ仕上げ
+
+- 初回ユーザー誘導を「自動遷移」から「キャラ未設定バナー」に切替（前版は /character-setup への強制 replace で体感が悪かった）
+- `src/scripts/run-migration.md` を新規：Supabase SQL Editor でのマイグレ実行手順書
+- `/mypage` → `/profile` redirect ページ追加（旧 URL 救済）
+- ログイン成功時 `router.replace("/home")` 動作確認
+- ダッシュボード：カレンダーセクションの Google リンク + 月〜日のメモ欄（週次リセット）動作確認
+
+## ✅ v6.7 / v6.7.1（2026-04-17）— 400 対策 + 速度改善
+
+- `profiles?select=...character_animal,character_name` 400 エラー対策：select を多段フォールバック化（full → streak+is_admin → id）
+- `supabase-v6-safe.sql` と `supabase/migrations/20260417_fix_profiles.sql` 新規：カラム追加 + RLS 3 ポリシー再作成
+- 「🔥 {streak}日連続！」を 24px ミントで大きく表示
+- 「🔥 今日 N人 が記録したよ」 peer effect バッジ（posts.count の HEAD クエリ 1 本）
+- タイムライン初期取得 500→20 件
+- `/api/check-progress` を 2秒 setTimeout で遅延実行（初期レンダリング非ブロック）
+- 初期ロードクエリを約 5 本削減
+
+## ✅ v6.6（2026-04-17）— Stripe 課金フロー完成
+
+- `/api/stripe/checkout` の success_url を `/home?subscribed=true` に
+- `/pricing` 新規：Free vs Pro 比較カード + 「Proにアップグレード」ボタン
+- `/home` で ?subscribed=true を検知してトースト
+- `.env.local.example` を Stripe/VAPID/Anthropic の全変数で拡充
+- 「アシスタントマネージャー」対策：BAD_NAMES で不正 character_name を自動クリア
+
+## ✅ v6.5（2026-04-17）— PWA 刷新 + ダッシュボード公開
+
+- `manifest.json`: start_url `/home` / background `#0a0a0a` / theme `#10b981`
+- `public/icon-192.png` / `icon-512.png` をルートに配置
+- layout.tsx: theme-color を `#10b981` に統一、status-bar を black-translucent
+- `public/dashboard.html` 配置 + `next.config.mjs` rewrite `/dashboard → /dashboard.html`
+- ダッシュボード v2.0: メディア集客 / 週間スケジュール / ルーティン / カレンダー / 事業⑨ を追加、モバイル overflow 修正、固定ヘッダー折りたたみ
+
+## ✅ v6.4（2026-04-17）— 引き算リデザイン + Quick-Post
+
+- ホーム: おやつ・FAB・🔄更新・朝活チャレンジカードを削除
+- Quick-Post モーダル: ホーム内で気分2択 + 一言 + 送る✨ で完結投稿
+- 認証 maxAge を 30日 に延長
+
+## ✅ v6.3（2026-04-17）— 朝活チャレンジ + 明示入力
+
+- 朝ジャーナルに「今日起きた時刻」<input type="time">
+- 朝モード:「🎯 今日の目標を一言」/ 夜モード:「🌙 今日できたこと一言」
+
+## ✅ v6.2（2026-04-17）— streak バグ根絶 + 継続の仕掛け
+
+- 投稿後 `/api/check-progress` を await → 即 currentStreak 反映 + profiles.streak を直接 UPDATE
+- マイルストーン（3/7/14/30）紙吹雪 + 「ありがとう🌸」
+- 危機バナー 22:00〜23:59（streak 依存撤廃）+「今すぐ書く」
+- PostCard: h-44px / 14px / border-2 / localStorage 永続化
 
 ---
 

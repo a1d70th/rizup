@@ -111,12 +111,7 @@ export default function HomePage() {
         }
         if (animalLocal) setCharAnimal(animalLocal);
         if (nameLocal) setCharName(nameLocal);
-
-        // 初回ユーザー → キャラ選択へ自動誘導
-        if (!animalLocal) {
-          router.replace("/character-setup");
-          return;
-        }
+        // 初回ユーザーは自動遷移せず、ホーム上のバナーで誘導（下で描画）
 
         // ── 今日分データをまとめて 1クエリで取得（JST 0:00〜翌0:00） ──
         const nowJst = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
@@ -348,6 +343,17 @@ export default function HomePage() {
         {pull > 0 && (
           <div className="flex justify-center py-2 text-xs text-text-light">
             {refreshing ? "更新中…" : pull > 60 ? "離して更新" : "↓ 引っ張って更新"}
+          </div>
+        )}
+        {/* 初回ユーザー誘導バナー（キャラ未設定時のみ） */}
+        {!loading && !charAnimal && (
+          <div className="max-w-md mx-auto px-4 pt-3">
+            <Link
+              href="/character-setup"
+              className="block bg-gradient-to-r from-mint to-[#4ecba0] text-white rounded-2xl px-5 py-4 shadow-lg shadow-mint/30 active:scale-[.98] transition">
+              <p className="text-base font-extrabold">🌱 キャラを選んでスタート</p>
+              <p className="text-[12px] opacity-90 mt-0.5">まずは相棒の動物を選ぼう。30秒で終わるよ</p>
+            </Link>
           </div>
         )}
         <div className="max-w-md mx-auto px-4 py-2">
