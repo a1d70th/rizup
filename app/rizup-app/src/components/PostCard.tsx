@@ -106,6 +106,9 @@ interface PostCardProps {
     morning_goal?: string | null;
     goal_achieved?: string | null;
     compound_score_today?: number | null;
+    wake_time?: string | null;
+    bedtime?: string | null;
+    sleep_hours?: number | null;
     profiles?: { name: string; avatar_url: string | null; streak?: number | null };
   };
   userId?: string | null;
@@ -391,11 +394,24 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
         )}
       </header>
 
-      {/* Context: 朝の目標 / 夜の達成状況 */}
-      {isMorning && post.morning_goal && (
-        <div className="mx-4 mb-2 px-3 py-2 bg-gradient-to-r from-orange-light/60 to-white border border-orange/20 rounded-xl">
-          <p className="text-[11px] font-bold text-orange mb-0.5">🎯 今日の目標</p>
-          <p className="text-[14px] font-bold text-text">{post.morning_goal}</p>
+      {/* 朝活: 起床時刻バッジ（みんなの習慣が見える） */}
+      {isMorning && (post.wake_time || post.bedtime || post.sleep_hours) && (
+        <div className="mx-4 mb-2 flex items-center gap-2 flex-wrap">
+          {post.wake_time && (
+            <span className="inline-flex items-center gap-1 text-[12px] font-extrabold text-orange bg-orange-light rounded-full px-3 py-1">
+              ⏰ {post.wake_time} 起床
+            </span>
+          )}
+          {post.bedtime && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-text-mid bg-gray-100 dark:bg-[#2a2a2a] rounded-full px-2.5 py-1">
+              🌙 {post.bedtime}
+            </span>
+          )}
+          {post.sleep_hours != null && (
+            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-text-mid bg-gray-100 dark:bg-[#2a2a2a] rounded-full px-2.5 py-1">
+              ⏱ {post.sleep_hours}h
+            </span>
+          )}
         </div>
       )}
       {!isMorning && post.goal_achieved && (

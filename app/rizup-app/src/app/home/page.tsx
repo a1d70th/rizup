@@ -22,6 +22,12 @@ interface PostWithProfile {
   morning_goal?: string | null;
   goal_achieved?: string | null;
   compound_score_today?: number | null;
+  wake_time?: string | null;
+  bedtime?: string | null;
+  sleep_hours?: number | null;
+  did_well?: string | null;
+  grateful?: string | null;
+  tomorrow_word?: string | null;
   profiles: { name: string; avatar_url: string | null; streak?: number | null };
 }
 

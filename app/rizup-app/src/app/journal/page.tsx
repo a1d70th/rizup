@@ -8,7 +8,6 @@ import BottomNav from "@/components/BottomNav";
 import type { AnimalKind } from "@/components/MyCharacter";
 import { compressImage } from "@/lib/image-compress";
 import { dailyCompoundScore } from "@/lib/compound";
-import CountUp from "@/components/CountUp";
 import { safeInsertPost, findTodayPost } from "@/lib/safe-insert";
 import { showToast } from "@/components/Toast";
 
@@ -35,7 +34,6 @@ export default function JournalPage() {
   const [mode, setMode] = useState<"morning" | "evening">("morning");
   const [mood, setMood] = useState(0);
   const [content, setContent] = useState("");
-  const [gratitudes, setGratitudes] = useState(["", "", ""]);
   const [sleepHours, setSleepHours] = useState("");
   const [bedtime, setBedtime] = useState<string>(() => {
     if (typeof window === "undefined") return "";
@@ -44,8 +42,10 @@ export default function JournalPage() {
       return localStorage.getItem(`rizup_bedtime_${today}`) || "";
     } catch { return ""; }
   });
-  const [morningGoal, setMorningGoal] = useState("");
-  const [eveningWin, setEveningWin] = useState("");
+  // 夜の3行日記（B案）
+  const [didWell, setDidWell] = useState("");
+  const [grateful, setGrateful] = useState("");
+  const [tomorrow, setTomorrow] = useState("");
   // 朝活チャレンジ: 起床時刻（朝モード）
   const [wakeTime, setWakeTime] = useState<string>(() => {
     if (typeof window === "undefined") return "";
@@ -88,7 +88,6 @@ export default function JournalPage() {
 
 
   // もっと書く▼（デフォルト折りたたみ・最小2-3タップで投稿）
-  const [showMore, setShowMore] = useState(false);
 
   const imageRef = useRef<HTMLInputElement>(null);
 
@@ -187,7 +186,7 @@ export default function JournalPage() {
     if (!userId) { setLoading(false); return; }
 
     // モデレーション
-    const allText = [content, morningGoal, ...gratitudes].filter(Boolean).join(" ");
+    const allText = [content, didWell, grateful, tomorrow].filter(Boolean).join(" ");
     try {
       const modRes = await fetch("/api/moderate", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -229,12 +228,20 @@ export default function JournalPage() {
       }
     }
 
-    // 夜モード: 「今日できたこと」を本文に前置き
+    // 夜モード: 3行日記（できたこと/感謝/明日へ）を本文に整形
     const combinedContent = (() => {
-      if (mode === "evening" && eveningWin.trim()) {
-        return `✅ 今日できたこと：${eveningWin.trim()}${content ? "\n\n" + content : ""}`;
+      if (mode === "evening") {
+        const lines: string[] = [];
+        if (didWell.trim())  lines.push(`🌱 できたこと：${didWell.trim()}`);
+        if (grateful.trim()) lines.push(`🙏 感謝：${grateful.trim()}`);
+        if (tomorrow.trim()) lines.push(`💭 明日へ：${tomorrow.trim()}`);
+        const three = lines.join("\n");
+        if (three && content.trim()) return `${three}\n\n${content.trim()}`;
+        if (three) return three;
+        return content.trim();
       }
-      return content || (mode === "morning" ? morningGoal : "");
+      // 朝は自由記述のみ
+      return content.trim();
     })();
 
     // posts insert
@@ -243,12 +250,16 @@ export default function JournalPage() {
       mood, image_url: imageUrl,
     };
     if (mode === "morning") {
-      if (morningGoal.trim()) payload.morning_goal = morningGoal.trim();
+      // 朝活データ: 起床/入眠/睡眠を保存（safe-insert が未マイグレ列を落とす）
+      if (wakeTime) payload.wake_time = wakeTime;
+      if (bedtime) payload.bedtime = bedtime;
       if (sleepHours) payload.sleep_hours = parseFloat(sleepHours);
     } else {
       if (sleepHours) payload.sleep_hours = parseFloat(sleepHours);
-      const gs = gratitudes.filter(g => g.trim());
-      if (gs.length > 0) payload.gratitudes = gs;
+      // 3行日記のフィールドを個別に保存（検索・集計用）
+      if (didWell.trim())  payload.did_well = didWell.trim();
+      if (grateful.trim()) payload.grateful = grateful.trim();
+      if (tomorrow.trim()) payload.tomorrow_word = tomorrow.trim();
       if (morningPost) {
         payload.linked_morning_post_id = morningPost.id;
         if (goalAchieved) payload.goal_achieved = goalAchieved;
@@ -303,18 +314,22 @@ export default function JournalPage() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ postId: data.id, content: allText }),
       }).catch(() => {});
-      // ── streak 更新（クライアント主導＋サーバー同期の二段構え） ──
-      // 1) クライアントで posts から JST 基準の連続日数を再計算
+      // ── streak 更新（投稿 OR 起床時刻記録 のどちらかで加算） ──
       try {
         const { data: recent } = await supabase.from("posts")
           .select("created_at").eq("user_id", userId)
           .order("created_at", { ascending: false }).limit(120);
         const toJst = (d: string) => new Date(d).toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
         const dateSet = new Set((recent || []).map(p => toJst(p.created_at)));
+        // 起床時刻のみを記録した日も streak に含める（習慣化の摩擦を最小化）
+        try {
+          const wakeRaw = localStorage.getItem("rizup_wake_log") || "[]";
+          const wakeLog: { date: string; time: string }[] = JSON.parse(wakeRaw);
+          wakeLog.forEach(r => { if (r.date) dateSet.add(r.date); });
+        } catch { /* ignore */ }
         const todayJstStr = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
         let newStreak = 0;
         const cursor = new Date(todayJstStr + "T00:00:00");
-        // 今日分が含まれていれば今日から、なければ昨日から遡る
         if (!dateSet.has(todayJstStr)) cursor.setDate(cursor.getDate() - 1);
         for (let i = 0; i < 120; i++) {
           const k = cursor.toLocaleDateString("en-CA");
@@ -322,7 +337,6 @@ export default function JournalPage() {
           else break;
         }
         setCurrentStreak(newStreak);
-        // 2) profiles.streak を直接更新（失敗しても UI は先に正しい値を反映済み）
         try {
           await supabase.from("profiles").update({ streak: newStreak }).eq("id", userId);
         } catch { /* RLS 等で失敗しても UI は先行 */ }
@@ -580,35 +594,49 @@ export default function JournalPage() {
           </div>
         )}
 
-        {/* 朝モード: 今日の目標を一言（5〜9時推奨） */}
-        {mode === "morning" && (
-          <div className="bg-gradient-to-br from-orange-light to-yellow-50 dark:from-[#2a2515] dark:to-[#2a2a1a] rounded-2xl p-4 border border-orange/30 mb-3">
-            <p className="text-sm font-bold text-orange mb-1">🎯 今日の目標を一言</p>
-            <p className="text-[11px] text-text-mid mb-2">朝5〜9時に書くと、一日の解像度がぐっと上がるよ</p>
-            <input
-              type="text"
-              value={morningGoal}
-              onChange={e => setMorningGoal(e.target.value)}
-              placeholder="例：散歩を15分する / 苦手な電話を1本かける"
-              maxLength={80}
-              className="w-full border-2 border-orange/30 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-orange bg-white dark:bg-[#1a1a1a]"
-            />
-          </div>
-        )}
-
-        {/* 夜モード: 今日できたこと一言（21〜24時推奨） */}
+        {/* 夜モード: 3行日記（B案） */}
         {mode === "evening" && (
-          <div className="bg-gradient-to-br from-mint-light to-blue-50 dark:from-[#0d2818] dark:to-[#1a2028] rounded-2xl p-4 border border-mint/30 mb-3">
-            <p className="text-sm font-bold text-mint mb-1">🌙 今日できたこと一言</p>
-            <p className="text-[11px] text-text-mid mb-2">どんなに小さくてもOK。書いた瞬間、それは「できたこと」になる</p>
-            <input
-              type="text"
-              value={eveningWin}
-              onChange={e => setEveningWin(e.target.value)}
-              placeholder="例：朝、布団を畳めた / 3分だけでも本を開いた"
-              maxLength={80}
-              className="w-full border-2 border-mint/30 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint bg-white dark:bg-[#1a1a1a]"
-            />
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
+            <p className="text-sm font-extrabold mb-3 dark:text-gray-100">📖 3行でふりかえる</p>
+            <div className="space-y-3">
+              <label className="block">
+                <span className="flex items-center gap-1.5 text-[12px] font-bold text-mint mb-1">
+                  🌱 できたこと <span className="text-text-light font-normal">（小さくてもOK）</span>
+                </span>
+                <input
+                  type="text" value={didWell}
+                  onChange={e => setDidWell(e.target.value)}
+                  placeholder="例：散歩を15分できた"
+                  maxLength={100}
+                  className="w-full border-2 border-mint/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint bg-white dark:bg-[#111111]"
+                />
+              </label>
+              <label className="block">
+                <span className="flex items-center gap-1.5 text-[12px] font-bold text-orange mb-1">
+                  🙏 感謝したこと <span className="text-text-light font-normal">（人・モノ・空気なんでも）</span>
+                </span>
+                <input
+                  type="text" value={grateful}
+                  onChange={e => setGrateful(e.target.value)}
+                  placeholder="例：同僚が声をかけてくれた"
+                  maxLength={100}
+                  className="w-full border-2 border-orange/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-orange bg-white dark:bg-[#111111]"
+                />
+              </label>
+              <label className="block">
+                <span className="flex items-center gap-1.5 text-[12px] font-bold text-[#06b6d4] mb-1">
+                  💭 明日への一言 <span className="text-text-light font-normal">（未来の自分へ）</span>
+                </span>
+                <input
+                  type="text" value={tomorrow}
+                  onChange={e => setTomorrow(e.target.value)}
+                  placeholder="例：早起きできたらコーヒーご褒美"
+                  maxLength={100}
+                  className="w-full border-2 border-[#06b6d4]/20 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#06b6d4] bg-white dark:bg-[#111111]"
+                />
+              </label>
+            </div>
+            <p className="text-[11px] text-text-light mt-3">どれか1つだけでも送信OK</p>
           </div>
         )}
 
@@ -663,50 +691,15 @@ export default function JournalPage() {
           </div>
         )}
 
-        {/* 睡眠（夜モード・もっと書く内のみ） */}
-        {mode === "evening" && showMore && (
-          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
-            <p className="text-sm font-bold mb-2">
-😴 昨夜は何時間寝ましたか？
-            </p>
-            <input type="number" min="0" max="24" step="0.5"
-              value={sleepHours} onChange={e => setSleepHours(e.target.value)}
-              placeholder="例：7"
-              aria-label="睡眠時間"
-              className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint box-border"
-              style={{ WebkitAppearance: "none" }} />
-          </div>
-        )}
-
-        {/* 夜モード: 本文（常時表示） */}
+        {/* 夜モード: ✍️ もっと書く（自由記述・任意） */}
         {mode === "evening" && (
-        <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
-          <p className="text-sm font-bold mb-2">今日の振り返り</p>
-          <textarea value={content} onChange={e => { setContent(e.target.value); setModerationError(null); }}
-            placeholder="例：散歩したら気分が軽くなった"
-            className="w-full border-2 border-gray-100 rounded-xl px-4 py-3 text-sm resize-none h-24 outline-none focus:border-mint"
-            maxLength={500} />
-        </div>
-        )}
-
-        {/* 画像添付（夜モード・もっと書く内のみ） */}
-        {mode === "evening" && showMore && (
-        <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
-          <button onClick={() => imageRef.current?.click()} type="button"
-            className="flex items-center gap-1 text-sm text-text-light hover:text-mint transition">
-            📷 画像を追加
-          </button>
-          <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
-          {imagePreview && (
-            <div className="relative mt-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={imagePreview} alt="添付プレビュー" className="w-full max-h-48 object-cover rounded-xl" />
-              <button onClick={() => { setImageFile(null); setImagePreview(null); }}
-                aria-label="画像を削除"
-                className="absolute top-2 right-2 bg-black/50 text-white w-6 h-6 rounded-full text-xs flex items-center justify-center">✕</button>
-            </div>
-          )}
-        </div>
+          <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
+            <p className="text-sm font-bold mb-2 dark:text-gray-100">✍️ もっと書く <span className="text-[11px] text-text-light font-normal">（任意）</span></p>
+            <textarea value={content} onChange={e => { setContent(e.target.value); setModerationError(null); }}
+              placeholder="今日あったこと、感じたこと、なんでも"
+              className="w-full border-2 border-gray-100 dark:border-[#2a2a2a] rounded-xl px-4 py-3 text-sm resize-none h-28 outline-none focus:border-mint bg-white dark:bg-[#111111]"
+              maxLength={500} />
+          </div>
         )}
 
         {moderationError && (
@@ -716,51 +709,23 @@ export default function JournalPage() {
           </div>
         )}
 
-        {/* 夜モード: もっと書く▼ */}
-        {mode === "evening" && !showMore && (
-          <button
-            type="button"
-            onClick={() => setShowMore(true)}
-            className="w-full py-2 mb-3 text-xs font-extrabold text-mint hover:bg-mint-light dark:hover:bg-[#1f2824] rounded-full transition"
-            aria-label="追加項目を表示">
-            もっと書く ▼（感謝・今日の積み上げ・画像）
-          </button>
-        )}
-
-        {/* 夜モード: 今日の積み上げスコア予測（showMore 時のみ） */}
-        {mode === "evening" && showMore && (() => {
-          const todoRate = morningTodos.length === 0 ? 0.5
-            : morningTodos.filter(t => t.done).length / morningTodos.length;
-          const score = dailyCompoundScore({
-            todoCompletionRate: todoRate,
-            habitCompletionRate: habitDoneRatio,
-            positivityRate: mood / 5,
-          });
-          return (
-            <div className="glass-mint rounded-2xl p-4 mb-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xl">✨</span>
-                <p className="text-sm font-extrabold flex-1">今日の積み上げ</p>
-                <span className="text-2xl font-extrabold text-mint"><CountUp value={score} />/100</span>
-              </div>
-              <div className="w-full bg-white/60 rounded-full h-2 mb-2">
-                <div className="bg-gradient-to-r from-mint to-orange rounded-full h-2 transition-all duration-700"
-                  style={{ width: `${score}%` }} />
-              </div>
-              <p className="text-[10px] text-text-mid">ToDo達成 × 毎日のこと × 気分から算出。この積み重ねが明日のあなたを作る。</p>
-            </div>
-          );
-        })()}
-
-        {mode === "evening" && showMore && (
+        {/* 夜モード: 任意の画像添付 */}
+        {mode === "evening" && (
           <div className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-4 border border-gray-100 dark:border-[#2a2a2a] mb-3">
-            <p className="text-sm font-bold mb-3">🙏 今日の感謝</p>
-            {["今日ありがたかったこと", "誰かに感謝したいこと", "自分を褒めたいこと"].map((ph, i) => (
-              <input key={i} type="text" value={gratitudes[i]}
-                onChange={e => { const g = [...gratitudes]; g[i] = e.target.value; setGratitudes(g); }}
-                placeholder={ph}
-                className="w-full border-2 border-gray-100 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-mint mb-2" />
-            ))}
+            <button onClick={() => imageRef.current?.click()} type="button"
+              className="flex items-center gap-1 text-sm text-text-light hover:text-mint transition">
+              📷 画像を追加（任意）
+            </button>
+            <input ref={imageRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+            {imagePreview && (
+              <div className="relative mt-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imagePreview} alt="添付プレビュー" className="w-full max-h-48 object-cover rounded-xl" />
+                <button onClick={() => { setImageFile(null); setImagePreview(null); }}
+                  aria-label="画像を削除"
+                  className="absolute top-2 right-2 bg-black/50 text-white w-6 h-6 rounded-full text-xs flex items-center justify-center">✕</button>
+              </div>
+            )}
           </div>
         )}
 
