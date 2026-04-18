@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const protectedPaths = ["/home", "/journal", "/profile", "/notifications", "/settings", "/premium", "/pricing", "/admin", "/vision", "/habits", "/growth", "/village", "/character-setup"];
+const protectedPaths = ["/home", "/journal", "/profile", "/notifications", "/settings", "/premium", "/pricing", "/admin", "/vision", "/habits", "/growth", "/village", "/character-setup", "/events"];
 const authPaths = ["/login", "/register"];
 
 export async function middleware(request: NextRequest) {
@@ -70,6 +70,7 @@ export const config = {
     "/vision/:path*", "/habits/:path*",
     "/growth/:path*",
     "/village/:path*", "/character-setup/:path*",
+    "/events/:path*",
     "/login", "/register", "/onboarding", "/auth/callback",
   ],
 };
