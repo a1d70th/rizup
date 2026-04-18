@@ -123,20 +123,11 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
   const [counts, setCounts] = useState<Record<string, number>>({ cheer: 0, relate: 0, amazing: 0 });
   const [myReactions, setMyReactions] = useState<Set<string>>(new Set());
   const [animating, setAnimating] = useState<string | null>(null);
-  const [commentText, setCommentText] = useState("");
-  const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<{ id: string; content: string; profiles?: { name: string } }[]>([]);
   const [showMenu, setShowMenu] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
-  const [showReport, setShowReport] = useState(false);
-  const [reportReason, setReportReason] = useState("");
-  const [reported, setReported] = useState(false);
   const [displayContent, setDisplayContent] = useState(post.content);
   const [expanded, setExpanded] = useState(false);
-  const [showStrengthGift, setShowStrengthGift] = useState(false);
-  const [strengthText, setStrengthText] = useState("");
-  const [strengthSent, setStrengthSent] = useState(false);
 
   const isOwner = userId && post.user_id === userId;
   const canDelete = isOwner || isAdmin;
@@ -179,15 +170,6 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
           } catch { /* ignore */ }
         }
       } catch { /* reactions テーブル未作成時は無視 */ }
-      try {
-        const { data: cmts } = await supabase
-          .from("comments")
-          .select("id, content, profiles(name)")
-          .eq("post_id", post.id)
-          .order("created_at", { ascending: true });
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if (cmts) setComments(cmts as any);
-      } catch { /* comments テーブル未作成時は無視 */ }
     };
     load();
   }, [post.id, userId]);
@@ -241,37 +223,6 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
     }
   };
 
-  const handleComment = async () => {
-    if (!userId) {
-      window.location.href = "https://rizup-app.vercel.app/login";
-      return;
-    }
-    if (!commentText.trim()) return;
-    const { data } = await supabase
-      .from("comments")
-      .insert({ post_id: post.id, user_id: userId, content: commentText.trim() })
-      .select("id, content, profiles(name)")
-      .single();
-    if (data) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setComments((prev) => [...prev, data as any]);
-      if (post.user_id !== userId) {
-        const commenterName = (data as unknown as { profiles: { name: string } }).profiles?.name || "誰か";
-        supabase
-          .from("notifications")
-          .insert({
-            user_id: post.user_id,
-            type: "comment",
-            content: `${commenterName}さんがあなたの投稿にコメントしました：「${commentText.trim().slice(0, 30)}${
-              commentText.trim().length > 30 ? "…" : ""
-            }」`,
-          })
-          .then(() => {});
-      }
-    }
-    setCommentText("");
-  };
-
   const handleEdit = async () => {
     if (!editContent.trim()) return;
     await supabase.from("posts").update({ content: editContent }).eq("id", post.id);
@@ -312,48 +263,6 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
       console.error("[PostCard] Server delete threw:", e);
       alert("通信エラーで削除できませんでした。時間をおいて再度お試しください。");
     }
-  };
-
-  const handleSendStrength = async () => {
-    if (!userId || !strengthText.trim() || !post.user_id) return;
-    try {
-      await supabase.from("strength_gifts").insert({
-        from_id: userId,
-        to_id: post.user_id,
-        body: strengthText.trim(),
-        source_post_id: post.id,
-      });
-      try {
-        await supabase.from("notifications").insert({
-          user_id: post.user_id,
-          type: "strength",
-          content: `✨ あなたの強みを見つけてくれた人がいるよ`,
-        });
-      } catch { /* ignore */ }
-      setStrengthSent(true);
-      setShowStrengthGift(false);
-      setStrengthText("");
-    } catch { /* ignore - likely migration not applied */ }
-  };
-
-  const handleReport = async () => {
-    if (!userId) return;
-    await supabase
-      .from("reports")
-      .insert({ post_id: post.id, reporter_id: userId, reason: reportReason });
-    fetch("/api/report", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        postId: post.id,
-        reporterName: "ユーザー",
-        postContent: displayContent,
-        reason: reportReason,
-      }),
-    }).catch(() => {});
-    setReported(true);
-    setShowReport(false);
-    setReportReason("");
   };
 
   const badgeCls = isMorning
@@ -538,138 +447,6 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
         })}
       </div>
 
-      {/* Comments row */}
-      <div className="flex items-center gap-3 px-4 pb-3 border-t border-gray-50 pt-3">
-        <button
-          onClick={() => setShowComments(!showComments)}
-          aria-label="コメントを表示"
-          className="flex items-center gap-1.5 text-[13px] text-text-mid hover:text-mint transition py-1 font-medium"
-        >
-          <span className="text-base">💬</span>
-          {comments.length > 0 ? `${comments.length}件` : "コメント"}
-        </button>
-        {userId && !isOwner && !strengthSent && (
-          <button
-            onClick={() => setShowStrengthGift(s => !s)}
-            aria-label="強みを発見した"
-            className="text-xs text-orange hover:text-orange/80 transition font-bold"
-          >
-            ✨ 強みを発見
-          </button>
-        )}
-        {strengthSent && <span className="text-xs text-orange ml-1">✨ 贈った</span>}
-        {userId && !isOwner && (
-          reported ? (
-            <span className="text-xs text-text-light ml-auto">✅ 通報済み</span>
-          ) : (
-            <button
-              onClick={() => setShowReport(!showReport)}
-              className="text-xs text-text-light hover:text-red-400 transition ml-auto"
-            >
-              🚩 通報
-            </button>
-          )
-        )}
-      </div>
-
-      {/* 強み贈与フォーム */}
-      {showStrengthGift && (
-        <div className="mx-4 mb-3 border border-orange/30 rounded-xl p-3 bg-orange-light/30 dark:bg-[#2a1f15]">
-          <p className="text-xs font-bold text-orange mb-2">✨ {name || "この人"}のここが素敵だと思った</p>
-          <textarea
-            value={strengthText}
-            onChange={e => setStrengthText(e.target.value)}
-            maxLength={200}
-            placeholder="例：続ける力がすごい"
-            className="w-full border border-orange/30 rounded-lg px-3 py-2 text-xs outline-none resize-none h-16 mb-2 bg-white dark:bg-[#1a1a1a]"
-          />
-          <div className="flex gap-2">
-            <button
-              onClick={handleSendStrength}
-              disabled={!strengthText.trim()}
-              className="bg-orange text-white text-xs font-extrabold px-4 py-1.5 rounded-full disabled:opacity-40"
-            >
-              贈る
-            </button>
-            <button onClick={() => setShowStrengthGift(false)} className="text-xs text-text-light px-4 py-1.5">
-              キャンセル
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Report form */}
-      {showReport && (
-        <div className="mx-4 mb-3 border border-red-100 rounded-xl p-3 bg-red-50/50">
-          <p className="text-xs font-bold text-red-500 mb-2">この投稿を通報する</p>
-          <input
-            type="text"
-            value={reportReason}
-            onChange={(e) => setReportReason(e.target.value)}
-            placeholder="通報理由（任意）"
-            className="w-full border border-red-100 rounded-lg px-3 py-2 text-xs outline-none mb-2"
-          />
-          <div className="flex gap-2">
-            <button
-              onClick={handleReport}
-              className="bg-red-500 text-white text-xs font-bold px-4 py-1.5 rounded-full"
-            >
-              送信
-            </button>
-            <button
-              onClick={() => setShowReport(false)}
-              className="text-xs text-text-light px-4 py-1.5"
-            >
-              キャンセル
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showComments && (
-        <div className="mx-4 mb-4 pt-2">
-          {comments.length === 0 && (
-            <p className="text-xs text-text-light text-center py-3">最初のコメントを送ろう！</p>
-          )}
-          {comments.map((c) => (
-            <div key={c.id} className="flex items-start gap-2 mb-2.5">
-              <div className="w-7 h-7 rounded-full bg-orange-light flex items-center justify-center text-xs mt-0.5 shrink-0">
-                🌸
-              </div>
-              <div className="flex-1 bg-gray-50 rounded-2xl px-3 py-2">
-                <span className="text-[12px] font-extrabold">{c.profiles?.name || "匿名"}</span>
-                <p className="text-[13px] text-text-mid leading-relaxed">{c.content}</p>
-              </div>
-            </div>
-          ))}
-          <div className="flex gap-2 mt-2">
-            <input
-              type="text"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="前向きなコメントを書こう..."
-              className="flex-1 border border-gray-100 rounded-full px-4 py-2 text-[13px] outline-none focus:border-mint"
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  (e.target as HTMLInputElement).blur();
-                  handleComment();
-                }
-              }}
-            />
-            <button
-              onClick={() => {
-                (document.activeElement as HTMLElement)?.blur();
-                handleComment();
-              }}
-              disabled={!commentText.trim()}
-              aria-label="コメントを送信"
-              className="bg-mint text-white rounded-full px-5 py-2 text-xs font-extrabold disabled:opacity-30 shadow-sm shadow-mint/30"
-            >
-              送信
-            </button>
-          </div>
-        </div>
-      )}
     </article>
   );
 }
