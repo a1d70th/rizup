@@ -1,11 +1,104 @@
-# Rizup HQ — AI引継ぎファイル（v7.3 / タイムライン大掃除）
+# Rizup HQ — AI引継ぎファイル（v7.5 / アイコン刷新 + 会社ロゴ）
 
 > 新しいチャットを開いたらまずこのファイルを読んで即作業開始。確認不要。
-> **最終更新：2026-04-18（v7.3 リリース）**
+> **最終更新：2026-04-18（v7.5 リリース）**
 
 ---
 
-## 🆕 v7.3（2026-04-18）— タイムライン大掃除 + ヘッダー刷新
+## 💰 収益モデル方針（2026-04-18 確定）
+
+| プラン | 価格 | 主な差分 |
+|---|---|---|
+| **Free** | ¥0 | 自前ハウス広告あり（翔平さんSNS誘導バナー） |
+| **Pro** | **¥480/月** | 広告完全非表示・Pro バッジ・週間AIレポート |
+| **Premium**（将来） | 未定 | オフ会無料参加・児玉さんQ&A・限定コミュニティ |
+
+**運用方針**
+- 広告：Google AdSense 等は使わず**自前ハウス広告のみ**（翔平さんの SNS・note 誘導で二次収益を狙う）
+- オフ会：**ユーザー 50 人到達までは開催せず**、その後オンライン先行で試験運用（Zoom）
+- Google Calendar 連携：**今週中に iframe 埋め込み版**で対応（API 版は Phase2 以降）
+- アプリ→ダッシュボード同期（Supabase `dashboard_state` テーブル）：**Phase2 以降**に実装
+
+---
+
+## 🆕 v7.5（2026-04-18）— PWAアイコン刷新 + 会社ロゴ + タグライン刷新
+
+**タグライン刷新（旧「書くたびに村が育つ」→ 新「朝と夜、1分で未来が変わる。」）**
+- v7.0 で村コンセプト撤去済なのに残っていた旧タグラインを全消し
+- `src/app/layout.tsx`: title / description / OG / Twitter カード 5箇所を新タグラインに
+- `public/manifest.json`: description + shortcut 「成長グラフ」説明を更新
+- 新 description: 「朝のひとこと、夜のふりかえり。1分の記録から、小さな積み重ねで未来を変えていく。」
+
+**PWA ホーム画面アイコン（`public/logo-r.svg` 全面書換）**
+- 旧: v7.4 の DAWN(夜明けの太陽) → 新: **"RIZUP" ワードマーク**（Header.tsx と完全一致のミント→シアングラデ `#10b981 → #06b6d4`）
+- ジオメトリック block-letter パスで構築（フォント依存ゼロ、小サイズでも崩れない）
+- iOS 風 rounded corners (rx=112)、ダーク背景 + 上下アクセントグロー + 右上スパークドット
+- `scripts/gen-icons.mjs` 実行済 → `public/icons/` 配下 15 サイズ + maskable 2 + apple-touch + favicon 再生成
+- ルート `public/icon-192.png` / `icon-512.png` も同期
+
+**ダッシュボード会社ロゴ（`public/logo-company.svg` 新規）**
+- 横長 520×180、上昇アーク + "RIZUP" ワードマーク + アクセントライン + タグライン
+- `public/dashboard.html`：`<h1>株式会社Rizup — 経営ダッシュボード</h1>` の上に `<img src="/logo-company.svg">` を追加、h1 を「経営ダッシュボード」のみに簡素化
+- drop-shadow でミント系光彩、モバイル 720px 以下で幅 200px に自動縮小
+
+**Service Worker**
+- `public/sw.js`：CACHE_VERSION `rizup-v4.3` → **`rizup-v7.5`**（旧キャッシュ破棄 → 新アイコン即反映）
+
+## ✅ v7.4.1（2026-04-18・commit 3b88b8e）
+- 感謝バナーを 1日1回のみ表示に制限
+
+## ✅ v7.4（2026-04-18・commit e4c83f9）
+- **DAWN アイコン**（夜明けの太陽・v7.5 で "RIZUP" ワードマークに置換予定）
+- 3行日記（did_well / grateful / tomorrow_word）+ posts マイグレ
+- 起床バッジ + streak 拡張
+
+## ✅ v7.3.1（2026-04-18・commit 2c631bc）
+- 朝活 CSS 修正 + PWA アイコン刷新（ダーク基調、後に v7.4 で DAWN 化 → v7.5 で ワードマーク化）
+
+---
+
+## 📱 iPhone ホーム画面アイコンが古いままの対処
+
+iOS はホーム画面アイコンを強くキャッシュするため、以下の手順が必須:
+
+1. **デプロイ確認**: 変更を GitHub へ push → Vercel 自動デプロイ完了を待つ
+2. **iPhone 側**:
+   - ホーム画面の旧 Rizup アイコンを長押し → 「Appを削除」
+   - Safari を開く → Safari の「履歴とWebサイトデータを消去」（設定 > Safari）
+   - Safari で `https://rizup-app.vercel.app` を開く
+   - 共有ボタン → 「ホーム画面に追加」→ 新しい RIZUP ワードマークが表示される
+
+---
+
+## ✅ v7.4（2026-04-18）— 朝活データ + 3行日記
+
+**DB マイグレ（要実行）**
+- `app/rizup-app/supabase/migrations/20260418_journal_v74.sql`（冪等・IF NOT EXISTS）
+  - posts に `wake_time` / `bedtime`（HH:MM 文字列）
+  - posts に `did_well` / `grateful` / `tomorrow_word`（3行日記）
+  - `posts(type, created_at DESC)` インデックス追加
+- **状態：翔平さんが Supabase SQL Editor で実行中**
+
+**コード実装（完了済み）**
+- `src/app/journal/page.tsx`：朝モードに起床/就寝時刻 input、夜モードに 3行日記（できたこと / 感謝 / 明日の一言）を追加。localStorage で入力保持、送信時 payload に `wake_time` / `bedtime` / `did_well` / `grateful` / `tomorrow_word` を含める
+- `src/components/PostCard.tsx`：朝活投稿で「⏰ HH:MM 起床 / 🌙 HH:MM」を表示
+- `src/app/home/page.tsx`：Post 型に v7.4 カラム追加
+
+## 🚀 ローンチ前チェックリスト（v7.4 更新）
+
+- [ ] **DB v7.4**: `supabase/migrations/20260418_journal_v74.sql` を Supabase SQL Editor で実行（**実施中**）
+- [x] **DB v7.3 以前**: `src/scripts/run-migration.md` の SQL 実行済み
+- [x] **テストデータ**: `supabase/README_SEED.md` 手順で seed-posts.sql 投入済
+- [ ] **Stripe**: `.env.local.example` 参照して Vercel に 4 変数登録（**準備中**）
+- [ ] **Stripe Dashboard**: Webhook `/api/stripe/webhook` 登録 + signing secret 反映（**準備中**）
+- [x] **PWA実機**: iPhone Safari「ホーム画面に追加」→ 追加できるようになった ✅
+- [ ] **Threads**: @shohei_rizup 初日投稿
+- [ ] **note**: 下書き公開
+- [ ] **Pro購入テスト**: /pricing → Checkout → Webhook で plan=pro に更新されるか
+
+---
+
+## ✅ v7.3（2026-04-18）— タイムライン大掃除 + ヘッダー刷新
 
 **ロゴ（グラデーションタイポ）**
 - `Header.tsx`: SVG Image → CSS グラデの "RIZUP" 文字に変更
@@ -30,17 +123,6 @@
 **テストデータ**
 - `app/rizup-app/supabase/seed-posts.sql` 新規（8件・朝4/夜4）
 - `app/rizup-app/supabase/README_SEED.md`: user_id 差し替え手順と投入手順
-
-## 🚀 ローンチ前チェックリスト（更新）
-
-- [x] **DB**: `src/scripts/run-migration.md` の SQL を Supabase SQL Editor で実行
-- [x] **テストデータ**: `supabase/README_SEED.md` 手順で seed-posts.sql 投入（タイムラインの見栄え確認用）
-- [x] **Stripe**: `.env.local.example` 参照して Vercel に 4 変数を登録
-- [x] **Stripe Dashboard**: Webhook エンドポイント `/api/stripe/webhook` 登録 + signing secret 環境変数反映
-- [ ] **Threads**: @shohei_rizup 初日投稿
-- [ ] **note**: 下書き公開
-- [ ] **PWA実機**: iPhone Safari「ホーム画面に追加」→ 新しい RIZUP ロゴ表示 / ステータスバー被りなし確認
-- [ ] **Pro購入テスト**: /pricing → Checkout → Webhook で plan=pro に更新されるか
 
 ---
 

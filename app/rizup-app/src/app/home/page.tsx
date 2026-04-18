@@ -279,9 +279,10 @@ export default function HomePage() {
     }
   }, []);
 
-  // マイルストーン到達チェック
+  // マイルストーン到達チェック（各マイルストーンは生涯 1 回のみ）
   useEffect(() => {
     if (streak <= 0) return;
+    if (typeof window === "undefined") return;
     const milestones: Record<number, string> = {
       3: "3日続いた！すごい第一歩🌱",
       7: "1週間！本当によくやってるよ✨",
@@ -290,10 +291,20 @@ export default function HomePage() {
     };
     const msg = milestones[streak];
     if (!msg) return;
-    const key = `rizup_milestone_${streak}`;
-    if (typeof window !== "undefined" && !localStorage.getItem(key)) {
-      localStorage.setItem(key, new Date().toISOString());
+    try {
+      // 旧キー互換：rizup_milestone_3 等が残っていたら highest に移行
+      const thresholds = [3, 7, 14, 30];
+      let highest = Number(localStorage.getItem("rizup_milestone_highest") || "0");
+      for (const m of thresholds) {
+        if (localStorage.getItem(`rizup_milestone_${m}`)) highest = Math.max(highest, m);
+      }
+      // 既に同じ or 高い段階を見ていたら何もしない → 「3日目おめでとう」が何度も出る事象を根絶
+      if (streak <= highest) return;
+      localStorage.setItem("rizup_milestone_highest", String(streak));
+      localStorage.setItem(`rizup_milestone_${streak}`, new Date().toISOString());
       setMilestoneModal({ days: streak, message: msg });
+    } catch {
+      // localStorage 不可の環境では演出スキップ（二重表示よりマシ）
     }
   }, [streak]);
 

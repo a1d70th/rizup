@@ -1,83 +1,60 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <defs>
-    <!-- 深いダーク背景 -->
-    <radialGradient id="sky" cx="50%" cy="100%" r="95%">
+    <!-- Deep navy background -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%"   stop-color="#0d1822"/>
-      <stop offset="40%"  stop-color="#0a121a"/>
-      <stop offset="100%" stop-color="#05080c"/>
-    </radialGradient>
+      <stop offset="100%" stop-color="#050810"/>
+    </linearGradient>
 
-    <!-- 太陽: ミント → ティール → シアン -->
-    <linearGradient id="sunGrad" x1="0" y1="1" x2="0" y2="0">
+    <!-- Brand gradient (matches Header.tsx: #10b981 → #06b6d4) -->
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%"   stop-color="#10b981"/>
-      <stop offset="55%"  stop-color="#14c4b6"/>
       <stop offset="100%" stop-color="#06b6d4"/>
     </linearGradient>
-
-    <!-- 太陽の外側グロー -->
-    <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
-      <stop offset="0%"   stop-color="#14c4b6" stop-opacity="0.55"/>
-      <stop offset="60%"  stop-color="#10b981" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
-    </radialGradient>
-
-    <!-- 空気感の光 -->
-    <linearGradient id="atm" x1="0" y1="1" x2="0" y2="0">
-      <stop offset="0%"   stop-color="#06b6d4" stop-opacity="0.25"/>
-      <stop offset="50%"  stop-color="#06b6d4" stop-opacity="0.06"/>
-      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
-    </linearGradient>
-
-    <filter id="soften" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="1.2"/>
-    </filter>
-
-    <!-- 地平線で太陽を切り取るマスク -->
-    <clipPath id="aboveHorizon">
-      <rect x="0" y="0" width="512" height="340"/>
-    </clipPath>
   </defs>
 
-  <!-- 背景: 夜明けの空 -->
-  <rect width="512" height="512" rx="112" fill="url(#sky)"/>
+  <!-- iOS-style rounded background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
 
-  <!-- 大気グラデーション（下から立ち上る光） -->
-  <rect x="0" y="180" width="512" height="240" rx="0" fill="url(#atm)" opacity="0.9"/>
+  <!-- Subtle atmospheric glow -->
+  <ellipse cx="256" cy="80"  rx="280" ry="70" fill="#10b981" opacity="0.10"/>
+  <ellipse cx="256" cy="480" rx="240" ry="50" fill="#06b6d4" opacity="0.08"/>
 
-  <!-- 朝一番星（右上のアクセント） -->
-  <circle cx="408" cy="118" r="3.5" fill="#ffffff" opacity="0.95"/>
-  <circle cx="362" cy="78"  r="2"   fill="#ffffff" opacity="0.7"/>
-  <circle cx="440" cy="70"  r="1.8" fill="#ffffff" opacity="0.6"/>
+  <!-- RIZUP wordmark (geometric, font-independent) -->
+  <!-- Letters are 140 tall, centered vertically. Total width 384, centered in 512. -->
+  <g fill="url(#brand)">
+    <!-- R (x=64, width=80) -->
+    <g transform="translate(64 186)">
+      <rect x="0"  y="0"  width="24" height="140"/>
+      <rect x="0"  y="0"  width="60" height="24"/>
+      <rect x="0"  y="58" width="60" height="24"/>
+      <rect x="56" y="0"  width="24" height="82"/>
+      <path d="M 24 82 L 56 82 L 80 140 L 48 140 Z"/>
+    </g>
 
-  <!-- 太陽の外側グロー -->
-  <circle cx="256" cy="340" r="210" fill="url(#sunGlow)"/>
+    <!-- I (x=154, width=24) -->
+    <rect x="154" y="186" width="24" height="140"/>
 
-  <!-- 太陽本体（地平線の上半分のみ表示） -->
-  <g clip-path="url(#aboveHorizon)">
-    <circle cx="256" cy="340" r="118" fill="url(#sunGrad)"/>
-    <!-- 太陽の上部にかすかなハイライト -->
-    <ellipse cx="230" cy="250" rx="38" ry="10" fill="#ffffff" opacity="0.18" filter="url(#soften)"/>
+    <!-- Z (x=188, width=80) -->
+    <g transform="translate(188 186)">
+      <rect x="0" y="0"   width="80" height="24"/>
+      <rect x="0" y="116" width="80" height="24"/>
+      <path d="M 56 24 L 80 24 L 24 116 L 0 116 Z"/>
+    </g>
+
+    <!-- U (x=278, width=80) -->
+    <path d="M 278 186 h 24 v 116 h 32 v -116 h 24 v 140 h -80 z"/>
+
+    <!-- P (x=368, width=80) -->
+    <g transform="translate(368 186)">
+      <rect x="0"  y="0"  width="24" height="140"/>
+      <rect x="0"  y="0"  width="60" height="24"/>
+      <rect x="0"  y="58" width="60" height="24"/>
+      <rect x="56" y="0"  width="24" height="82"/>
+    </g>
   </g>
 
-  <!-- 地平線 -->
-  <line x1="48" y1="340" x2="464" y2="340"
-        stroke="url(#sunGrad)" stroke-width="3.5" stroke-linecap="round"/>
-  <line x1="48" y1="340" x2="464" y2="340"
-        stroke="#ffffff" stroke-width="1" stroke-linecap="round" opacity="0.22"/>
-
-  <!-- 地平線下の「水面」フェード（抽象的） -->
-  <rect x="0" y="342" width="512" height="170" fill="#10b981" opacity="0.05"/>
-
-  <!-- 地平線下に太陽の反射（ほのか） -->
-  <g opacity="0.18">
-    <ellipse cx="256" cy="348" rx="108" ry="3" fill="url(#sunGrad)"/>
-    <ellipse cx="256" cy="360" rx="70"  ry="2" fill="url(#sunGrad)"/>
-    <ellipse cx="256" cy="374" rx="42"  ry="1.5" fill="url(#sunGrad)"/>
-  </g>
-
-  <!-- 微細な幾何アクセント（左下） -->
-  <g opacity="0.3" stroke="#14c4b6" stroke-width="1" fill="none" stroke-linecap="round">
-    <line x1="58" y1="450" x2="92"  y2="450"/>
-    <line x1="58" y1="434" x2="78"  y2="434"/>
-  </g>
+  <!-- Accent dot (top-right, like a spark) -->
+  <circle cx="430" cy="100" r="5" fill="#ffffff" opacity="0.9"/>
+  <circle cx="430" cy="100" r="10" fill="#06b6d4" opacity="0.3"/>
 </svg>
