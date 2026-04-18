@@ -434,6 +434,68 @@
     padding:10px 14px;font-size:14px;color:var(--sub);min-height:44px;display:flex;align-items:center;
   }
   .routine div b{color:var(--text)}
+
+  /* ── App status panel ── */
+  .app-status .status-grid{margin-bottom:8px}
+  .app-status .metric{
+    background:var(--card-2);border:1px solid var(--border);border-radius:12px;padding:14px;
+  }
+  .app-status .metric-label{
+    font-size:11px;color:var(--sub);font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;
+  }
+  .app-status .metric-value{
+    font-size:1.3rem;font-weight:900;color:var(--text);margin:6px 0 2px;line-height:1.2;
+    word-break:break-all;
+  }
+  .app-status .metric-value a{color:var(--accent)}
+  .app-status .metric-sub{font-size:12px;color:var(--sub)}
+
+  .sub-h3{
+    margin:28px 0 14px;font-size:14px;font-weight:900;color:var(--text);
+    letter-spacing:.03em;display:flex;align-items:center;gap:8px;
+  }
+  .sub-h3::before{
+    content:"";display:inline-block;width:4px;height:16px;border-radius:2px;background:var(--accent);
+  }
+
+  .status-checklist{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+  .status-checklist li{
+    padding:10px 14px;border-radius:8px;font-size:14px;font-weight:700;
+    display:flex;align-items:center;gap:10px;
+  }
+  .status-checklist li.done{background:rgba(16,185,129,.10);color:var(--accent)}
+  .status-checklist li.doing{background:rgba(245,158,11,.12);color:#fbbf24}
+  .status-checklist li.todo{background:var(--card-2);color:var(--sub)}
+
+  .history-list{display:flex;flex-direction:column;gap:8px}
+  .history-item{
+    padding:12px 14px;background:var(--card-2);border-radius:8px;
+    border-left:3px solid var(--accent);font-size:13px;line-height:1.7;
+  }
+  .history-item b{color:var(--accent);margin-right:8px;font-weight:900}
+
+  /* ── Roadmap timeline ── */
+  .timeline{display:flex;flex-direction:column;gap:8px}
+  .timeline-row{
+    display:grid;grid-template-columns:120px 1fr 200px;gap:14px;
+    padding:14px 16px;background:var(--card-2);border-radius:10px;align-items:center;
+    border-left:3px solid var(--accent);
+  }
+  .timeline-when{font-size:12px;font-weight:900;color:var(--accent);letter-spacing:.03em}
+  .timeline-what{font-size:14px;color:var(--text);font-weight:700;line-height:1.6}
+  .timeline-where{font-size:12px;color:var(--sub);text-align:right;font-weight:600}
+  @media (max-width:720px){
+    .timeline-row{grid-template-columns:1fr;gap:6px;padding:12px 14px}
+    .timeline-where{text-align:left}
+  }
+
+  .decisions{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+  .decisions li{
+    padding:10px 14px;background:var(--card-2);border-radius:8px;font-size:13px;
+    border-left:2px solid var(--accent-2);
+  }
+  .decisions li b{color:var(--accent);margin-right:8px}
 </style>
 </head>
 <body>
@@ -469,6 +531,142 @@
       <div class="time" id="clockTime">--:--:--</div>
     </div>
   </header>
+
+  <!-- ── Rizup アプリ 現状 ─────────────────────────── -->
+  <section class="card app-status" data-key="app-status">
+    <h2>📊 Rizup アプリ 現状 <span class="section-meta">最終更新: 2026-04-18 / v7.5</span></h2>
+
+    <div class="grid-4 status-grid">
+      <div class="metric">
+        <div class="metric-label">Version</div>
+        <div class="metric-value">v7.5</div>
+        <div class="metric-sub">タグライン + アイコン刷新</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">本番 URL</div>
+        <div class="metric-value"><a href="https://rizup-app.vercel.app" target="_blank">rizup-app</a></div>
+        <div class="metric-sub">Vercel 自動デプロイ</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">ローンチまで</div>
+        <div class="metric-value">残 4 タスク</div>
+        <div class="metric-sub">Stripe / 実機 / Threads / note</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Pro 価格</div>
+        <div class="metric-value">¥480/月</div>
+        <div class="metric-sub">確定（2026-04-18）</div>
+      </div>
+    </div>
+
+    <h3 class="sub-h3">🚀 ローンチ前チェックリスト</h3>
+    <ul class="status-checklist">
+      <li class="done">✅ v7.5 デプロイ完了（タグライン・RIZUP ワードマーク・会社ロゴ・マイルストーン修正）</li>
+      <li class="done">✅ PWA アイコン刷新（iPhone 側で旧削除→Safari キャッシュ消去→再追加が必要）</li>
+      <li class="doing">🟡 Supabase v7.4 マイグレ実行中（posts に wake_time/bedtime/did_well/grateful/tomorrow_word）</li>
+      <li class="doing">🟡 Stripe ¥480 商品作成（今日）</li>
+      <li class="doing">🟡 Vercel 環境変数 4 本登録（今日）</li>
+      <li class="todo">⬜ Stripe Webhook エンドポイント /api/stripe/webhook 登録 + 署名シークレット反映</li>
+      <li class="todo">⬜ Pro 購入テスト（/pricing → Checkout → plan=pro 反映確認）</li>
+      <li class="todo">⬜ Threads @shohei_rizup 初日投稿</li>
+      <li class="todo">⬜ note 下書き公開</li>
+    </ul>
+
+    <h3 class="sub-h3">📜 直近の変更履歴</h3>
+    <div class="history-list">
+      <div class="history-item">
+        <b>v7.5</b>タグライン「朝と夜、1分で未来が変わる。」/ RIZUP ワードマークアイコン / 会社ロゴ / マイルストーン重複バグ修正 / SW v7.5
+      </div>
+      <div class="history-item">
+        <b>v7.4.1</b>感謝バナーを 1日1回のみ表示に制限
+      </div>
+      <div class="history-item">
+        <b>v7.4</b>DAWN アイコン + 3行日記(did_well/grateful/tomorrow_word) + 起床バッジ + streak 拡張
+      </div>
+      <div class="history-item">
+        <b>v7.3</b>タイムライン大掃除 + ヘッダー CSS グラデ RIZUP + PostCard 簡素化 + 感情バッジ撤去
+      </div>
+      <div class="history-item">
+        <b>v7.2</b>ロゴリデザイン + Avatar 刷新（斜めグラデ + Inter-900）
+      </div>
+    </div>
+  </section>
+
+  <!-- ── ロードマップ：いつ/どこで/どのように ──────── -->
+  <section class="card" data-key="roadmap">
+    <h2>🗺 ロードマップ <span class="section-meta">いつ・どこで・どのように</span></h2>
+
+    <h3 class="sub-h3">📅 今週 (4/14 - 4/20)</h3>
+    <div class="timeline">
+      <div class="timeline-row">
+        <div class="timeline-when">今日 4/18 夜</div>
+        <div class="timeline-what">Stripe ¥480 商品作成 → Vercel 環境変数 4 本登録 → Webhook 登録</div>
+        <div class="timeline-where">Stripe Dashboard / Vercel</div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-when">4/19 土</div>
+        <div class="timeline-what">Pro 購入テスト（自分で決済 → Webhook 経由で plan=pro 反映確認）</div>
+        <div class="timeline-where">本番環境 / Stripe</div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-when">4/20 日</div>
+        <div class="timeline-what">Threads @shohei_rizup 初日投稿 + note 下書き公開 + iPhone 実機で PWA 確認</div>
+        <div class="timeline-where">Threads / note / iPhone Safari</div>
+      </div>
+    </div>
+
+    <h3 class="sub-h3">📅 今月 (4月)</h3>
+    <div class="timeline">
+      <div class="timeline-row">
+        <div class="timeline-when">4 月末</div>
+        <div class="timeline-what">ローンチ本番稼働 + 初ユーザー 10 人獲得</div>
+        <div class="timeline-where">Threads / X / note 誘導</div>
+      </div>
+    </div>
+
+    <h3 class="sub-h3">📅 来月 (5月)</h3>
+    <div class="timeline">
+      <div class="timeline-row">
+        <div class="timeline-when">5 月中旬</div>
+        <div class="timeline-what">GCal iframe 埋め込み（公開カレンダー URL をダッシュボード内に表示）</div>
+        <div class="timeline-where">dashboard.html</div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-when">5 月末</div>
+        <div class="timeline-what">有料会員 10 人 / 全ユーザー 20 人到達</div>
+        <div class="timeline-where">Stripe Dashboard で計測</div>
+      </div>
+    </div>
+
+    <h3 class="sub-h3">🚀 Phase 2（ユーザー 50 人到達後）</h3>
+    <div class="timeline">
+      <div class="timeline-row">
+        <div class="timeline-when">条件達成時</div>
+        <div class="timeline-what">オフ会オンライン先行開催（Zoom・チケット制 Stripe 単発決済）</div>
+        <div class="timeline-where">Zoom / /events ページ</div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-when">同</div>
+        <div class="timeline-what">アプリ→ダッシュボード DB 同期（Supabase dashboard_state テーブル）</div>
+        <div class="timeline-where">Supabase / dashboard.html</div>
+      </div>
+      <div class="timeline-row">
+        <div class="timeline-when">同</div>
+        <div class="timeline-what">Google Calendar API 版へ昇格（OAuth2・5 分ポーリング or Webhook）</div>
+        <div class="timeline-where">GCP / Vercel env</div>
+      </div>
+    </div>
+
+    <h3 class="sub-h3">🔒 決定事項（揺らがない基準）</h3>
+    <ul class="decisions">
+      <li><b>Pro 価格:</b> ¥480/月</li>
+      <li><b>広告:</b> 自前ハウス広告のみ（翔平さんの SNS・note 誘導）</li>
+      <li><b>オフ会:</b> ユーザー 50 人到達後 / オンライン先行</li>
+      <li><b>GCal 同期:</b> iframe 埋め込み版を 5 月中に / API 版は Phase 2</li>
+      <li><b>DB 同期:</b> Phase 2 以降</li>
+      <li><b>Mission:</b> 自分に縁する人を、全員輝かせる。</li>
+    </ul>
+  </section>
 
   <!-- ── 今日のフォーカス（詳細カード／編集用） ───────── -->
   <section class="card" data-default-open data-key="today-focus">
