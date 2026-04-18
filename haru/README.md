@@ -1,6 +1,6 @@
-# HARU — 日韓友達作りイベント
+# HARU — 隣の国と、もっと近くなる。
 
-> **Lueur Inc.** 事業② の LP。日本人と韓国人が「ただ飲む」だけのイベントコミュニティ。
+> 日本人と韓国人が「ただ飲む」だけの小さな集まり。
 > 大阪発・月 1〜2 回開催予定。
 
 ---
@@ -118,4 +118,4 @@ haru/
 
 ## 📄 ライセンス / 著作権
 
-© 2026 Lueur Inc. HARU is a service by Lueur Inc.
+© 2026 HARU. All rights reserved.
