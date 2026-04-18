@@ -84,7 +84,7 @@ export default function OnboardingPage() {
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center">
-        <Image src="/icons/icon-192.png" alt="Rizup" width={64} height={64} className="rounded-full mb-4 animate-sho-float" />
+        <Image src="/icons/icon-192.png" alt="Rizup" width={64} height={64} className="rounded-[22%] mb-4 shadow-md animate-sho-float" />
 
         {/* Step 1: どの動物があなたの相棒？ */}
         {step === 1 && (

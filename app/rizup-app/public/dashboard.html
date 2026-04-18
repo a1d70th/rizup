@@ -859,24 +859,24 @@
 
   <!-- ── SECTION 3: 事業ポートフォリオ ───────────────── -->
   <section class="card">
-    <h2>🏢 事業ポートフォリオ <span class="section-meta">1事業 × 2市場（日本+海外）・進捗は編集可</span></h2>
+    <h2>🏢 事業ポートフォリオ <span class="section-meta">3事業集中（Rizup / NOMI / KAKEHASHI）・進捗は編集可</span></h2>
     <div class="grid-2" id="bizGrid"><!-- JS --></div>
     <small class="hint">※ 進捗(%)をクリックで編集 → Enter/Tab で確定。全入力は自動保存。</small>
   </section>
 
-  <!-- ── SECTION 3.5: 事業組織マトリクス（Rizup 1事業 × 2市場 に集中）── -->
+  <!-- ── SECTION 3.5: 事業組織マトリクス（3事業体制）── -->
   <section class="card">
-    <h2>🧩 事業組織マトリクス <span class="section-meta">CEO × 5本部 × Rizup 1事業 × 2市場</span></h2>
+    <h2>🧩 事業組織マトリクス <span class="section-meta">CEO × 5本部 × 3事業</span></h2>
 
     <!-- CEO -->
     <div class="matrix-ceo">
       <div class="role-tag">CEO / 代表取締役</div>
       <div class="ceo-name"><b>児玉 翔平</b>（Sho）</div>
-      <div class="ceo-sub">Rizup 1本に集中 / 今月目標 Pro 10人 / ¥4,800 MRR</div>
+      <div class="ceo-sub">Rizup + NOMI + KAKEHASHI / 今月目標 Pro 10人 + NOMI 初回イベント</div>
     </div>
     <div class="matrix-vline"></div>
 
-    <!-- 5本部 × Rizup マッピング -->
+    <!-- 5本部 × 3事業 マッピング -->
     <div class="dept-grid">
 
       <!-- プロダクト本部 -->
@@ -890,10 +890,26 @@
           </div>
         </div>
         <div class="biz-list">
-          <div class="biz-row phase1"><span class="biz-num">①</span><span class="biz-name">Rizup（日本）</span><span class="biz-price">¥480/月</span></div>
-          <div class="biz-row phase4"><span class="biz-num">②</span><span class="biz-name">Rizup Global（海外）</span><span class="biz-price">$4.99/月</span></div>
+          <div class="biz-row phase1"><span class="biz-num">①</span><span class="biz-name">Rizup</span><span class="biz-price">¥480/月</span></div>
         </div>
-        <div class="dept-footer"><span>2市場担当</span><span class="revenue">MRR: Pro × ¥480</span></div>
+        <div class="dept-footer"><span>1事業担当</span><span class="revenue">MRR: Pro × ¥480</span></div>
+      </div>
+
+      <!-- 新規事業本部（翔平さん直轄・NOMI / KAKEHASHI） -->
+      <div class="dept-card">
+        <div class="dept-head">
+          <span class="dept-emoji">🌐</span>
+          <div class="dept-meta">
+            <div class="dept-role">新規事業本部長</div>
+            <div class="dept-leader">翔平さん 直轄</div>
+            <div class="dept-kpi">外国人 × 日本 軸の事業開拓</div>
+          </div>
+        </div>
+        <div class="biz-list">
+          <div class="biz-row phase1"><span class="biz-num">②</span><span class="biz-name">NOMI（外国人×交流）</span><span class="biz-price">¥2,500〜/回</span></div>
+          <div class="biz-row phase2"><span class="biz-num">③</span><span class="biz-name">KAKEHASHI（生活支援）</span><span class="biz-price">¥5,000〜/回</span></div>
+        </div>
+        <div class="dept-footer"><span>2事業担当</span><span class="revenue">イベント + 副業受注</span></div>
       </div>
 
       <!-- マーケティング本部 -->
@@ -1206,11 +1222,12 @@
       { t:"振り返りジャーナル", done:false },
     ],
 
-    // 2026-04-18: 1事業 × 2市場に集中。派生事業は Rizup の PMF 出てから検討
-    biz_schema_version: 2,
+    // 2026-04-18: 3事業体制に確定。Rizup Global は撤回（NOMI/KAKEHASHI が外国人軸をカバー）
+    biz_schema_version: 3,
     biz: [
-      { n:1, title:"Rizup(日本)",        phase:"PHASE1・最優先", pct:60, model:"Free + Pro ¥480/月", goal:"Pro 10人 / ¥4,800 MRR・Supabase migrate 完了", status:{label:"🔄 開発中",   tone:"yellow"} },
-      { n:2, title:"Rizup Global(海外)", phase:"PHASE4・将来",   pct:0,  model:"$4.99/月",               goal:"日本版 Pro 500人到達後に英訳展開",             status:{label:"💤 将来検討", tone:"sub"} },
+      { n:1, title:"Rizup",     phase:"PHASE1・最優先",      pct:60, model:"Free + Pro ¥480/月",        goal:"Pro 10人 / ¥4,800 MRR・Supabase migrate 完了", status:{label:"🔄 開発中",   tone:"yellow"} },
+      { n:2, title:"NOMI",      phase:"PHASE1・同時着手",    pct:5,  model:"¥2,500-3,000/回 → ¥980/月", goal:"今月：初回イベント開催 + 告知3本",             status:{label:"🔄 立上中",   tone:"yellow"} },
+      { n:3, title:"KAKEHASHI", phase:"PHASE2・転職後",      pct:0,  model:"¥5,000/回 → ¥30-100k/月/社", goal:"転職先の外国人スタッフ支援を副業として受注",  status:{label:"⏳ 準備中",   tone:"sub"} },
     ],
 
     // メディア

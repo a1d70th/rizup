@@ -4,7 +4,7 @@ import Image from "next/image";
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center text-center px-6 py-20">
-      <Image src="/icons/icon-192.png" alt="Rizup" width={120} height={120} className="rounded-full mb-6 animate-sho-float" />
+      <Image src="/icons/icon-192.png" alt="Rizup" width={120} height={120} className="rounded-[22%] mb-6 shadow-lg animate-sho-float" />
       <h1 className="text-3xl font-extrabold mb-2">
         <span className="text-mint">朝と夜</span>、<br />1分で<span className="text-orange">未来が変わる</span>。
       </h1>

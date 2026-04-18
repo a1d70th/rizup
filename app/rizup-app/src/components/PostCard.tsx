@@ -283,14 +283,35 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
 
   const handleDelete = async () => {
     if (!confirm("この投稿を削除しますか？")) return;
-    const { error } = await supabase.from("posts").delete().eq("id", post.id);
     setShowMenu(false);
-    if (error) {
-      alert("削除に失敗しました。もう一度お試しください。");
-      console.error("[PostCard] Delete error:", error);
+
+    // (A) クライアント直接削除（RLS DELETE ポリシーが正しい環境で最速）
+    const { error } = await supabase.from("posts").delete().eq("id", post.id);
+    if (!error) {
+      onDelete?.(post.id);
       return;
     }
-    onDelete?.(post.id);
+
+    console.warn("[PostCard] Client delete failed, falling back to server:", error.message);
+
+    // (B) サーバー側 service_role フォールバック（RLS 未整備環境での救済）
+    try {
+      const res = await fetch("/api/posts/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId: post.id }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        onDelete?.(post.id);
+        return;
+      }
+      console.error("[PostCard] Server delete failed:", data);
+      alert(`削除に失敗しました：${data.detail || data.error || "不明なエラー"}\n時間をおいて再度お試しください。`);
+    } catch (e) {
+      console.error("[PostCard] Server delete threw:", e);
+      alert("通信エラーで削除できませんでした。時間をおいて再度お試しください。");
+    }
   };
 
   const handleSendStrength = async () => {

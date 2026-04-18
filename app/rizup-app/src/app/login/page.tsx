@@ -117,7 +117,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 py-12">
-      <Image src="/icons/icon-192.png" alt="Rizup" width={72} height={72} className="rounded-full mb-4" />
+      <Image src="/icons/icon-192.png" alt="Rizup" width={72} height={72} className="rounded-[22%] mb-4 shadow-md" />
       <h1 className="text-2xl font-extrabold mb-1">おかえりなさい</h1>
       <p className="text-text-mid text-sm mb-8">Rizup にログイン</p>
 
