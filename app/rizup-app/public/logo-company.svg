@@ -1,29 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 200" width="560" height="200">
   <defs>
-    <!-- 深い夜 → 電気的シアン への光の流れ -->
+    <!-- 明るい空 → 電気的シアン への光の流れ（視認性優先で全体を明るく） -->
     <linearGradient id="lueur-primary" x1="0" y1="0.2" x2="1" y2="0.8">
-      <stop offset="0%"   stop-color="#0b1a3e"/>
-      <stop offset="35%"  stop-color="#1e3a8a"/>
-      <stop offset="70%"  stop-color="#2563eb"/>
-      <stop offset="100%" stop-color="#06b6d4"/>
+      <stop offset="0%"   stop-color="#60a5fa"/>
+      <stop offset="40%"  stop-color="#3b82f6"/>
+      <stop offset="75%"  stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#67e8f9"/>
     </linearGradient>
 
-    <!-- 光芒用フェードグラデ -->
+    <!-- 光芒用フェードグラデ（より明るい水色） -->
     <linearGradient id="lueur-halo" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="#60a5fa" stop-opacity="0.9"/>
-      <stop offset="100%" stop-color="#60a5fa" stop-opacity="0"/>
+      <stop offset="0%"   stop-color="#bae6fd" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#bae6fd" stop-opacity="0"/>
     </linearGradient>
 
     <linearGradient id="lueur-line" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%"   stop-color="#1e3a8a" stop-opacity="0"/>
-      <stop offset="30%"  stop-color="#3b82f6" stop-opacity="0.6"/>
-      <stop offset="70%"  stop-color="#06b6d4" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+      <stop offset="0%"   stop-color="#60a5fa" stop-opacity="0"/>
+      <stop offset="30%"  stop-color="#3b82f6" stop-opacity="0.85"/>
+      <stop offset="70%"  stop-color="#22d3ee" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#67e8f9" stop-opacity="0"/>
     </linearGradient>
 
-    <!-- 光源のソフトブラー -->
+    <!-- 光源のソフトブラー（より強めに発光させて明るく） -->
     <filter id="lueur-glow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feGaussianBlur stdDeviation="3" result="blur"/>
       <feMerge>
         <feMergeNode in="blur"/>
         <feMergeNode in="SourceGraphic"/>
@@ -32,35 +32,37 @@
   </defs>
 
   <!-- ① 左上：ほのかな光芒（"lueur" の語源表現） -->
-  <!-- 縦の光束 -->
+  <!-- 縦の光束（明るい水色） -->
   <rect x="64.5" y="30" width="3" height="68" rx="1.5"
         fill="url(#lueur-halo)" filter="url(#lueur-glow)"/>
-  <!-- 光源ドット（3重グロー） -->
-  <circle cx="66" cy="24" r="4"  fill="#06b6d4"/>
-  <circle cx="66" cy="24" r="10" fill="#06b6d4" opacity="0.25"/>
-  <circle cx="66" cy="24" r="18" fill="#3b82f6" opacity="0.12"/>
-  <circle cx="66" cy="24" r="28" fill="#1e40af" opacity="0.06"/>
+  <!-- 光源ドット（3重グロー・明るい水色系） -->
+  <circle cx="66" cy="24" r="4.5" fill="#ffffff"/>
+  <circle cx="66" cy="24" r="6"   fill="#67e8f9"/>
+  <circle cx="66" cy="24" r="12"  fill="#22d3ee" opacity="0.45"/>
+  <circle cx="66" cy="24" r="20"  fill="#38bdf8" opacity="0.25"/>
+  <circle cx="66" cy="24" r="30"  fill="#60a5fa" opacity="0.12"/>
 
-  <!-- ② 飛び散る微細なスパーク（奥行きと"きらめき"） -->
-  <circle cx="32"  cy="46"  r="1.6" fill="#93c5fd" opacity="0.8"/>
-  <circle cx="112" cy="38"  r="1.3" fill="#bae6fd" opacity="0.75"/>
-  <circle cx="152" cy="52"  r="1.9" fill="#06b6d4" opacity="0.7"/>
-  <circle cx="92"  cy="72"  r="1.1" fill="#60a5fa" opacity="0.6"/>
+  <!-- ② 飛び散る微細なスパーク（明るめトーン） -->
+  <circle cx="32"  cy="46"  r="1.8" fill="#bae6fd" opacity="0.95"/>
+  <circle cx="112" cy="38"  r="1.5" fill="#e0f2fe" opacity="0.9"/>
+  <circle cx="152" cy="52"  r="2.1" fill="#67e8f9" opacity="0.85"/>
+  <circle cx="92"  cy="72"  r="1.3" fill="#93c5fd" opacity="0.75"/>
+  <circle cx="45"  cy="28"  r="1.2" fill="#ffffff" opacity="0.9"/>
 
   <!-- ③ メインワードマーク "LUEUR" -->
-  <!-- Inter 900 + タイトなトラッキングでスタイリッシュに -->
+  <!-- Inter 900 + タイトなトラッキング・明るいブルー→シアングラデ -->
   <text x="60" y="142"
         font-family="'Inter','SF Pro Display','Helvetica Neue',-apple-system,system-ui,sans-serif"
         font-size="92" font-weight="900" letter-spacing="-4"
         fill="url(#lueur-primary)">LUEUR</text>
 
-  <!-- ④ ワードマーク直下の光の帯（アクセントライン） -->
+  <!-- ④ ワードマーク直下の光の帯（明るめのアクセントライン） -->
   <rect x="60" y="158" width="420" height="2" rx="1" fill="url(#lueur-line)"/>
 
-  <!-- ⑤ タグライン -->
+  <!-- ⑤ タグライン（明るい水色で視認性 UP） -->
   <text x="60" y="184"
         font-family="'M PLUS Rounded 1c','Hiragino Sans','Yu Gothic UI',sans-serif"
-        font-size="12.5" font-weight="600" fill="#7dd3fc" letter-spacing="2.4">
+        font-size="12.5" font-weight="600" fill="#bae6fd" letter-spacing="2.4">
     Lueur Inc.  —  自分に縁する人を、全員輝かせる。
   </text>
 </svg>
