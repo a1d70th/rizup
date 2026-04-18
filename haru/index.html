@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="ja" data-lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>HARU - 日韓友達作りイベント</title>
+<meta name="description" content="日韓の友達作りイベント。言葉は下手でもいい。ただ一緒に飲もう。大阪発。" />
+<meta property="og:title" content="HARU - 日韓友達作りイベント" />
+<meta property="og:description" content="韓国の友達を作ろう / 일본 친구를 만들자。言葉は下手でもいい。ただ一緒に飲もう。" />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="/logo.svg" />
+<meta name="twitter:card" content="summary" />
+
+<link rel="icon" type="image/svg+xml" href="/logo.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Noto+Sans+KR:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --pink: #FFB7C5;
+    --pink-strong: #FF6B9D;
+    --teal: #4ECDC4;
+    --teal-strong: #2BB1A7;
+    --ink: #2D2D2D;
+    --ink-light: #6B6B6B;
+    --bg: #FFFFFF;
+    --bg-soft: #FFF5F7;
+    --border: #FFE5EB;
+    --shadow: 0 4px 20px rgba(255,183,197,.18);
+    --shadow-strong: 0 8px 32px rgba(255,107,157,.28);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { overflow-x: hidden; }
+  body {
+    font-family: 'Noto Sans JP', 'Noto Sans KR', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.8;
+    -webkit-font-smoothing: antialiased;
+  }
+  html[data-lang="ko"] body {
+    font-family: 'Noto Sans KR', 'Noto Sans JP', -apple-system, sans-serif;
+  }
+
+  /* Language toggle button */
+  .lang-toggle {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 100;
+    display: flex;
+    gap: 4px;
+    background: rgba(255,255,255,.92);
+    backdrop-filter: blur(12px);
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+    box-shadow: var(--shadow);
+  }
+  .lang-btn {
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 12px;
+    border: none;
+    background: transparent;
+    color: var(--ink-light);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .lang-btn.active {
+    background: linear-gradient(135deg, var(--pink) 0%, var(--teal) 100%);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(255,107,157,.3);
+  }
+
+  /* Bilingual content */
+  [data-ja], [data-ko] { display: none; }
+  html[data-lang="ja"] [data-ja] { display: revert; }
+  html[data-lang="ko"] [data-ko] { display: revert; }
+
+  /* Hero */
+  .hero {
+    min-height: 92vh;
+    padding: 80px 24px 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background:
+      radial-gradient(ellipse 800px 500px at 30% 20%, rgba(255,183,197,.25), transparent 70%),
+      radial-gradient(ellipse 700px 400px at 80% 80%, rgba(78,205,196,.18), transparent 70%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .sakura {
+    position: absolute;
+    font-size: 28px;
+    opacity: .4;
+    animation: float 6s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .sakura:nth-child(1) { top: 12%; left: 8%; animation-delay: 0s; }
+  .sakura:nth-child(2) { top: 24%; right: 12%; animation-delay: 1.5s; font-size: 22px; }
+  .sakura:nth-child(3) { bottom: 18%; left: 15%; animation-delay: 3s; font-size: 20px; }
+  .sakura:nth-child(4) { bottom: 30%; right: 8%; animation-delay: 4.5s; font-size: 26px; }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-18px) rotate(12deg); }
+  }
+
+  .hero-logo {
+    width: 88px;
+    height: auto;
+    margin-bottom: 24px;
+    filter: drop-shadow(0 6px 16px rgba(255,107,157,.25));
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 6vw, 3.4rem);
+    font-weight: 900;
+    letter-spacing: -.02em;
+    line-height: 1.35;
+    margin-bottom: 18px;
+  }
+  .hero h1 .accent {
+    background: linear-gradient(135deg, var(--pink-strong) 0%, var(--teal-strong) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero .sub {
+    font-size: clamp(1rem, 2.4vw, 1.15rem);
+    color: var(--ink-light);
+    font-weight: 500;
+    margin-bottom: 40px;
+    max-width: 480px;
+  }
+  .cta {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--pink-strong) 0%, var(--teal-strong) 100%);
+    color: #fff;
+    font-size: 17px;
+    font-weight: 900;
+    padding: 18px 48px;
+    border-radius: 999px;
+    text-decoration: none;
+    box-shadow: var(--shadow-strong);
+    transition: transform .2s, box-shadow .2s;
+    letter-spacing: .02em;
+  }
+  .cta:hover, .cta:active {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 36px rgba(255,107,157,.35);
+  }
+  .hero-note {
+    font-size: 13px;
+    color: var(--ink-light);
+    margin-top: 16px;
+  }
+
+  /* Section base */
+  section.block {
+    padding: 72px 24px;
+    max-width: 720px;
+    margin: 0 auto;
+  }
+  .section-label {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .2em;
+    color: var(--pink-strong);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .section-title {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 900;
+    letter-spacing: -.02em;
+    line-height: 1.45;
+    margin-bottom: 28px;
+  }
+
+  /* Who should come */
+  .who-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .who-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--bg-soft);
+    border: 1.5px solid var(--border);
+    border-radius: 18px;
+    padding: 18px 22px;
+    font-size: 15px;
+    font-weight: 600;
+    transition: border-color .2s, background .2s;
+  }
+  .who-item:hover { border-color: var(--pink); background: #fff; }
+  .who-item .emoji { font-size: 26px; flex-shrink: 0; }
+
+  /* Event details */
+  .event-card {
+    background: linear-gradient(135deg, rgba(255,183,197,.12) 0%, rgba(78,205,196,.10) 100%);
+    border: 2px solid var(--pink);
+    border-radius: 24px;
+    padding: 32px 28px;
+    box-shadow: var(--shadow);
+  }
+  .event-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 14px 20px;
+    font-size: 15px;
+  }
+  .event-grid .k {
+    font-weight: 700;
+    color: var(--pink-strong);
+    white-space: nowrap;
+  }
+  .event-grid .v { color: var(--ink); font-weight: 500; }
+  .event-badge {
+    display: inline-block;
+    margin-top: 20px;
+    background: var(--teal);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 900;
+    padding: 8px 16px;
+    border-radius: 999px;
+  }
+
+  /* Host */
+  .host-card {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 22px;
+    padding: 28px 24px;
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    box-shadow: var(--shadow);
+  }
+  .host-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--pink) 0%, var(--teal) 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 26px;
+    font-weight: 900;
+    flex-shrink: 0;
+    box-shadow: 0 4px 14px rgba(255,107,157,.25);
+  }
+  .host-info .name {
+    font-size: 18px;
+    font-weight: 900;
+    margin-bottom: 4px;
+  }
+  .host-info .msg {
+    font-size: 14px;
+    color: var(--ink-light);
+    line-height: 1.8;
+  }
+
+  /* SNS */
+  .sns-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .sns-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    text-decoration: none;
+    color: var(--ink);
+    transition: all .2s;
+  }
+  .sns-card:hover { border-color: var(--pink); transform: translateY(-2px); }
+  .sns-card .icon { font-size: 26px; }
+  .sns-card .label {
+    font-size: 11px;
+    color: var(--ink-light);
+    font-weight: 700;
+    letter-spacing: .1em;
+  }
+  .sns-card .handle {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  /* Footer */
+  footer {
+    padding: 40px 24px;
+    text-align: center;
+    background: var(--bg-soft);
+    border-top: 1px solid var(--border);
+  }
+  footer p {
+    font-size: 13px;
+    color: var(--ink-light);
+    line-height: 1.9;
+  }
+  footer .brand {
+    font-weight: 900;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  footer .brand .dot {
+    color: var(--pink-strong);
+  }
+
+  /* Mobile tweaks */
+  @media (max-width: 480px) {
+    .lang-toggle { top: 12px; right: 12px; }
+    .lang-btn { font-size: 11px; padding: 5px 10px; }
+    section.block { padding: 56px 20px; }
+    .event-card { padding: 24px 20px; }
+    .event-grid { grid-template-columns: 1fr; gap: 4px 0; }
+    .event-grid .k { margin-top: 10px; }
+    .sns-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Language toggle -->
+<div class="lang-toggle" role="group" aria-label="Language switch">
+  <button class="lang-btn" data-set-lang="ja">🇯🇵 日本語</button>
+  <button class="lang-btn" data-set-lang="ko">🇰🇷 한국어</button>
+</div>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <span class="sakura">🌸</span>
+  <span class="sakura">🌸</span>
+  <span class="sakura">🌸</span>
+  <span class="sakura">🌸</span>
+
+  <img src="/logo.svg" alt="HARU" class="hero-logo" />
+
+  <h1>
+    <span data-ja><span class="accent">韓国の友達</span>を作ろう。</span>
+    <span data-ko><span class="accent">일본 친구</span>를 만들자。</span>
+  </h1>
+  <p class="sub">
+    <span data-ja>言葉は下手でもいい。<br>ただ一緒に飲もう。</span>
+    <span data-ko>말이 서툴러도 괜찮아。<br>같이 한잔 하자。</span>
+  </p>
+
+  <a href="#event" class="cta">
+    <span data-ja>参加する</span>
+    <span data-ko>참가하기</span>
+  </a>
+  <p class="hero-note">
+    <span data-ja>🌸 大阪発の日韓友達作りパーティー</span>
+    <span data-ko>🌸 오사카에서 시작하는 한일 친구 만들기 파티</span>
+  </p>
+</section>
+
+<!-- ─── WHO SHOULD COME ─── -->
+<section class="block">
+  <span class="section-label">
+    <span data-ja>Who</span>
+    <span data-ko>Who</span>
+  </span>
+  <h2 class="section-title">
+    <span data-ja>こんな人に来てほしい</span>
+    <span data-ko>이런 분 환영</span>
+  </h2>
+
+  <!-- 日本語版 -->
+  <div data-ja class="who-list">
+    <div class="who-item"><span class="emoji">🫶</span>韓国人の友達が欲しい</div>
+    <div class="who-item"><span class="emoji">🗣</span>韓国語を練習したい（ゼロ OK）</div>
+    <div class="who-item"><span class="emoji">🎨</span>韓国文化が好き（K-POP / 韓ドラ / 料理 etc.）</div>
+    <div class="who-item"><span class="emoji">🍻</span>新しい友達を作りたい・ただ飲みたい</div>
+  </div>
+
+  <!-- 韓国語版 -->
+  <div data-ko class="who-list">
+    <div class="who-item"><span class="emoji">🫶</span>일본 친구를 만들고 싶은 분</div>
+    <div class="who-item"><span class="emoji">🗣</span>일본어를 연습하고 싶은 분 (전혀 못해도 OK)</div>
+    <div class="who-item"><span class="emoji">🎨</span>일본 문화가 좋은 분 (음식 / 만화 / 드라마 등)</div>
+    <div class="who-item"><span class="emoji">🍻</span>새로운 친구를 만들고 싶은・그냥 같이 한잔하고 싶은 분</div>
+  </div>
+</section>
+
+<!-- ─── EVENT ─── -->
+<section class="block" id="event">
+  <span class="section-label">Event</span>
+  <h2 class="section-title">
+    <span data-ja>イベント概要</span>
+    <span data-ko>이벤트 안내</span>
+  </h2>
+
+  <div class="event-card">
+    <div class="event-grid">
+      <span class="k">
+        <span data-ja>🗓 日時</span>
+        <span data-ko>🗓 일정</span>
+      </span>
+      <span class="v">
+        <span data-ja>近日開催（日程は SNS で告知）</span>
+        <span data-ko>곧 개최 (일정은 SNS에서 공지)</span>
+      </span>
+
+      <span class="k">
+        <span data-ja>📍 場所</span>
+        <span data-ko>📍 장소</span>
+      </span>
+      <span class="v">
+        <span data-ja>大阪（鶴橋・梅田エリア）</span>
+        <span data-ko>오사카 (츠루하시・우메다 근처)</span>
+      </span>
+
+      <span class="k">
+        <span data-ja>👥 人数</span>
+        <span data-ko>👥 인원</span>
+      </span>
+      <span class="v">
+        <span data-ja>10 人限定</span>
+        <span data-ko>10명 한정</span>
+      </span>
+
+      <span class="k">
+        <span data-ja>💴 参加費</span>
+        <span data-ko>💴 참가비</span>
+      </span>
+      <span class="v">
+        <span data-ja>日本人 ¥2,500 / 韓国人 ¥1,500</span>
+        <span data-ko>한국인 ¥1,500 / 일본인 ¥2,500</span>
+      </span>
+    </div>
+
+    <div class="event-badge">
+      <span data-ja>韓国語ゼロでも OK</span>
+      <span data-ko>일본어 몰라도 OK</span>
+    </div>
+  </div>
+</section>
+
+<!-- ─── HOST ─── -->
+<section class="block">
+  <span class="section-label">Host</span>
+  <h2 class="section-title">
+    <span data-ja>ホスト紹介</span>
+    <span data-ko>호스트 소개</span>
+  </h2>
+
+  <div class="host-card">
+    <div class="host-avatar">S</div>
+    <div class="host-info">
+      <p class="name">Sho</p>
+      <p class="msg">
+        <span data-ja>韓国語ゼロから勉強中の無職起業家。<br>一緒に仲良くなりましょう。</span>
+        <span data-ko>한국어 공부 중인 일본인 창업가。<br>같이 친해져요。</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SNS ─── -->
+<section class="block">
+  <span class="section-label">Follow</span>
+  <h2 class="section-title">
+    <span data-ja>最新情報はここで</span>
+    <span data-ko>최신 소식은 여기에서</span>
+  </h2>
+
+  <div class="sns-grid">
+    <a href="https://www.threads.net/@mushoku_owata" target="_blank" rel="noopener" class="sns-card">
+      <span class="icon">🧵</span>
+      <div>
+        <div class="label">THREADS</div>
+        <div class="handle">@mushoku_owata</div>
+      </div>
+    </a>
+    <a href="#" class="sns-card" style="opacity:.55;pointer-events:none">
+      <span class="icon">📷</span>
+      <div>
+        <div class="label">
+          <span data-ja>INSTAGRAM 準備中</span>
+          <span data-ko>INSTAGRAM 준비중</span>
+        </div>
+        <div class="handle">@haru_osaka</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- ─── FOOTER ─── -->
+<footer>
+  <p class="brand">HARU <span class="dot">🌸</span></p>
+  <p>
+    <span data-ja>HARU — 日韓友達作りイベント<br>Lueur Inc. / Sho</span>
+    <span data-ko>HARU — 한일 친구 만들기 이벤트<br>Lueur Inc. / Sho</span>
+  </p>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+  // 1) URL ?lang= 最優先 → 2) localStorage → 3) ブラウザ言語 → 4) ja fallback
+  const html = document.documentElement;
+  const LS_KEY = 'haru_lang';
+  const SUPPORTED = ['ja', 'ko'];
+
+  function pickInitialLang() {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('lang');
+    if (q && SUPPORTED.includes(q)) return q;
+
+    try {
+      const saved = localStorage.getItem(LS_KEY);
+      if (saved && SUPPORTED.includes(saved)) return saved;
+    } catch (e) {}
+
+    const navLang = (navigator.language || 'ja').toLowerCase();
+    if (navLang.startsWith('ko')) return 'ko';
+    return 'ja';
+  }
+
+  function applyLang(lang) {
+    if (!SUPPORTED.includes(lang)) lang = 'ja';
+    html.setAttribute('data-lang', lang);
+    html.setAttribute('lang', lang === 'ko' ? 'ko' : 'ja');
+
+    // update toggle buttons
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-set-lang') === lang);
+      btn.setAttribute('aria-pressed', btn.getAttribute('data-set-lang') === lang ? 'true' : 'false');
+    });
+
+    // persist + reflect in URL (no reload)
+    try { localStorage.setItem(LS_KEY, lang); } catch (e) {}
+    const url = new URL(location.href);
+    if (url.searchParams.get('lang') !== lang) {
+      url.searchParams.set('lang', lang);
+      history.replaceState(null, '', url.toString());
+    }
+
+    // update document title & meta for SEO / share
+    if (lang === 'ko') {
+      document.title = 'HARU - 한일 친구 만들기 이벤트';
+    } else {
+      document.title = 'HARU - 日韓友達作りイベント';
+    }
+  }
+
+  // init
+  applyLang(pickInitialLang());
+
+  // bind toggle buttons
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const lang = btn.getAttribute('data-set-lang');
+      applyLang(lang);
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
