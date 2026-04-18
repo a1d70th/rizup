@@ -98,6 +98,6 @@
 ## お問い合わせ
 
 Lueur Inc.
-代表：児玉翔平
+運営責任者：Lueur Inc.
 メール：a1d.70th@gmail.com
 サービスURL：https://rizup.vercel.app

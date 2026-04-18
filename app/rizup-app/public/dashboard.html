@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Lueur Inc. — 経営ダッシュボード</title>
-<meta name="description" content="Lueur Inc. の経営ダッシュボード。事業ポートフォリオ・収益・組織・スレッズ分析を一画面で俯瞰。代表：児玉 翔平。" />
+<meta name="description" content="Lueur Inc. の経営ダッシュボード。事業ポートフォリオ・収益・組織・スレッズ分析を一画面で俯瞰。代表：Rizup 運営。" />
 <meta name="robots" content="noindex, nofollow" />
 <!-- OG / Twitter カード（URL シェア時のプレビュー制御） -->
 <meta property="og:type" content="website" />
@@ -69,22 +69,63 @@
     border-bottom:none !important;
   }
 
-  /* ── Header ── */
-  header.top{
-    display:flex;justify-content:space-between;align-items:flex-end;gap:16px;
-    padding:12px 4px 20px;border-bottom:1px solid var(--border);margin-bottom:28px;
+  /* ── Hero Header（ロゴ主役のホーム画面風）── */
+  header.hero-top{
+    position:relative;
+    display:flex;flex-direction:column;align-items:center;
+    padding:44px 20px 28px;margin-bottom:32px;
+    border-radius:20px;
+    background:
+      radial-gradient(ellipse 800px 400px at 50% 0%, rgba(37,99,235,.18), transparent 70%),
+      radial-gradient(ellipse 600px 300px at 50% 100%, rgba(6,182,212,.12), transparent 70%),
+      linear-gradient(180deg, rgba(11,26,62,.35) 0%, rgba(10,10,10,.0) 100%);
+    border:1px solid rgba(96,165,250,.18);
+    overflow:hidden;
   }
-  header.top .brand h1{margin:0 0 4px;font-size:1.6rem;font-weight:800;letter-spacing:.02em}
-  header.top .brand h1 span{color:var(--accent)}
-  header.top .brand .sub{font-size:14px;color:var(--sub)}
-  header.top .brand .mission{margin-top:8px;font-size:14px;color:var(--accent);font-weight:700}
-  header.top .brand .company-logo{display:block;margin:0 0 14px;max-width:260px;height:auto;filter:drop-shadow(0 2px 8px rgba(16,185,129,.25))}
+  header.hero-top .hero-bg-glow{
+    position:absolute;top:-40%;left:50%;transform:translateX(-50%);
+    width:120%;height:180%;pointer-events:none;
+    background:radial-gradient(ellipse at center,
+      rgba(103,232,249,.22) 0%,
+      rgba(59,130,246,.10) 30%,
+      transparent 60%);
+    filter:blur(40px);
+    z-index:0;
+  }
+  header.hero-top .hero-logo{
+    position:relative;z-index:1;
+    display:block;
+    width:min(520px, 85%);height:auto;
+    filter:drop-shadow(0 8px 28px rgba(96,165,250,.35));
+    margin-bottom:18px;
+  }
+  header.hero-top .hero-meta{
+    position:relative;z-index:1;
+    width:100%;
+    display:flex;justify-content:space-between;align-items:flex-end;gap:20px;
+    flex-wrap:wrap;
+  }
+  header.hero-top .hero-meta-left{flex:1;min-width:0}
+  header.hero-top .hero-title-sub{
+    font-size:13px;font-weight:700;color:#7dd3fc;
+    letter-spacing:.2em;text-transform:uppercase;
+  }
+  header.hero-top .hero-tagline{
+    margin-top:6px;font-size:13px;color:var(--sub);line-height:1.7;
+  }
+  header.hero-top .hero-tagline b{color:#67e8f9;font-weight:800}
+  header.hero-top .hero-clock{text-align:right;flex-shrink:0}
+  header.hero-top .hero-clock .date{font-size:13px;color:var(--sub)}
+  header.hero-top .hero-clock .time{
+    font-size:22px;font-weight:800;color:var(--text);
+    letter-spacing:.05em;font-variant-numeric:tabular-nums;
+  }
   @media (max-width:720px){
-    header.top .brand .company-logo{max-width:200px}
+    header.hero-top{padding:32px 16px 22px}
+    header.hero-top .hero-logo{width:min(420px, 92%)}
+    header.hero-top .hero-meta{flex-direction:column;align-items:flex-start;gap:10px}
+    header.hero-top .hero-clock{text-align:left;align-self:flex-end}
   }
-  header.top .clock{text-align:right}
-  header.top .clock .date{font-size:14px;color:var(--sub)}
-  header.top .clock .time{font-size:22px;font-weight:800;color:var(--text);letter-spacing:.05em;font-variant-numeric:tabular-nums}
 
   /* ── Section card ── */
   section.card{
@@ -598,17 +639,19 @@
 
 <div class="wrap">
 
-  <!-- ── HEADER ────────────────────────────────────── -->
-  <header class="top">
-    <div class="brand">
-      <img src="/logo-company.svg" alt="Lueur Inc.（リュエール）" class="company-logo" width="280" height="100" />
-      <h1><span>Lueur Inc.</span> — 経営ダッシュボード</h1>
-      <div class="sub">読み方：<b style="color:#67e8f9">リュエール</b> / 代表：児玉 翔平（Sho）</div>
-      <div class="mission">Mission: 自分に縁する人を、全員輝かせる。</div>
-    </div>
-    <div class="clock">
-      <div class="date" id="clockDate">—</div>
-      <div class="time" id="clockTime">--:--:--</div>
+  <!-- ── HERO HEADER（ロゴ主役のホーム画面風）──────── -->
+  <header class="hero-top">
+    <div class="hero-bg-glow"></div>
+    <img src="/logo-company.svg" alt="Lueur Inc.（リュエール）" class="hero-logo" />
+    <div class="hero-meta">
+      <div class="hero-meta-left">
+        <div class="hero-title-sub">経営ダッシュボード</div>
+        <div class="hero-tagline">読み方：<b>リュエール</b> / Mission: 自分に縁する人を、全員輝かせる。</div>
+      </div>
+      <div class="clock hero-clock">
+        <div class="date" id="clockDate">—</div>
+        <div class="time" id="clockTime">--:--:--</div>
+      </div>
     </div>
   </header>
 
@@ -740,7 +783,7 @@
     <h3 class="sub-h3">🔒 決定事項（揺らがない基準）</h3>
     <ul class="decisions">
       <li><b>Pro 価格:</b> ¥480/月</li>
-      <li><b>広告:</b> 自前ハウス広告のみ（翔平さんの SNS・note 誘導）</li>
+      <li><b>広告:</b> 自前ハウス広告のみ（代表の SNS・note 誘導）</li>
       <li><b>オフ会:</b> ユーザー 50 人到達後 / オンライン先行</li>
       <li><b>GCal 同期:</b> iframe 埋め込み版を 5 月中に / API 版は Phase 2</li>
       <li><b>DB 同期:</b> Phase 2 以降</li>
@@ -871,7 +914,7 @@
     <!-- CEO -->
     <div class="matrix-ceo">
       <div class="role-tag">CEO / 代表取締役</div>
-      <div class="ceo-name"><b>児玉 翔平</b>（Sho）</div>
+      <div class="ceo-name"><b>代表</b></div>
       <div class="ceo-sub">Rizup + NOMI + KAKEHASHI / 今月目標 Pro 10人 + NOMI 初回イベント</div>
     </div>
     <div class="matrix-vline"></div>
@@ -895,13 +938,13 @@
         <div class="dept-footer"><span>1事業担当</span><span class="revenue">MRR: Pro × ¥480</span></div>
       </div>
 
-      <!-- 新規事業本部（翔平さん直轄・NOMI / KAKEHASHI） -->
+      <!-- 新規事業本部（代表直轄・NOMI / KAKEHASHI） -->
       <div class="dept-card">
         <div class="dept-head">
           <span class="dept-emoji">🌐</span>
           <div class="dept-meta">
             <div class="dept-role">新規事業本部長</div>
-            <div class="dept-leader">翔平さん 直轄</div>
+            <div class="dept-leader">代表 直轄</div>
             <div class="dept-kpi">外国人 × 日本 軸の事業開拓</div>
           </div>
         </div>
@@ -1061,7 +1104,7 @@
     <div class="org">
       <div class="ceo">
         <div style="font-size:11px;color:var(--sub);font-weight:800;letter-spacing:.12em">CEO / 代表取締役</div>
-        <div style="font-size:18px;font-weight:800;margin-top:4px"><b>児玉 翔平</b>（Sho）</div>
+        <div style="font-size:18px;font-weight:800;margin-top:4px"><b>代表</b></div>
         <div style="font-size:13px;color:var(--sub);margin-top:4px">全事業の意思決定・最終判断</div>
       </div>
       <div class="vline"></div>

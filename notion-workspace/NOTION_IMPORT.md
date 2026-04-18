@@ -9,7 +9,7 @@
 Claude Code から **Notion MCP 経由で直接 Notion にページを作成することは、現在このセッションでは行えません**：
 
 - 有効化されているMCP に `notion-mcp` は含まれていない
-- Notion Integration Token （`secret_...`）を翔平さんから受け取っていない
+- Notion Integration Token （`secret_...`）を代表から受け取っていない
 
 **代わりに以下3つの方式を用意しました。どれでも10分以内でNotionに全ページ構築できます。**
 
@@ -45,10 +45,10 @@ notion-workspace/import-markdown/
 
 ## 方式C：Integration Token + 自動化スクリプト（10分）
 
-翔平さんが Notion Internal Integration を作成してトークンを渡せば、
+代表が Notion Internal Integration を作成してトークンを渡せば、
 私が `create-notion-workspace.mjs` で全ページを自動生成します。
 
-### 翔平さんがやること
+### 代表がやること
 1. https://www.notion.so/profile/integrations → **+ New integration**
 2. 名前：`Rizup HQ Sync`、Workspace 選択
 3. Capabilities：Read/Update/Insert content 全チェック
@@ -141,7 +141,7 @@ notion-workspace/import-markdown/
 ### プロパティ
 - タイトル（Title）
 - ステータス（Status）：`📋 TODO` / `🔥 進行中` / `✅ 完了` / `⏸ 保留`
-- 担当（Select）：翔平 / Sora / Kai / Rei / Leo / Haru
+- 担当（Select）：代表 / Sora / Kai / Rei / Leo / Haru
 - 事業部（Select）：アプリ / メディア / 営業 / コミュニティ / 会社全体
 - 優先度（Select）：🔴 最優先 / 🟠 高 / 🟡 中 / 🟢 低
 - 期限（Date）
@@ -151,16 +151,16 @@ notion-workspace/import-markdown/
 
 ```csv
 タイトル,ステータス,担当,事業部,優先度,期限,売上貢献
-Supabase v3-rebuild.sql 実行,📋 TODO,翔平,アプリ,🔴 最優先,2026-04-14,0
-Supabase v3.2-appstore.sql 実行,📋 TODO,翔平,アプリ,🔴 最優先,2026-04-14,0
-CW スカウト① 条件提示送信,📋 TODO,翔平,営業,🔴 最優先,2026-04-14,68000
-Stripe本番 商品作成+Webhook登録,📋 TODO,翔平,アプリ,🔴 最優先,2026-04-14,10000
-Xアカウント開設 Post 1-5送信,📋 TODO,翔平,メディア,🟠 高,2026-04-14,0
-Threads アクセストークン取得,📋 TODO,翔平,メディア,🟠 高,2026-04-14,0
-GAS Webアプリ セットアップ,📋 TODO,翔平,メディア,🟠 高,2026-04-15,0
-CW 新規提案10件リストアップ,📋 TODO,Leo → 翔平,営業,🟠 高,2026-04-15,150000
+Supabase v3-rebuild.sql 実行,📋 TODO,代表,アプリ,🔴 最優先,2026-04-14,0
+Supabase v3.2-appstore.sql 実行,📋 TODO,代表,アプリ,🔴 最優先,2026-04-14,0
+CW スカウト① 条件提示送信,📋 TODO,代表,営業,🔴 最優先,2026-04-14,68000
+Stripe本番 商品作成+Webhook登録,📋 TODO,代表,アプリ,🔴 最優先,2026-04-14,10000
+Xアカウント開設 Post 1-5送信,📋 TODO,代表,メディア,🟠 高,2026-04-14,0
+Threads アクセストークン取得,📋 TODO,代表,メディア,🟠 高,2026-04-14,0
+GAS Webアプリ セットアップ,📋 TODO,代表,メディア,🟠 高,2026-04-15,0
+CW 新規提案10件リストアップ,📋 TODO,Leo → 代表,営業,🟠 高,2026-04-15,150000
 note 初回記事 執筆開始,📋 TODO,Rei,メディア,🟡 中,2026-04-17,10000
-Rizupアプリ 実機ゴールデンパステスト,📋 TODO,Sora → 翔平,アプリ,🟠 高,2026-04-14,0
+Rizupアプリ 実機ゴールデンパステスト,📋 TODO,Sora → 代表,アプリ,🟠 高,2026-04-14,0
 ```
 
 ---

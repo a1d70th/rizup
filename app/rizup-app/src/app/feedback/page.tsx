@@ -141,7 +141,7 @@ export default function FeedbackPage() {
         </button>
 
         <p className="text-[11px] text-text-light text-center mt-4 leading-relaxed">
-          送っていただいた声は翔平さんが全て読みます。<br />
+          送っていただいた声は代表が全て読みます。<br />
           ただし返信は個別にはできないことがあります。ご了承ください。
         </p>
       </main>

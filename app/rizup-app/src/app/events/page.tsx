@@ -61,7 +61,7 @@ export default function EventsPage() {
           {ENABLE_MEETING ? (
             <>
               <p className="text-sm text-text-mid leading-relaxed mb-3">
-                翔平さんの近況 45 分 + 参加者のシェアタイム 45 分。<br />
+                代表の近況 45 分 + 参加者のシェアタイム 45 分。<br />
                 聞き専 OK・本音で話せる少人数空間。
               </p>
               <div className="bg-mint-light/50 dark:bg-mint/10 rounded-xl p-3 mb-4">
@@ -88,7 +88,7 @@ export default function EventsPage() {
           ) : (
             <>
               <p className="text-sm text-text-mid leading-relaxed mb-4">
-                翔平さんの近況報告＋参加者シェアタイム。<br />
+                代表の近況報告＋参加者シェアタイム。<br />
                 準備が整い次第スタートします。<br />
                 スレッズ <a href="https://www.threads.net/@mushoku_owata" target="_blank" rel="noopener" className="text-mint font-bold">@mushoku_owata</a> で告知予定。
               </p>
@@ -111,7 +111,7 @@ export default function EventsPage() {
             </div>
           </div>
           <p className="text-sm text-text-mid leading-relaxed">
-            翔平さんがホスト・自由交流のリアル会。<br />
+            代表がホスト・自由交流のリアル会。<br />
             詳細が決まり次第ここで案内します。
           </p>
         </section>

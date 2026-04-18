@@ -235,6 +235,34 @@ section{padding:60px 1rem}
     </div>
   </div>
 </section>
+<!-- みんなで頑張る：コミュニティ駆動メッセージ -->
+<section style="background:linear-gradient(180deg,var(--white) 0%,var(--mint-light) 100%);padding:90px 1.5rem">
+  <div style="max-width:760px;margin:0 auto;text-align:center">
+    <span class="sec-label">Together</span>
+    <h2 class="sec-title" style="margin-bottom:1.2rem">一人だと、続かない。<br>でも <span style="color:var(--mint)">仲間</span>がいれば、続けられる。</h2>
+    <p class="sec-desc" style="margin:0 auto 2.5rem">朝起きたら、誰かがもう書いてる。<br>夜、自分が書いたら「🌱 応援」が届く。<br>それだけで、明日もまた続けたくなる。</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;max-width:620px;margin:0 auto" class="together-grid">
+      <div style="background:#fff;border-radius:18px;padding:1.4rem 1rem;box-shadow:var(--shadow);border:1.5px solid var(--mint-light)">
+        <div style="font-size:2rem;margin-bottom:.4rem">🤝</div>
+        <p style="font-size:.82rem;color:var(--text);font-weight:700;line-height:1.7">同じように<br>前に進む人が、<br>すぐそこにいる。</p>
+      </div>
+      <div style="background:#fff;border-radius:18px;padding:1.4rem 1rem;box-shadow:var(--shadow);border:1.5px solid var(--mint-light)">
+        <div style="font-size:2rem;margin-bottom:.4rem">🌱</div>
+        <p style="font-size:.82rem;color:var(--text);font-weight:700;line-height:1.7">弱音を吐いても<br>「わかるよ」が<br>返ってくる。</p>
+      </div>
+      <div style="background:#fff;border-radius:18px;padding:1.4rem 1rem;box-shadow:var(--shadow);border:1.5px solid var(--mint-light)">
+        <div style="font-size:2rem;margin-bottom:.4rem">✨</div>
+        <p style="font-size:.82rem;color:var(--text);font-weight:700;line-height:1.7">小さな一歩を、<br>誰かが<br>見ててくれる。</p>
+      </div>
+    </div>
+    <p style="font-size:.88rem;color:var(--text-mid);margin-top:2.5rem;line-height:1.9">自己啓発本を17冊読んでも変わらなかった人が、<br>1ヶ月続いたのは「一人じゃなかった」から。<br><strong style="color:var(--mint)">頑張るから頑張れるんじゃない。みんなで頑張るから、頑張れる。</strong></p>
+  </div>
+</section>
+<style>
+@media(max-width:600px){
+  .together-grid{grid-template-columns:1fr!important;max-width:340px!important}
+}
+</style>
 <section class="app-preview" id="app">
   <div class="app-inner">
     <span class="sec-label">App</span>
@@ -258,31 +286,24 @@ section{padding:60px 1rem}
 <section class="solution" id="pricing" style="background:var(--white)">
   <div class="solution-inner">
     <span class="sec-label">Pricing</span>
-    <h2 class="sec-title">Free と Pro、2つだけ。</h2>
-    <p class="sec-desc" style="margin:0 auto 2.5rem">基本機能はずっと無料。広告を消して集中したい人のために Pro を用意しています。</p>
-    <div class="pricing-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;max-width:680px;margin:0 auto">
-      <!-- Free -->
-      <div class="sol-card fade-up" style="text-align:left">
-        <div style="font-size:.78rem;font-weight:700;color:var(--text-mid);margin-bottom:.3rem">Free</div>
-        <div style="font-size:2rem;font-weight:800">¥0<span style="font-size:.85rem;font-weight:400;color:var(--text-light)">/月</span></div>
-        <p style="font-size:.82rem;color:var(--text-mid);margin:.8rem 0;line-height:1.9">朝夜ジャーナル<br>タイムライン・リアクション<br>習慣トラッカー・ビジョン<br>AI フィードバック</p>
-        <a href="https://rizup-app.vercel.app/register" style="display:block;text-align:center;background:var(--bg);color:var(--text-mid);font-weight:700;padding:.7rem;border-radius:99px;text-decoration:none;font-size:.85rem;border:1.5px solid var(--border)">無料で始める</a>
-      </div>
-      <!-- Pro -->
-      <div class="sol-card fade-up" style="text-align:left;border-color:var(--mint);position:relative">
-        <div style="position:absolute;top:-10px;right:16px;background:var(--mint);color:#fff;padding:.2rem .8rem;border-radius:99px;font-size:.7rem;font-weight:700">人気</div>
-        <div style="font-size:.78rem;font-weight:700;color:var(--mint);margin-bottom:.3rem">Pro</div>
-        <div style="font-size:2rem;font-weight:800">¥480<span style="font-size:.85rem;font-weight:400;color:var(--text-light)">/月</span></div>
-        <p style="font-size:.82rem;color:var(--text-mid);margin:.8rem 0;line-height:1.9">広告完全非表示<br>Pro バッジ<br>週間 AI レポート<br>（ランチ1回分で自分に投資）</p>
-        <a href="https://rizup-app.vercel.app/register" style="display:block;text-align:center;background:var(--mint);color:#fff;font-weight:700;padding:.7rem;border-radius:99px;text-decoration:none;font-size:.85rem;box-shadow:0 4px 14px rgba(110,203,176,.3)">Proで始める</a>
+    <h2 class="sec-title">今は、完全無料。</h2>
+    <p class="sec-desc" style="margin:0 auto 2.5rem">ローンチ記念で全機能を無料開放中。使ってみて「これはいい」と思ったら、未来の有料プランで応援してください。</p>
+    <div style="max-width:420px;margin:0 auto">
+      <!-- All Free -->
+      <div class="sol-card fade-up" style="text-align:left;border-color:var(--mint);position:relative;padding:2rem 1.8rem">
+        <div style="position:absolute;top:-10px;right:16px;background:var(--mint);color:#fff;padding:.2rem .8rem;border-radius:99px;font-size:.7rem;font-weight:700">ローンチ記念</div>
+        <div style="font-size:.78rem;font-weight:700;color:var(--mint);margin-bottom:.3rem">All Free</div>
+        <div style="font-size:2.4rem;font-weight:800">¥0<span style="font-size:.9rem;font-weight:400;color:var(--text-light)">/月</span></div>
+        <p style="font-size:.88rem;color:var(--text-mid);margin:1rem 0;line-height:1.9">朝夜ジャーナル<br>タイムライン・リアクション<br>習慣トラッカー・ビジョン<br>AI フィードバック<br><strong style="color:var(--mint)">全機能・広告なし・ずっと無料</strong></p>
+        <a href="https://rizup-app.vercel.app/register" style="display:block;text-align:center;background:var(--mint);color:#fff;font-weight:700;padding:.9rem;border-radius:99px;text-decoration:none;font-size:.95rem;box-shadow:0 4px 14px rgba(110,203,176,.35)">無料で始める</a>
       </div>
     </div>
-    <p style="font-size:.78rem;color:var(--text-light);margin:1.5rem auto 0;text-align:center;max-width:480px;line-height:1.7">※ 月1オンラインミーティングは近日開始予定</p>
+    <p style="font-size:.78rem;color:var(--text-light);margin:1.5rem auto 0;text-align:center;max-width:480px;line-height:1.7">※ 将来的に有料プランを追加予定。現在登録いただいた方は無料機能をそのまま使い続けられます。<br>※ 月1オンラインミーティングは近日開始予定</p>
   </div>
 </section>
 <section class="cta-section" id="join">
   <div class="cta-inner">
-    <img src="images/sho.png" alt="Rizup" width="64" height="64" style="border-radius:50%;margin-bottom:.8rem" />
+    <img src="https://rizup-app.vercel.app/icons/icon-192.png" alt="Rizup" width="72" height="72" style="border-radius:22%;margin-bottom:1rem;box-shadow:0 6px 20px rgba(0,0,0,.15)" />
     <h2>今すぐ、<br>前に進もう。</h2>
     <p>完全無料で全機能を体験。<br>Google アカウントで、10秒で始められます。</p>
     <a href="https://rizup-app.vercel.app/register" class="btn-main" style="font-size:1.1rem;padding:1.15rem 3rem;margin-bottom:.8rem;box-shadow:0 8px 28px rgba(110,203,176,.5)">無料で始める</a>
@@ -291,11 +312,11 @@ section{padding:60px 1rem}
 </section>
 <section class="founder" id="founder">
   <div class="founder-inner">
-    <div class="founder-img" style="padding:0;overflow:hidden"><img src="images/sho.png" alt="Rizup" width="160" height="160" style="width:100%;height:100%;object-fit:cover;border-radius:50%" /></div>
+    <div class="founder-img" style="padding:0;overflow:hidden;display:flex;align-items:center;justify-content:center"><img src="https://rizup-app.vercel.app/icons/icon-192.png" alt="Rizup" width="160" height="160" style="width:100%;height:100%;object-fit:cover;border-radius:22%;box-shadow:0 8px 24px rgba(0,0,0,.12)" /></div>
     <div class="founder-text">
-      <span class="sec-label">Founder</span>
-      <h2 class="sec-title">Shohei / Rizup代表</h2>
-      <p>はじめまして、児玉翔平（Shohei）です。28歳。<br>大手アパレル企業で店長をしていました。売上は全国1位。チームの離職率は95%改善。</p>
+      <span class="sec-label">Why Rizup</span>
+      <h2 class="sec-title">Rizup を作った理由</h2>
+      <p>28歳、大阪。大手アパレル企業で店長をしていました。売上は全国1位。チームの離職率は95%改善。</p>
       <p>でも、ずっと感じていた違和感がありました。<br>「頑張っているのに自信が持てない人」が、自分の周りにたくさんいたこと。能力があるのに「自分なんか」と言う部下たち。そして、かつての自分自身。</p>
       <p>必要だったのは、上からの評価じゃなかった。<br><strong>「わかるよ」と言ってくれる、横のつながり</strong>だった。</p>
       <p>だから Rizup を作りました。<br>夢を一人で抱えなくていい場所を。毎日の小さな一歩を、一緒に喜べる場所を。</p>
