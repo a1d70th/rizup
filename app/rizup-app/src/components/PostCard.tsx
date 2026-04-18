@@ -140,10 +140,10 @@ export default function PostCard({ post, userId, isAdmin, onDelete, onEdit }: Po
 
   const isOwner = userId && post.user_id === userId;
   const canDelete = isOwner || isAdmin;
-  // 旧シード "Sho" や未設定ユーザーは名前非表示（「ユーザー」は出さない）
+  // 旧シード "Sho" は非表示、未設定ユーザーは「名無しさん」フォールバック
   const rawName = (post.profiles?.name || "").trim();
   const isShoSeed = /^sho$/i.test(rawName);
-  const name = isShoSeed ? "" : rawName;
+  const name = isShoSeed ? "名無しさん" : (rawName || "名無しさん");
   const streakDays = post.profiles?.streak ?? 0;
   const time = formatRelativeTime(post.created_at);
   const isMorning = post.type === "morning";

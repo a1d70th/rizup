@@ -178,7 +178,7 @@ export default function ProfilePage() {
             </button>
             <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
           </div>
-          <h1 className="text-xl font-extrabold">{profile.name}</h1>
+          <h1 className="text-xl font-extrabold">{profile.name?.trim() || "名無しさん"}</h1>
           {profile.character_name && (
             <p className="text-sm text-mint font-bold mt-1">
               {profile.character_animal === "rabbit" ? "🐰" : profile.character_animal === "raccoon" ? "🦝" : profile.character_animal === "cat" ? "🐱" : profile.character_animal === "squirrel" ? "🐿️" : profile.character_animal === "owl" ? "🦉" : "🌿"}
