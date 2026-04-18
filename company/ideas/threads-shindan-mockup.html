@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スレッズ診断 | アウトプット想定モック</title>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+Antique:wght@400;700;900&family=Noto+Serif+JP:wght@700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0a0a0a;
+  --paper: #f5f1e8;
+  --accent: #ff3d2e;
+  --accent-2: #2d5af0;
+  --gold: #d4a84b;
+  --mute: #6b6355;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Zen Kaku Gothic Antique', sans-serif;
+  background: #e8e3d5;
+  color: var(--ink);
+  padding: 20px 0;
+}
+
+.nav-tabs {
+  max-width: 680px;
+  margin: 0 auto 24px;
+  padding: 0 16px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+.nav-tab {
+  padding: 10px 14px;
+  background: white;
+  border: 2px solid var(--ink);
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.nav-tab.active { background: var(--accent); color: white; }
+
+.screen-label {
+  max-width: 680px;
+  margin: 40px auto 12px;
+  padding: 0 16px;
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--mute);
+}
+.screen-label strong { color: var(--accent); }
+
+/* ========== 診断結果カード（Threadsにシェアする縦長画像の想定）========== */
+.share-card {
+  max-width: 400px;
+  margin: 0 auto 40px;
+  aspect-ratio: 4/5;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 32px 28px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 8px 8px 0 var(--accent);
+  display: flex;
+  flex-direction: column;
+}
+.share-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 160px;
+  height: 160px;
+  background: radial-gradient(circle, rgba(255,61,46,0.4) 0%, transparent 70%);
+  filter: blur(30px);
+}
+.share-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  opacity: 0.6;
+  margin-bottom: 30px;
+  position: relative;
+  z-index: 2;
+}
+.share-user {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  opacity: 0.7;
+  margin-bottom: 4px;
+  position: relative;
+  z-index: 2;
+}
+.share-type-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 0.3em;
+  margin-bottom: 10px;
+  position: relative;
+  z-index: 2;
+}
+.share-type-name {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 34px;
+  font-weight: 900;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 2;
+  letter-spacing: -0.02em;
+}
+.share-type-name .sub {
+  display: block;
+  font-size: 16px;
+  color: var(--gold);
+  margin-top: 4px;
+}
+.share-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: auto;
+  position: relative;
+  z-index: 2;
+}
+.share-stat {
+  border: 1px solid rgba(245, 241, 232, 0.2);
+  padding: 10px;
+}
+.share-stat-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  opacity: 0.5;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+.share-stat-val {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 20px;
+  font-weight: 900;
+}
+.share-stat-val .unit { font-size: 11px; opacity: 0.6; margin-left: 2px; }
+.share-footer {
+  position: absolute;
+  bottom: 16px;
+  right: 20px;
+  font-family: 'Noto Serif JP', serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  z-index: 2;
+}
+.share-footer span { color: var(--accent); }
+
+/* ========== 詳細結果ページ ========== */
+.detail-page {
+  max-width: 680px;
+  margin: 0 auto 40px;
+  background: var(--paper);
+  padding: 32px 24px;
+  border: 2px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--ink);
+}
+.detail-badge {
+  display: inline-block;
+  background: var(--ink);
+  color: var(--paper);
+  padding: 4px 10px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  margin-bottom: 16px;
+}
+.detail-title {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 26px;
+  font-weight: 900;
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+.detail-subtitle {
+  color: var(--mute);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+.detail-section {
+  border-top: 1px solid var(--ink);
+  padding: 24px 0 16px;
+}
+.detail-section h3 {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 18px;
+  margin-bottom: 14px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.detail-section h3::before {
+  content: '';
+  width: 6px; height: 22px;
+  background: var(--accent);
+}
+
+/* ヒートマップ */
+.heatmap {
+  display: grid;
+  grid-template-columns: 40px repeat(7, 1fr);
+  gap: 3px;
+  font-size: 10px;
+  font-family: 'Space Mono', monospace;
+}
+.heatmap-day-header {
+  text-align: center;
+  padding: 4px 0;
+  color: var(--mute);
+}
+.heatmap-time {
+  padding: 6px 4px;
+  color: var(--mute);
+  text-align: right;
+}
+.heatmap-cell {
+  aspect-ratio: 1;
+  background: rgba(0,0,0,0.05);
+  border-radius: 2px;
+}
+.heatmap-cell.lv1 { background: rgba(255, 61, 46, 0.15); }
+.heatmap-cell.lv2 { background: rgba(255, 61, 46, 0.4); }
+.heatmap-cell.lv3 { background: rgba(255, 61, 46, 0.7); }
+.heatmap-cell.lv4 { background: var(--accent); }
+.heatmap-note {
+  margin-top: 14px;
+  padding: 12px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 13px;
+  font-weight: 700;
+}
+.heatmap-note strong { color: var(--accent); }
+
+/* AIアドバイス */
+.advice-list { list-style: none; }
+.advice-list li {
+  padding: 14px 16px;
+  background: rgba(0,0,0,0.03);
+  margin-bottom: 10px;
+  border-left: 3px solid var(--accent);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.advice-list li strong { display: block; margin-bottom: 4px; font-size: 13px; color: var(--accent); }
+
+/* ========== ランキングページ ========== */
+.ranking-page {
+  max-width: 680px;
+  margin: 0 auto 40px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--ink);
+}
+.ranking-header {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 28px 24px;
+}
+.ranking-header-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  opacity: 0.5;
+  margin-bottom: 6px;
+}
+.ranking-header h2 {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 26px;
+  font-weight: 900;
+  margin-bottom: 6px;
+}
+.ranking-header-meta {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  opacity: 0.6;
+}
+.ranking-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--ink);
+}
+.ranking-tab {
+  flex: 1;
+  padding: 14px 8px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  border-right: 1px solid var(--ink);
+}
+.ranking-tab:last-child { border-right: none; }
+.ranking-tab.active { background: var(--accent); color: white; }
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+.ranking-num {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 28px;
+  font-weight: 900;
+  width: 44px;
+  text-align: center;
+}
+.ranking-num.top1 { color: var(--gold); }
+.ranking-num.top2 { color: #999; }
+.ranking-num.top3 { color: #b87333; }
+.ranking-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 900;
+  font-size: 16px;
+}
+.ranking-info { flex: 1; min-width: 0; }
+.ranking-name {
+  font-weight: 900;
+  font-size: 15px;
+  margin-bottom: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ranking-handle {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--mute);
+}
+.ranking-stat { text-align: right; flex-shrink: 0; }
+.ranking-change {
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--accent);
+}
+.ranking-change.down { color: var(--accent-2); }
+.ranking-total {
+  font-size: 11px;
+  color: var(--mute);
+}
+
+/* ========== プロフィールページ（他人の数値詳細）========== */
+.profile-page {
+  max-width: 680px;
+  margin: 0 auto 40px;
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  box-shadow: 8px 8px 0 var(--ink);
+  overflow: hidden;
+}
+.profile-hero {
+  background: linear-gradient(135deg, var(--ink), #2a2a2a);
+  color: var(--paper);
+  padding: 28px 24px;
+  position: relative;
+}
+.profile-avatar-lg {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--gold));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 900;
+  font-size: 24px;
+  margin-bottom: 14px;
+}
+.profile-name {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 24px;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+.profile-handle {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  opacity: 0.6;
+  margin-bottom: 20px;
+}
+.profile-big-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+.profile-big-stat-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  opacity: 0.5;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+.profile-big-stat-val {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 22px;
+  font-weight: 900;
+}
+.profile-big-stat-change {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px;
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+/* 疑似グラフ */
+.graph-section {
+  padding: 24px;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+.graph-section-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.graph-section-title h3 {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 16px;
+  font-weight: 900;
+}
+.graph-range {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--mute);
+}
+.fake-graph {
+  height: 180px;
+  background: white;
+  border: 1px solid rgba(0,0,0,0.1);
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+}
+.fake-graph svg { width: 100%; height: 100%; }
+
+.vote-section {
+  padding: 24px;
+  background: var(--ink);
+  color: var(--paper);
+}
+.vote-section h3 {
+  font-family: 'Noto Serif JP', serif;
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+.vote-note {
+  font-size: 12px;
+  opacity: 0.6;
+  margin-bottom: 16px;
+}
+.vote-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.vote-btn {
+  padding: 14px 6px;
+  border: 1px solid rgba(245,241,232,0.3);
+  background: rgba(255,255,255,0.05);
+  color: var(--paper);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+}
+.vote-btn:hover { background: var(--accent); border-color: var(--accent); }
+.vote-result {
+  display: flex;
+  height: 24px;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.vote-bar-like { background: var(--accent); }
+.vote-bar-neutral { background: var(--gold); }
+.vote-bar-dislike { background: var(--accent-2); }
+.vote-legend {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+/* ========== 解説パネル ========== */
+.explain {
+  max-width: 680px;
+  margin: 0 auto 32px;
+  padding: 20px;
+  background: var(--accent);
+  color: white;
+  font-size: 13px;
+  line-height: 1.7;
+  border: 2px solid var(--ink);
+  box-shadow: 6px 6px 0 var(--ink);
+}
+.explain strong { display: block; margin-bottom: 8px; font-size: 14px; font-family: 'Noto Serif JP', serif; }
+</style>
+</head>
+<body>
+
+<div class="nav-tabs">
+  <div class="nav-tab active">① 診断結果シェア画像</div>
+  <div class="nav-tab">② 詳細結果ページ</div>
+  <div class="nav-tab">③ ランキング</div>
+  <div class="nav-tab">④ 他人プロフィール</div>
+</div>
+
+<!-- ========== 画面①：シェア画像（これがThreadsに投稿されるやつ） ========== -->
+<div class="screen-label">画面① <strong>診断結果シェア画像（4:5縦長・Threads投稿用）</strong></div>
+
+<div class="share-card">
+  <div class="share-header">
+    <div>THREADS ANALYTICS</div>
+    <div>2026.04.17</div>
+  </div>
+  <div class="share-user">@shohei_gu</div>
+  <div class="share-type-label">YOUR TYPE / 03 OF 16</div>
+  <div class="share-type-name">
+    共感型<br>ストーリーテラー
+    <span class="sub">The Empathic Narrator</span>
+  </div>
+  <div class="share-stats">
+    <div class="share-stat">
+      <div class="share-stat-label">共感度</div>
+      <div class="share-stat-val">92<span class="unit">/100</span></div>
+    </div>
+    <div class="share-stat">
+      <div class="share-stat-label">情報密度</div>
+      <div class="share-stat-val">48<span class="unit">/100</span></div>
+    </div>
+    <div class="share-stat">
+      <div class="share-stat-label">バズ時間</div>
+      <div class="share-stat-val">22<span class="unit">時台</span></div>
+    </div>
+    <div class="share-stat">
+      <div class="share-stat-label">同タイプ</div>
+      <div class="share-stat-val">14<span class="unit">.2%</span></div>
+    </div>
+  </div>
+  <div class="share-footer">スレッズ<span>診断</span></div>
+</div>
+
+<div class="explain">
+  <strong>これがコアの拡散装置</strong>
+  4:5縦長、スマホでスクショ→Threadsに投稿→「#スレッズ診断 でやってみた！」の流れを誘発。MBTI診断と同じ心理。16タイプにして「他のタイプも気になる」回遊も狙える。
+</div>
+
+<!-- ========== 画面②：詳細結果 ========== -->
+<div class="screen-label">画面② <strong>詳細結果ページ（診断後に表示される）</strong></div>
+
+<div class="detail-page">
+  <div class="detail-badge">DIAGNOSIS / 03</div>
+  <h1 class="detail-title">共感型ストーリーテラー</h1>
+  <div class="detail-subtitle">@shohei_gu さんの詳細分析 · 投稿24件を解析</div>
+
+  <div class="detail-section">
+    <h3>バズる時間帯ヒートマップ</h3>
+    <div class="heatmap">
+      <div class="heatmap-day-header"></div>
+      <div class="heatmap-day-header">月</div>
+      <div class="heatmap-day-header">火</div>
+      <div class="heatmap-day-header">水</div>
+      <div class="heatmap-day-header">木</div>
+      <div class="heatmap-day-header">金</div>
+      <div class="heatmap-day-header">土</div>
+      <div class="heatmap-day-header">日</div>
+      
+      <div class="heatmap-time">06</div>
+      <div class="heatmap-cell lv1"></div><div class="heatmap-cell"></div><div class="heatmap-cell lv1"></div><div class="heatmap-cell"></div><div class="heatmap-cell lv1"></div><div class="heatmap-cell lv2"></div><div class="heatmap-cell lv2"></div>
+      
+      <div class="heatmap-time">12</div>
+      <div class="heatmap-cell lv2"></div><div class="heatmap-cell lv2"></div><div class="heatmap-cell lv1"></div><div class="heatmap-cell lv2"></div><div class="heatmap-cell lv2"></div><div class="heatmap-cell lv1"></div><div class="heatmap-cell"></div>
+      
+      <div class="heatmap-time">18</div>
+      <div class="heatmap-cell lv3"></div><div class="heatmap-cell lv3"></div><div class="heatmap-cell lv2"></div><div class="heatmap-cell lv3"></div><div class="heatmap-cell lv3"></div><div class="heatmap-cell lv2"></div><div class="heatmap-cell lv2"></div>
+      
+      <div class="heatmap-time">22</div>
+      <div class="heatmap-cell lv3"></div><div class="heatmap-cell lv4"></div><div class="heatmap-cell lv3"></div><div class="heatmap-cell lv3"></div><div class="heatmap-cell lv4"></div><div class="heatmap-cell lv3"></div><div class="heatmap-cell lv2"></div>
+    </div>
+    <div class="heatmap-note">
+      🎯 ベスト投稿時間：<strong>火曜22時台</strong>・<strong>金曜22時台</strong>
+    </div>
+  </div>
+
+  <div class="detail-section">
+    <h3>AIからの改善アドバイス</h3>
+    <ul class="advice-list">
+      <li>
+        <strong>01 / 1行目の掴み</strong>
+        あなたの投稿は2-3行目がピークになりがち。1行目に「〜ってこと、ある？」のような問いを入れるとスクロール停止率が上がる可能性。
+      </li>
+      <li>
+        <strong>02 / 文字数</strong>
+        平均180文字。Threadsでは120-150文字帯が最もエンゲージメント率が高い傾向。20%ほど削ると伸びやすい。
+      </li>
+      <li>
+        <strong>03 / 改行パターン</strong>
+        2行ごとに改行を入れる傾向あり。3行1ブロックに変えると「余白のリズム」が出る。
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="explain">
+  <strong>ここが無料で全公開。有料はさらに深く（月次履歴・PDF出力など）</strong>
+  無料だけでも満足度が高い作りにしないと拡散されない。だから核の分析は全部無料。マネタイズは「定点観測」「履歴保存」など継続性で差別化。
+</div>
+
+<!-- ========== 画面③：ランキング ========== -->
+<div class="screen-label">画面③ <strong>ランキングページ（他人データ・回遊の要）</strong></div>
+
+<div class="ranking-page">
+  <div class="ranking-header">
+    <div class="ranking-header-label">DAILY RANKING</div>
+    <h2>今週フォロワーが伸びた人TOP10</h2>
+    <div class="ranking-header-meta">UPDATED: 2026.04.17 03:00 · 登録アカウント: 12,438</div>
+  </div>
+  <div class="ranking-tabs">
+    <div class="ranking-tab active">急上昇</div>
+    <div class="ranking-tab">急降下</div>
+    <div class="ranking-tab">総合</div>
+    <div class="ranking-tab">1万人突破</div>
+  </div>
+
+  <div class="ranking-item">
+    <div class="ranking-num top1">1</div>
+    <div class="ranking-avatar">A</div>
+    <div class="ranking-info">
+      <div class="ranking-name">あおい / 20代OL副業ログ</div>
+      <div class="ranking-handle">@aoi_fukugyou</div>
+    </div>
+    <div class="ranking-stat">
+      <div class="ranking-change">+2,847</div>
+      <div class="ranking-total">24,102人</div>
+    </div>
+  </div>
+
+  <div class="ranking-item">
+    <div class="ranking-num top2">2</div>
+    <div class="ranking-avatar">K</div>
+    <div class="ranking-info">
+      <div class="ranking-name">けんすう｜起業家</div>
+      <div class="ranking-handle">@kensuu</div>
+    </div>
+    <div class="ranking-stat">
+      <div class="ranking-change">+1,923</div>
+      <div class="ranking-total">156,430人</div>
+    </div>
+  </div>
+
+  <div class="ranking-item">
+    <div class="ranking-num top3">3</div>
+    <div class="ranking-avatar">M</div>
+    <div class="ranking-info">
+      <div class="ranking-name">みーこ / 大阪ごはん</div>
+      <div class="ranking-handle">@meeko_osaka</div>
+    </div>
+    <div class="ranking-stat">
+      <div class="ranking-change">+1,402</div>
+      <div class="ranking-total">8,934人</div>
+    </div>
+  </div>
+
+  <div class="ranking-item">
+    <div class="ranking-num">4</div>
+    <div class="ranking-avatar">T</div>
+    <div class="ranking-info">
+      <div class="ranking-name">たくみ | AI開発中</div>
+      <div class="ranking-handle">@takumi_ai_dev</div>
+    </div>
+    <div class="ranking-stat">
+      <div class="ranking-change">+1,238</div>
+      <div class="ranking-total">5,621人</div>
+    </div>
+  </div>
+
+  <div class="ranking-item">
+    <div class="ranking-num">5</div>
+    <div class="ranking-avatar">N</div>
+    <div class="ranking-info">
+      <div class="ranking-name">ナオミ / パーソナルトレーナー</div>
+      <div class="ranking-handle">@naomi_pt</div>
+    </div>
+    <div class="ranking-stat">
+      <div class="ranking-change">+984</div>
+      <div class="ranking-total">12,043人</div>
+    </div>
+  </div>
+
+  <div class="ranking-item">
+    <div class="ranking-num">6</div>
+    <div class="ranking-avatar">S</div>
+    <div class="ranking-info">
+      <div class="ranking-name">しょうへい / 元GU店長</div>
+      <div class="ranking-handle">@shohei_gu</div>
+    </div>
+    <div class="ranking-stat">
+      <div class="ranking-change">+721</div>
+      <div class="ranking-total">3,482人</div>
+    </div>
+  </div>
+</div>
+
+<div class="explain">
+  <strong>ここが回遊率を上げる最大のページ</strong>
+  「他人の伸び方」を見たい欲求をフック。Google検索「〇〇さん Threads フォロワー」で流入が発生するSEO装置にもなる。急降下タブはゴシップ性で滞在時間を伸ばす。
+</div>
+
+<!-- ========== 画面④：他人プロフィール ========== -->
+<div class="screen-label">画面④ <strong>他人プロフィールページ（星野ロミ式の詳細データ）</strong></div>
+
+<div class="profile-page">
+  <div class="profile-hero">
+    <div class="profile-avatar-lg">A</div>
+    <div class="profile-name">あおい / 20代OL副業ログ</div>
+    <div class="profile-handle">@aoi_fukugyou</div>
+    <div class="profile-big-stats">
+      <div>
+        <div class="profile-big-stat-label">FOLLOWERS</div>
+        <div class="profile-big-stat-val">24,102</div>
+        <div class="profile-big-stat-change">+2,847 / 週</div>
+      </div>
+      <div>
+        <div class="profile-big-stat-label">FOLLOWING</div>
+        <div class="profile-big-stat-val">342</div>
+        <div class="profile-big-stat-change">+12</div>
+      </div>
+      <div>
+        <div class="profile-big-stat-label">POSTS</div>
+        <div class="profile-big-stat-val">1,238</div>
+        <div class="profile-big-stat-change">+21</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="graph-section">
+    <div class="graph-section-title">
+      <h3>フォロワー推移（過去30日）</h3>
+      <div class="graph-range">30D / 90D / 1Y</div>
+    </div>
+    <div class="fake-graph">
+      <svg viewBox="0 0 400 160" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="grad" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#ff3d2e" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#ff3d2e" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path d="M0,140 L30,135 L60,130 L90,125 L120,115 L150,100 L180,90 L210,75 L240,70 L270,55 L300,45 L330,30 L360,20 L400,15" 
+              fill="none" stroke="#ff3d2e" stroke-width="2.5"/>
+        <path d="M0,140 L30,135 L60,130 L90,125 L120,115 L150,100 L180,90 L210,75 L240,70 L270,55 L300,45 L330,30 L360,20 L400,15 L400,160 L0,160 Z" 
+              fill="url(#grad)"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="graph-section">
+    <div class="graph-section-title">
+      <h3>投稿ごとのいいね数</h3>
+      <div class="graph-range">直近20投稿</div>
+    </div>
+    <div class="fake-graph">
+      <svg viewBox="0 0 400 160" preserveAspectRatio="none">
+        <rect x="10" y="110" width="12" height="40" fill="#0a0a0a"/>
+        <rect x="30" y="80" width="12" height="70" fill="#0a0a0a"/>
+        <rect x="50" y="120" width="12" height="30" fill="#0a0a0a"/>
+        <rect x="70" y="60" width="12" height="90" fill="#0a0a0a"/>
+        <rect x="90" y="40" width="12" height="110" fill="#ff3d2e"/>
+        <rect x="110" y="95" width="12" height="55" fill="#0a0a0a"/>
+        <rect x="130" y="70" width="12" height="80" fill="#0a0a0a"/>
+        <rect x="150" y="30" width="12" height="120" fill="#ff3d2e"/>
+        <rect x="170" y="105" width="12" height="45" fill="#0a0a0a"/>
+        <rect x="190" y="85" width="12" height="65" fill="#0a0a0a"/>
+        <rect x="210" y="50" width="12" height="100" fill="#0a0a0a"/>
+        <rect x="230" y="15" width="12" height="135" fill="#ff3d2e"/>
+        <rect x="250" y="90" width="12" height="60" fill="#0a0a0a"/>
+        <rect x="270" y="75" width="12" height="75" fill="#0a0a0a"/>
+        <rect x="290" y="115" width="12" height="35" fill="#0a0a0a"/>
+        <rect x="310" y="55" width="12" height="95" fill="#0a0a0a"/>
+        <rect x="330" y="25" width="12" height="125" fill="#ff3d2e"/>
+        <rect x="350" y="100" width="12" height="50" fill="#0a0a0a"/>
+        <rect x="370" y="65" width="12" height="85" fill="#0a0a0a"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="vote-section">
+    <h3>このアカウント、どう思う？</h3>
+    <div class="vote-note">⚠ 投票すると、このアカウントの「AIが分析した文体タイプ」が見られます</div>
+    <div class="vote-buttons">
+      <button class="vote-btn">👍 好き</button>
+      <button class="vote-btn">🤔 わからない</button>
+      <button class="vote-btn">👎 苦手</button>
+    </div>
+    <div class="vote-result">
+      <div class="vote-bar-like" style="width: 62%;"></div>
+      <div class="vote-bar-neutral" style="width: 28%;"></div>
+      <div class="vote-bar-dislike" style="width: 10%;"></div>
+    </div>
+    <div class="vote-legend">
+      <span>好き 62%</span>
+      <span>わからない 28%</span>
+      <span>苦手 10%</span>
+    </div>
+  </div>
+</div>
+
+<div class="explain">
+  <strong>星野ロミ式のコア：ゴシップ性＋回遊装置</strong>
+  「投票しないと文体タイプが見れない」仕掛けで滞在時間UP。グラフの推移を見に来るリピート訪問も増える。これが広告収益の肝。各プロフィールページがGoogle検索でヒット→無限の入口になる。
+</div>
+
+<div style="max-width:680px; margin:40px auto; padding:20px; background:var(--ink); color:var(--paper); text-align:center; font-family:'Space Mono', monospace; font-size:12px;">
+  全4画面のモック / スレッズ診断
+</div>
+
+</body>
+</html>
