@@ -230,10 +230,20 @@ export default function HomePage() {
     setPostMood(0);
     setPostContent("");
     setPosting(false);
-    setThanks(true);
     setHappyAnim(true);
     setTimeout(() => setHappyAnim(false), 1500);
-    setTimeout(() => setThanks(false), 3000);
+    // 感謝メッセージは 1 日 1 回だけ（連投しても鬱陶しくない）
+    try {
+      const key = `rizup_thanks_shown_${todayJST()}`;
+      if (!localStorage.getItem(key)) {
+        localStorage.setItem(key, "1");
+        setThanks(true);
+        setTimeout(() => setThanks(false), 3000);
+      }
+    } catch {
+      setThanks(true);
+      setTimeout(() => setThanks(false), 3000);
+    }
   };
 
   // URL パラメータから subscribed=true を検知（Stripe 成功 → Pro 昇格）
@@ -245,22 +255,27 @@ export default function HomePage() {
     }
   }, []);
 
-  // URL パラメータから posted=true を検知
+  // URL パラメータから posted=true を検知（1日1回のみ表示）
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get("posted") === "true") {
-      setJustPosted(true);
       // URLからパラメータを消す
       window.history.replaceState({}, "", "/home");
       // 今日の花カウントをインクリメント
       try {
-        const flowerKey = `rizup_flowers_${new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" })}`;
+        const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tokyo" });
+        const flowerKey = `rizup_flowers_${today}`;
         const current = parseInt(localStorage.getItem(flowerKey) || '0');
         localStorage.setItem(flowerKey, String(current + 1));
+        // 1 日 1 回だけ「今日もお疲れさま」バナーを出す
+        const praiseKey = `rizup_praise_shown_${today}`;
+        if (!localStorage.getItem(praiseKey)) {
+          localStorage.setItem(praiseKey, "1");
+          setJustPosted(true);
+          const t = setTimeout(() => setJustPosted(false), 3000);
+          return () => clearTimeout(t);
+        }
       } catch {}
-      // 3秒後に消す
-      const t = setTimeout(() => setJustPosted(false), 3000);
-      return () => clearTimeout(t);
     }
   }, []);
 
