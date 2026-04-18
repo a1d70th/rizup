@@ -181,8 +181,9 @@ export default function RegisterPage() {
 
       <p className="text-xs text-text-light mt-6 max-w-xs text-center leading-relaxed">
         登録することで、
-        <a href="/legal/terms-of-service.html" className="text-mint">利用規約</a> と
-        <a href="/legal/privacy-policy.html" className="text-mint">プライバシーポリシー</a> に同意したものとみなされます。
+        <a href="/legal/terms-of-service.html" className="text-mint">利用規約</a>・
+        <a href="/legal/privacy-policy.html" className="text-mint">プライバシーポリシー</a>・
+        <a href="/legal/tokushoho.html" className="text-mint">特定商取引法</a> に同意したものとみなされます。
       </p>
 
       <div className="mt-4 text-sm text-text-mid">

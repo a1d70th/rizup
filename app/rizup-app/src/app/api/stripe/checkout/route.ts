@@ -4,9 +4,10 @@ import type { NextRequest } from "next/server";
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 
+// Premium プランは現在非公開（将来再開予定）
+// ローンチ時点は Free + Pro のみ
 const PRICE_IDS: Record<string, string | undefined> = {
   pro: process.env.STRIPE_PRO_PRICE_ID,
-  premium: process.env.STRIPE_PREMIUM_PRICE_ID,
 };
 
 export async function POST(request: NextRequest) {

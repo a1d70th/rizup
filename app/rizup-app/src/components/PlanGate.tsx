@@ -7,15 +7,16 @@ const RANK: Record<string, number> = { free: 0, pro: 1, premium: 2 };
 const planInfo: Record<string, { name: string; price: string; color: string; features: string[] }> = {
   pro: {
     name: "Pro",
-    price: "¥780/月",
+    price: "¥480/月",
     color: "text-mint",
-    features: ["AIフィードバック", "Rizup Insight", "成長グラフ全指標", "毎日のこと・なりたい自分 無制限", "避けたい未来"],
+    features: ["広告完全非表示", "Pro バッジ", "週間 AI レポート", "全機能アンロック"],
   },
+  // Premium プランは将来公開（現在は Free + Pro のみ）
   premium: {
-    name: "Premium",
-    price: "¥1,480/月",
-    color: "text-orange",
-    features: ["Pro の全機能", "月次/週次PDFレポート", "ポジティブ度分析レポート"],
+    name: "Pro",
+    price: "¥480/月",
+    color: "text-mint",
+    features: ["広告完全非表示", "Pro バッジ", "週間 AI レポート", "全機能アンロック"],
   },
 };
 

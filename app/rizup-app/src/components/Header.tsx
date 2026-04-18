@@ -26,14 +26,23 @@ export default function Header() {
             RIZUP
           </span>
         </Link>
-        <Link
-          href="/notifications"
-          className="relative flex items-center justify-center w-11 h-11"
-          aria-label="通知"
-        >
-          <span className="text-xl">🔔</span>
-          <span className="absolute top-1 right-1 w-2 h-2 bg-[#06b6d4] rounded-full" aria-hidden="true" />
-        </Link>
+        <div className="flex items-center gap-1">
+          <Link
+            href="/notifications"
+            className="relative flex items-center justify-center w-11 h-11"
+            aria-label="通知"
+          >
+            <span className="text-xl">🔔</span>
+            <span className="absolute top-1 right-1 w-2 h-2 bg-[#06b6d4] rounded-full" aria-hidden="true" />
+          </Link>
+          <Link
+            href="/settings"
+            className="flex items-center justify-center w-11 h-11"
+            aria-label="設定"
+          >
+            <span className="text-xl">⚙️</span>
+          </Link>
+        </div>
       </div>
     </header>
   );

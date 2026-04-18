@@ -267,12 +267,12 @@ export default function GrowthPage() {
             </div>
           </div>
         ) : (
-          <Link href="/settings" className="block bg-white rounded-2xl p-4 border border-orange/30 shadow-sm mb-4">
+          <Link href="/settings" className="block bg-white rounded-2xl p-4 border border-mint/30 shadow-sm mb-4">
             <div className="flex items-center gap-3">
               <span className="text-xl">🎁</span>
               <div className="flex-1">
-                <p className="text-sm font-bold text-orange">Premium で月次PDFレポート</p>
-                <p className="text-[10px] text-text-light">¥1,480/月 → 設定から</p>
+                <p className="text-sm font-bold text-mint">Pro で広告非表示 + 週間 AI レポート</p>
+                <p className="text-[10px] text-text-light">¥480/月 → 設定から</p>
               </div>
               <span className="text-text-light">→</span>
             </div>
