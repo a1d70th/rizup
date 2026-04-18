@@ -17,7 +17,7 @@
 
 ---
 
-## 🎭 デモ用ユーザー：児玉翔平
+## 🎭 デモ用ユーザー：代表
 
 **Supabase SQL Editor で1回だけ実行してデモ状態を作る：**
 
@@ -34,7 +34,7 @@ BEGIN
 
   -- プロフィール
   INSERT INTO profiles (id, email, name, dream, avatar_url, streak, plan, zodiac, rizup_type, mbti, onboarding_completed, trial_started_at, trial_ends_at)
-  VALUES (demo_id, 'shohei-demo@example.com', '翔平', '昨日より今日を1%好きになる', '🌿', 42, 'pro', 'てんびん座', 'Flame', 'ENFP', TRUE, NOW() - INTERVAL '42 days', NOW() + INTERVAL '23 days')
+  VALUES (demo_id, 'shohei-demo@example.com', 'デモ', '昨日より今日を1%好きになる', '🌿', 42, 'pro', 'てんびん座', 'Flame', 'ENFP', TRUE, NOW() - INTERVAL '42 days', NOW() + INTERVAL '23 days')
   ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, streak = EXCLUDED.streak, plan = EXCLUDED.plan;
 
   -- ビジョン 4階層
