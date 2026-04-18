@@ -902,9 +902,61 @@
 
   <!-- ── SECTION 3: 事業ポートフォリオ ───────────────── -->
   <section class="card">
-    <h2>🏢 事業ポートフォリオ <span class="section-meta">3事業集中（Rizup / NOMI / KAKEHASHI）・進捗は編集可</span></h2>
+    <h2>🏢 事業ポートフォリオ <span class="section-meta">3事業集中（Rizup / HARU / KAKEHASHI）・進捗は編集可</span></h2>
     <div class="grid-2" id="bizGrid"><!-- JS --></div>
     <small class="hint">※ 進捗(%)をクリックで編集 → Enter/Tab で確定。全入力は自動保存。</small>
+  </section>
+
+  <!-- ── SECTION 3.3: HARU 進捗ダッシュボード ─────────── -->
+  <section class="card">
+    <h2>🌸 HARU 進捗 <span class="section-meta">事業② 日韓友達作りイベント</span></h2>
+
+    <!-- Phase 1 開始条件チェックリスト -->
+    <h3 style="font-size:14px;font-weight:800;color:var(--text);margin:4px 0 10px">📋 Phase 1 開始条件</h3>
+    <div class="grid-2" style="margin-bottom:18px">
+      <label style="display:flex;align-items:center;gap:10px;background:var(--card-2);border:1px solid var(--border-2);border-radius:10px;padding:10px 14px;cursor:pointer;user-select:none">
+        <input type="checkbox" data-key="haru_check_host" style="accent-color:#FF6B9D;width:16px;height:16px" />
+        <span style="font-size:13px;font-weight:700">女性共同ホスト 1 人の内諾</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;background:var(--card-2);border:1px solid var(--border-2);border-radius:10px;padding:10px 14px;cursor:pointer;user-select:none">
+        <input type="checkbox" data-key="haru_check_trademark" style="accent-color:#FF6B9D;width:16px;height:16px" />
+        <span style="font-size:13px;font-weight:700">商標調査完了（J-PlatPat）</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;background:var(--card-2);border:1px solid var(--border-2);border-radius:10px;padding:10px 14px;cursor:pointer;user-select:none">
+        <input type="checkbox" data-key="haru_check_female_apply" style="accent-color:#FF6B9D;width:16px;height:16px" />
+        <span style="font-size:13px;font-weight:700">女性事前申込 2 人以上</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:10px;background:var(--card-2);border:1px solid var(--border-2);border-radius:10px;padding:10px 14px;cursor:pointer;user-select:none">
+        <input type="checkbox" data-key="haru_check_lp_deploy" style="accent-color:#FF6B9D;width:16px;height:16px" />
+        <span style="font-size:13px;font-weight:700">LP Vercel デプロイ完了</span>
+      </label>
+    </div>
+
+    <!-- KPI 手動入力 -->
+    <h3 style="font-size:14px;font-weight:800;color:var(--text);margin:4px 0 10px">📊 KPI（手動更新）</h3>
+    <div class="grid-4">
+      <div class="kpi" style="border-color:#FFB7C5">
+        <div class="label">IG フォロワー</div>
+        <div class="value" style="color:#FF6B9D"><span contenteditable="true" data-key="haru_ig_followers">0</span></div>
+        <div class="sub">@haru_osaka</div>
+      </div>
+      <div class="kpi" style="border-color:#4ECDC4">
+        <div class="label">開催回数</div>
+        <div class="value" style="color:#2BB1A7"><span contenteditable="true" data-key="haru_event_count">0</span>回</div>
+        <div class="sub">累計</div>
+      </div>
+      <div class="kpi" style="border-color:#FFB7C5">
+        <div class="label">参加者累計</div>
+        <div class="value" style="color:#FF6B9D"><span contenteditable="true" data-key="haru_total_attendees">0</span>人</div>
+        <div class="sub">延べ人数</div>
+      </div>
+      <div class="kpi" style="border-color:#4ECDC4">
+        <div class="label">スレッズ連続投稿</div>
+        <div class="value" style="color:#2BB1A7"><span contenteditable="true" data-key="haru_threads_streak">0</span>日</div>
+        <div class="sub">@mushoku_owata</div>
+      </div>
+    </div>
+    <small class="hint" style="margin-top:12px;display:block">※ Instagram・イベント実施ごとにここを更新。チェックボックスは達成時に ✓</small>
   </section>
 
   <!-- ── SECTION 3.5: 事業組織マトリクス（3事業体制）── -->
@@ -1346,6 +1398,9 @@
     src_rizup: 0, src_note: 0, src_cw: 0, src_hr: 0, src_other: 0,
     threads_followers: 0, threads_week_follow: 0, threads_week_posts: 0, threads_eng_rate: 0,
     threads_top_post: "", threads_flop_post: "", threads_next_plan: "",
+    // HARU 進捗
+    haru_check_host: false, haru_check_trademark: false, haru_check_female_apply: false, haru_check_lp_deploy: false,
+    haru_ig_followers: 0, haru_event_count: 0, haru_total_attendees: 0, haru_threads_streak: 0,
     chart: [0,0,0,0,0,0,0,0,0,0,0,0],
     chartLabels: ["4月","5月","6月","7月","8月","9月","10月","11月","12月","1月","2月","3月"],
 
@@ -1456,9 +1511,20 @@
   document.querySelectorAll("[data-key]").forEach(node => {
     const key = node.getAttribute("data-key");
     const isTextarea = node.tagName === "TEXTAREA";
+    const isCheckbox = node.tagName === "INPUT" && node.type === "checkbox";
     // セクション用 data-key（collapse 状態管理専用）は render から除外
-    // これらは textContent を書き換えるとセクション中身が [object Object] になる
     if (node.tagName === "SECTION") return;
+
+    // チェックボックス: boolean 値の load / save を専用処理
+    if (isCheckbox) {
+      if (key in state) node.checked = !!state[key];
+      node.addEventListener("change", () => {
+        state[key] = node.checked;
+        save();
+      });
+      return;
+    }
+
     if (key in state) {
       const v = state[key];
       // オブジェクト/配列は [object Object] 化するのでスキップ
@@ -1468,7 +1534,7 @@
     }
     const commit = () => {
       const v = isTextarea ? node.value : node.textContent;
-      if (typeof state[key] === "number" || /^(rev_|src_|job_|cash_)/.test(key)) {
+      if (typeof state[key] === "number" || /^(rev_|src_|job_|cash_|haru_(ig_|event_|total_|threads_))/.test(key)) {
         const n = parseNum(v, 0);
         state[key] = n;
         if (!isTextarea) node.textContent = fmtInt(n);
