@@ -94,7 +94,7 @@ export default function EventsPage() {
           </div>
           <p className="text-sm text-text-mid leading-relaxed mb-4">
             翔平さんがホスト。自由交流。<br />
-            参加費: Pro ¥1,000-2,000 / 一般 ¥3,000-4,000
+            参加費: Pro ¥500-1,000 / 一般 ¥2,000-3,000（場所代のみ）
           </p>
           <p className="text-xs text-text-light text-center">次回開催は近日告知予定</p>
         </section>
