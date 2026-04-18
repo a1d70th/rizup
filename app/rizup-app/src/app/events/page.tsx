@@ -35,23 +35,29 @@ export default function EventsPage() {
     <div className="min-h-screen bg-bg pb-20">
       <Header />
       <main className="max-w-md mx-auto px-4 py-4">
-        <h1 className="text-lg font-extrabold mb-1">🎥 イベント</h1>
-        <p className="text-xs text-text-mid mb-5">Rizup コミュニティ交流</p>
+        <h1 className="text-lg font-extrabold mb-1">🎉 イベント・ミーティング</h1>
+        <p className="text-xs text-text-mid mb-5">Rizupコミュニティ</p>
 
         {/* 月1オンラインミーティングカード */}
         <section className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-5 border border-gray-100 dark:border-[#2a2a2a] shadow-sm mb-4">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-2xl">🎥</span>
             <div className="flex-1">
-              <h2 className="text-base font-extrabold font-extrabold">月1オンラインミーティング</h2>
+              <h2 className="text-base font-extrabold">月1オンラインミーティング</h2>
               <p className="text-[11px] text-text-mid">Zoom / 毎月第〇土曜 20:00〜21:30</p>
             </div>
             <span className="text-[10px] font-extrabold bg-mint-light text-mint rounded-full px-2 py-1 whitespace-nowrap">参加無料</span>
           </div>
-          <p className="text-sm text-text-mid leading-relaxed mb-4">
+          <p className="text-sm text-text-mid leading-relaxed mb-3">
             翔平さんの近況 45 分 + 参加者のシェアタイム 45 分。<br />
             聞き専 OK・本音で話せる少人数空間。
           </p>
+          <div className="bg-mint-light/50 dark:bg-mint/10 rounded-xl p-3 mb-4">
+            <p className="text-xs font-bold text-mint mb-1">✅ 参加無料・全ユーザー対象</p>
+            <p className="text-[11px] text-text-mid leading-relaxed">
+              📣 日程はスレッズ（<a href="https://www.threads.net/@mushoku_owata" target="_blank" rel="noopener" className="text-mint font-bold">@mushoku_owata</a>）で告知
+            </p>
+          </div>
 
           {loading ? (
             <div className="text-xs text-text-light text-center py-3">読み込み中...</div>
@@ -68,15 +74,14 @@ export default function EventsPage() {
           )}
         </section>
 
-        {/* 不定期オフ会カード（金額は伏せる） */}
+        {/* 不定期オフ会カード（詳細すべて未定） */}
         <section className="bg-white dark:bg-[#1a1a1a] rounded-2xl p-5 border border-gray-100 dark:border-[#2a2a2a] shadow-sm mb-4">
           <div className="flex items-center gap-2 mb-2">
             <span className="text-2xl">🍻</span>
             <div className="flex-1">
               <h2 className="text-base font-extrabold">オフ会</h2>
-              <p className="text-[11px] text-text-mid">不定期で開催予定</p>
+              <p className="text-[11px] text-text-mid">開催日程は近日告知予定</p>
             </div>
-            <span className="text-[10px] font-extrabold bg-gray-100 dark:bg-[#2a2a2a] text-text-mid rounded-full px-2 py-1 whitespace-nowrap">準備中</span>
           </div>
           <p className="text-sm text-text-mid leading-relaxed">
             翔平さんがホスト・自由交流のリアル会。<br />
@@ -88,7 +93,7 @@ export default function EventsPage() {
         <div className="bg-gray-50 dark:bg-[#1a1a1a]/50 rounded-2xl p-4">
           <p className="text-[11px] text-text-mid leading-relaxed">
             💌 開催告知は登録メールアドレス（{userEmail || "ログイン後に表示"}）宛に送ります。<br />
-            スレッズ（<a href="https://www.threads.net/@shohei_rizup" target="_blank" rel="noopener" className="text-mint font-bold">@shohei_rizup</a>）でも告知。
+            スレッズ（<a href="https://www.threads.net/@mushoku_owata" target="_blank" rel="noopener" className="text-mint font-bold">@mushoku_owata</a>）でも告知。
           </p>
         </div>
 

@@ -84,7 +84,7 @@ export default function SettingsPage() {
 
   const items = [
     { icon: "👤", label: "プロフィール編集", href: "/profile" },
-    { icon: "🎥", label: "イベント（Pro 限定）", href: "/events" },
+    { icon: "🎥", label: "イベント・ミーティング", href: "/events" },
     { icon: "📝", label: "フィードバックを送る", href: "/feedback" },
     { icon: "🔔", label: "通知", href: "/notifications" },
     { icon: "📜", label: "利用規約", href: "/legal/terms-of-service.html" },
