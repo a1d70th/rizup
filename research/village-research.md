@@ -2,7 +2,7 @@
 
 > 作成：Kai（CMO）／ 2026-04-16
 > 対象：`company/village-concept.md`（翔平さん発案・2026-04-16）
-> 読み手：児玉翔平・株式会社Rizup代表
+> 読み手：児玉翔平・Lueur Inc.代表
 > 前提リサーチ：`research/team-research-v3.md`（v3.0 コンセプト勝算 62%）
 
 ---
@@ -331,4 +331,4 @@
 
 ---
 
-*作成：Kai (CMO) ／ 2026-04-16 ／ 株式会社Rizup*
+*作成：Kai (CMO) ／ 2026-04-16 ／ Lueur Inc.*

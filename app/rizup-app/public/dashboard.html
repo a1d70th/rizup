@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>株式会社Rizup — 経営ダッシュボード</title>
+<title>Lueur Inc. — 経営ダッシュボード</title>
 <style>
   :root{
     --bg:#0a0a0a;
@@ -496,6 +496,74 @@
     border-left:2px solid var(--accent-2);
   }
   .decisions li b{color:var(--accent);margin-right:8px}
+
+  /* ── 事業組織マトリクス（CEO → 6本部 → 9事業 × マネタイズ）── */
+  .matrix-ceo{
+    background:linear-gradient(135deg,rgba(6,182,212,.12),rgba(37,99,235,.08));
+    border:2px solid #06b6d4;border-radius:16px;padding:18px 22px;text-align:center;
+    max-width:380px;margin:0 auto 0;position:relative;
+  }
+  .matrix-ceo .role-tag{
+    font-size:11px;font-weight:800;letter-spacing:.14em;color:#06b6d4;text-transform:uppercase;
+  }
+  .matrix-ceo .ceo-name{font-size:20px;font-weight:900;margin-top:4px;color:var(--text)}
+  .matrix-ceo .ceo-name b{color:#06b6d4}
+  .matrix-ceo .ceo-sub{font-size:13px;color:var(--sub);margin-top:6px;line-height:1.5}
+  .matrix-vline{width:2px;height:24px;background:linear-gradient(180deg,#06b6d4,transparent);margin:0 auto}
+
+  .dept-grid{
+    display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;
+  }
+  @media (max-width:960px){.dept-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:600px){.dept-grid{grid-template-columns:1fr}}
+
+  .dept-card{
+    background:var(--card-2);border:1px solid var(--border-2);border-radius:14px;
+    padding:14px 16px;display:flex;flex-direction:column;gap:10px;
+    transition:border-color .18s, transform .18s;
+  }
+  .dept-card:hover{border-color:#06b6d4;transform:translateY(-1px)}
+
+  .dept-head{display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px dashed var(--border-2)}
+  .dept-emoji{font-size:22px;line-height:1;flex-shrink:0}
+  .dept-meta{min-width:0}
+  .dept-role{font-size:11px;font-weight:800;letter-spacing:.1em;color:#06b6d4;text-transform:uppercase}
+  .dept-leader{font-size:15px;font-weight:800;color:var(--text);margin-top:2px;line-height:1.2}
+  .dept-kpi{font-size:11px;color:var(--sub);margin-top:2px}
+
+  .biz-list{display:flex;flex-direction:column;gap:6px}
+  .biz-row{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px;
+    font-size:12.5px;
+  }
+  .biz-row .biz-num{
+    font-size:10px;font-weight:800;color:#06b6d4;background:rgba(6,182,212,.12);
+    border-radius:6px;padding:2px 6px;margin-right:2px;
+  }
+  .biz-row .biz-name{flex:1;color:var(--text);font-weight:700;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .biz-row .biz-price{font-size:11.5px;color:var(--accent);font-weight:800;white-space:nowrap}
+  .biz-row.phase1{border-color:rgba(6,182,212,.4);background:rgba(6,182,212,.04)}
+  .biz-row.phase2{border-color:rgba(251,191,36,.3)}
+  .biz-row.phase3{opacity:.78}
+  .biz-row.phase4{opacity:.55}
+
+  .dept-footer{
+    font-size:11px;color:var(--sub);padding-top:8px;border-top:1px dashed var(--border-2);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .dept-footer .revenue{color:var(--accent);font-weight:800}
+
+  .matrix-legend{
+    display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;font-size:11px;color:var(--sub);
+    padding:10px 12px;background:var(--card-2);border-radius:8px;
+  }
+  .matrix-legend .leg{display:flex;align-items:center;gap:5px}
+  .matrix-legend .chip{width:10px;height:10px;border-radius:3px}
+  .matrix-legend .chip.p1{background:#06b6d4}
+  .matrix-legend .chip.p2{background:#fbbf24}
+  .matrix-legend .chip.p3{background:#6b7280;opacity:.6}
+  .matrix-legend .chip.p4{background:#374151;opacity:.4}
 </style>
 </head>
 <body>
@@ -521,8 +589,8 @@
   <!-- ── HEADER ────────────────────────────────────── -->
   <header class="top">
     <div class="brand">
-      <img src="/logo-company.svg" alt="株式会社Rizup" class="company-logo" width="260" height="90" />
-      <h1>経営ダッシュボード</h1>
+      <img src="/logo-company.svg" alt="Lueur Inc." class="company-logo" width="280" height="100" />
+      <h1><span>Lueur Inc.</span> — 経営ダッシュボード</h1>
       <div class="sub">代表：児玉 翔平（Sho）</div>
       <div class="mission">Mission: 自分に縁する人を、全員輝かせる。</div>
     </div>
@@ -777,11 +845,212 @@
     </div>
   </section>
 
+  <!-- ── SECTION 2.9: 事業の柱（コミュニティ基軸）──────── -->
+  <section class="card">
+    <h2>🌐 事業の柱 <span class="section-meta">Rizup コミュニティ × 日本 + 海外</span></h2>
+    <p style="font-size:13px;color:var(--sub);margin:0 0 14px;line-height:1.6">
+      Lueur Inc. の事業基軸は <b style="color:#06b6d4">Rizup コミュニティ</b>。<br>
+      日本版で収益を立て、構造を英訳してグローバルへ。<b>1プロダクト × 2市場</b>の構造。
+    </p>
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px" class="pillar-grid">
+
+      <!-- 日本 -->
+      <div style="background:var(--card-2);border:2px solid #06b6d4;border-radius:14px;padding:16px 18px;position:relative">
+        <div style="position:absolute;top:-10px;left:16px;background:#06b6d4;color:#0a0a0a;font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;letter-spacing:.1em">PHASE1 最優先</div>
+        <div style="display:flex;align-items:center;gap:10px;margin:6px 0 10px">
+          <span style="font-size:28px">🇯🇵</span>
+          <div>
+            <div style="font-size:16px;font-weight:800;color:var(--text)">Rizup（日本コミュニティ）</div>
+            <div style="font-size:11px;color:var(--sub)">朝夜ジャーナル PWA / 国内ベータ中</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12.5px;margin-top:10px">
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+            <div style="color:var(--sub);font-size:11px">収益モデル</div>
+            <div style="color:var(--accent);font-weight:800">Free + Pro ¥480/月</div>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+            <div style="color:var(--sub);font-size:11px">今月 KPI</div>
+            <div style="color:var(--accent);font-weight:800">Pro 10人 / ¥4,800</div>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+            <div style="color:var(--sub);font-size:11px">本番 URL</div>
+            <div style="color:var(--text);font-weight:700;font-size:11px"><a href="https://rizup-app.vercel.app" target="_blank" style="color:#06b6d4">rizup-app.vercel.app</a></div>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+            <div style="color:var(--sub);font-size:11px">次の一手</div>
+            <div style="color:var(--text);font-weight:700;font-size:11.5px">ベータ50人 → 課金転換</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 海外 -->
+      <div style="background:var(--card-2);border:2px dashed var(--border-2);border-radius:14px;padding:16px 18px;position:relative;opacity:.88">
+        <div style="position:absolute;top:-10px;left:16px;background:var(--border-2);color:var(--sub);font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;letter-spacing:.1em">PHASE4 将来展開</div>
+        <div style="display:flex;align-items:center;gap:10px;margin:6px 0 10px">
+          <span style="font-size:28px">🌏</span>
+          <div>
+            <div style="font-size:16px;font-weight:800;color:var(--text)">Rizup Global（海外コミュニティ）</div>
+            <div style="font-size:11px;color:var(--sub)">英語版 PWA / 日本版検証後に展開</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12.5px;margin-top:10px">
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+            <div style="color:var(--sub);font-size:11px">収益モデル</div>
+            <div style="color:var(--accent);font-weight:800">$4.99/月 グローバル</div>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+            <div style="color:var(--sub);font-size:11px">想定市場</div>
+            <div style="color:var(--text);font-weight:700;font-size:11.5px">東南アジア → 英語圏</div>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+            <div style="color:var(--sub);font-size:11px">トリガー条件</div>
+            <div style="color:var(--text);font-weight:700;font-size:11.5px">日本版 Pro 500人到達</div>
+          </div>
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+            <div style="color:var(--sub);font-size:11px">資産</div>
+            <div style="color:var(--text);font-weight:700;font-size:11.5px">TOEIC 850 + Claude 翻訳</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <small class="hint" style="margin-top:14px;display:block">※ 他の 7 事業（コンサル・研修・コーチング等）は Rizup コミュニティを背景にした派生。コミュニティが土台。</small>
+  </section>
+
   <!-- ── SECTION 3: 事業ポートフォリオ ───────────────── -->
   <section class="card">
-    <h2>🏢 事業ポートフォリオ <span class="section-meta">8事業・進捗は編集可</span></h2>
+    <h2>🏢 事業ポートフォリオ <span class="section-meta">9事業・進捗は編集可</span></h2>
     <div class="grid-2" id="bizGrid"><!-- JS --></div>
     <small class="hint">※ 進捗(%)をクリックで編集 → Enter/Tab で確定。全入力は自動保存。</small>
+  </section>
+
+  <!-- ── SECTION 3.5: 事業組織マトリクス（CEO × 6本部 × 9事業 × マネタイズ）── -->
+  <section class="card">
+    <h2>🧩 事業組織マトリクス <span class="section-meta">CEO × 6本部 × 9事業 × マネタイズ</span></h2>
+
+    <!-- CEO -->
+    <div class="matrix-ceo">
+      <div class="role-tag">CEO / 代表取締役</div>
+      <div class="ceo-name"><b>児玉 翔平</b>（Sho）</div>
+      <div class="ceo-sub">全事業の意思決定・最終判断 / 今月目標 ¥200,000</div>
+    </div>
+    <div class="matrix-vline"></div>
+
+    <!-- 6本部 × 事業マッピング -->
+    <div class="dept-grid">
+
+      <!-- プロダクト本部 -->
+      <div class="dept-card">
+        <div class="dept-head">
+          <span class="dept-emoji">⚙️</span>
+          <div class="dept-meta">
+            <div class="dept-role">プロダクト本部長</div>
+            <div class="dept-leader">Sora（CTO）</div>
+            <div class="dept-kpi">アプリ開発・AI機能・技術基盤</div>
+          </div>
+        </div>
+        <div class="biz-list">
+          <div class="biz-row phase1"><span class="biz-num">①</span><span class="biz-name">Rizup アプリ</span><span class="biz-price">¥480/月</span></div>
+          <div class="biz-row phase2"><span class="biz-num">⑤</span><span class="biz-name">強み診断AI</span><span class="biz-price">¥1,980/回</span></div>
+          <div class="biz-row phase4"><span class="biz-num">⑧</span><span class="biz-name">Rizup for Business</span><span class="biz-price">¥500/人/月</span></div>
+          <div class="biz-row phase4"><span class="biz-num">⑨</span><span class="biz-name">グローバル版 Rizup</span><span class="biz-price">$4.99/月</span></div>
+        </div>
+        <div class="dept-footer"><span>4事業担当</span><span class="revenue">月商KPI ¥48k〜</span></div>
+      </div>
+
+      <!-- コンテンツ本部 -->
+      <div class="dept-card">
+        <div class="dept-head">
+          <span class="dept-emoji">✍️</span>
+          <div class="dept-meta">
+            <div class="dept-role">コンテンツ本部長</div>
+            <div class="dept-leader">Rei（CCO）</div>
+            <div class="dept-kpi">スレッズ × note × X / 全事業の集客基盤</div>
+          </div>
+        </div>
+        <div class="biz-list">
+          <div class="biz-row phase1"><span class="biz-num">②</span><span class="biz-name">等身大メディア</span><span class="biz-price">有料マガジン + スポンサー</span></div>
+        </div>
+        <div class="dept-footer"><span>1事業担当</span><span class="revenue">集客チャネル</span></div>
+      </div>
+
+      <!-- マーケティング本部 -->
+      <div class="dept-card">
+        <div class="dept-head">
+          <span class="dept-emoji">📊</span>
+          <div class="dept-meta">
+            <div class="dept-role">マーケティング本部長</div>
+            <div class="dept-leader">Kai（CMO）</div>
+            <div class="dept-kpi">市場調査 / ユーザー獲得 / LTV最大化</div>
+          </div>
+        </div>
+        <div class="biz-list">
+          <div class="biz-row phase1" style="background:rgba(6,182,212,.07)"><span class="biz-num">横断</span><span class="biz-name">全事業の獲得・分析</span><span class="biz-price">間接KPI</span></div>
+        </div>
+        <div class="dept-footer"><span>横断支援</span><span class="revenue">ARPU / CAC</span></div>
+      </div>
+
+      <!-- 営業本部 -->
+      <div class="dept-card">
+        <div class="dept-head">
+          <span class="dept-emoji">💼</span>
+          <div class="dept-meta">
+            <div class="dept-role">営業本部長</div>
+            <div class="dept-leader">Leo（CSO）</div>
+            <div class="dept-kpi">コンサル・研修・B2B / 法人営業</div>
+          </div>
+        </div>
+        <div class="biz-list">
+          <div class="biz-row phase2"><span class="biz-num">③</span><span class="biz-name">AI×採用コンサル</span><span class="biz-price">¥50,000/月/社</span></div>
+          <div class="biz-row phase2"><span class="biz-num">⑥</span><span class="biz-name">転職×メンタルコーチ</span><span class="biz-price">¥29,800/月/人</span></div>
+          <div class="biz-row phase3"><span class="biz-num">④</span><span class="biz-name">チームビルディング研修</span><span class="biz-price">¥300,000/回</span></div>
+          <div class="biz-row phase4"><span class="biz-num">⑦</span><span class="biz-name">英語×AI活用スクール</span><span class="biz-price">¥9,800/月</span></div>
+        </div>
+        <div class="dept-footer"><span>4事業担当</span><span class="revenue">月商KPI ¥79.8k〜</span></div>
+      </div>
+
+      <!-- 経営管理本部 -->
+      <div class="dept-card">
+        <div class="dept-head">
+          <span class="dept-emoji">📋</span>
+          <div class="dept-meta">
+            <div class="dept-role">経営管理本部長</div>
+            <div class="dept-leader">Haru（秘書）</div>
+            <div class="dept-kpi">進捗管理 / 日報週報 / 意思決定サポート</div>
+          </div>
+        </div>
+        <div class="biz-list">
+          <div class="biz-row phase1" style="background:rgba(6,182,212,.07)"><span class="biz-num">横断</span><span class="biz-name">全事業の進捗トラッキング</span><span class="biz-price">KPI 可視化</span></div>
+        </div>
+        <div class="dept-footer"><span>横断支援</span><span class="revenue">タスク完了率</span></div>
+      </div>
+
+      <!-- 品質保証本部 -->
+      <div class="dept-card">
+        <div class="dept-head">
+          <span class="dept-emoji">🛡️</span>
+          <div class="dept-meta">
+            <div class="dept-role">品質保証本部長</div>
+            <div class="dept-leader">QA</div>
+            <div class="dept-kpi">コミット前レビュー / バグ0運用 / セキュリティ</div>
+          </div>
+        </div>
+        <div class="biz-list">
+          <div class="biz-row phase1" style="background:rgba(6,182,212,.07)"><span class="biz-num">横断</span><span class="biz-name">全事業の品質ゲート</span><span class="biz-price">バグ0 / リリース品質</span></div>
+        </div>
+        <div class="dept-footer"><span>横断支援</span><span class="revenue">品質KPI</span></div>
+      </div>
+
+    </div>
+
+    <div class="matrix-legend">
+      <div class="leg"><span class="chip p1"></span>PHASE1 最優先（走っている）</div>
+      <div class="leg"><span class="chip p2"></span>PHASE2 準備中</div>
+      <div class="leg"><span class="chip p3"></span>PHASE3 実績積み次第</div>
+      <div class="leg"><span class="chip p4"></span>PHASE4 将来展開</div>
+    </div>
+    <small class="hint">※ 各事業の進捗・収益は下の「事業ポートフォリオ」「収益ダッシュボード」で編集。ここは俯瞰用のマップ。</small>
   </section>
 
   <!-- ── SECTION 4: 収益ダッシュボード ───────────────── -->
@@ -877,6 +1146,53 @@
     <div class="grid-3" id="mediaGrid"><!-- JS --></div>
   </section>
 
+  <!-- ── THREADS ANALYSIS: スレッズ分析（手動更新・週次） ── -->
+  <section class="card">
+    <h2>🧵 スレッズ分析 <span class="section-meta">@shohei_rizup / 手動更新・毎週月曜</span></h2>
+    <p style="font-size:13px;color:var(--sub);margin:0 0 14px;line-height:1.6">
+      1週間ごとの数値を手入力。クリックで編集できる。Rei が毎週月曜に投稿実績をもとに更新。
+    </p>
+    <div class="grid-4" style="margin-bottom:14px">
+      <div class="kpi">
+        <div class="label">フォロワー</div>
+        <div class="value"><span contenteditable="true" data-key="threads_followers">0</span></div>
+        <div class="sub">累計</div>
+      </div>
+      <div class="kpi">
+        <div class="label">今週 +Follow</div>
+        <div class="value accent"><span contenteditable="true" data-key="threads_week_follow">0</span></div>
+        <div class="sub">直近7日</div>
+      </div>
+      <div class="kpi">
+        <div class="label">今週 投稿数</div>
+        <div class="value"><span contenteditable="true" data-key="threads_week_posts">0</span><span style="font-size:14px;color:var(--sub);margin-left:3px">/21</span></div>
+        <div class="sub">目標：朝昼夜×7日</div>
+      </div>
+      <div class="kpi">
+        <div class="label">平均エンゲージ率</div>
+        <div class="value"><span contenteditable="true" data-key="threads_eng_rate">0</span>%</div>
+        <div class="sub">いいね / インプレ</div>
+      </div>
+    </div>
+    <div class="grid-2" style="margin-bottom:10px">
+      <div class="kpi">
+        <div class="label">今週のヒット投稿</div>
+        <div class="value" style="font-size:14px;line-height:1.5"><span contenteditable="true" data-key="threads_top_post">—</span></div>
+        <div class="sub">いいね最多の一文</div>
+      </div>
+      <div class="kpi">
+        <div class="label">失敗投稿（学び）</div>
+        <div class="value" style="font-size:14px;line-height:1.5"><span contenteditable="true" data-key="threads_flop_post">—</span></div>
+        <div class="sub">反応ゼロだった投稿</div>
+      </div>
+    </div>
+    <div style="background:var(--bg-2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--sub);line-height:1.7">
+      <b style="color:var(--accent)">📌 次週の方針メモ：</b><br>
+      <textarea data-key="threads_next_plan" placeholder="今週の学びから次週の投稿方針（3行以内で）"
+        style="width:100%;min-height:56px;background:transparent;border:none;color:var(--text);font-family:inherit;font-size:12.5px;line-height:1.7;resize:vertical;outline:none;padding:6px 0 0"></textarea>
+    </div>
+  </section>
+
   <!-- ── WEEK-PLAN: 曜日別タスク ─────────────────────── -->
   <section class="card">
     <h2>📅 週間スケジュール <span class="section-meta">曜日ごとの固定タスク</span></h2>
@@ -911,7 +1227,7 @@
   </section>
 
   <footer>
-    株式会社 Rizup — 経営ダッシュボード v1.1 · すべての入力は端末内 (localStorage) に保存されます
+    Lueur Inc. — 経営ダッシュボード v1.1 · すべての入力は端末内 (localStorage) に保存されます
   </footer>
 </div>
 
@@ -1055,6 +1371,8 @@
 
     rev_target: 200000, rev_actual: 0,
     src_rizup: 0, src_note: 0, src_cw: 0, src_hr: 0, src_other: 0,
+    threads_followers: 0, threads_week_follow: 0, threads_week_posts: 0, threads_eng_rate: 0,
+    threads_top_post: "", threads_flop_post: "", threads_next_plan: "",
     chart: [0,0,0,0,0,0,0,0,0,0,0,0],
     chartLabels: ["4月","5月","6月","7月","8月","9月","10月","11月","12月","1月","2月","3月"],
 
@@ -1161,9 +1479,15 @@
   document.querySelectorAll("[data-key]").forEach(node => {
     const key = node.getAttribute("data-key");
     const isTextarea = node.tagName === "TEXTAREA";
+    // セクション用 data-key（collapse 状態管理専用）は render から除外
+    // これらは textContent を書き換えるとセクション中身が [object Object] になる
+    if (node.tagName === "SECTION") return;
     if (key in state) {
-      if (isTextarea) node.value = state[key];
-      else node.textContent = typeof state[key] === "number" ? fmtInt(state[key]) : state[key];
+      const v = state[key];
+      // オブジェクト/配列は [object Object] 化するのでスキップ
+      if (v != null && typeof v === "object") return;
+      if (isTextarea) node.value = v;
+      else node.textContent = typeof v === "number" ? fmtInt(v) : v;
     }
     const commit = () => {
       const v = isTextarea ? node.value : node.textContent;

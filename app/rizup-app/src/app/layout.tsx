@@ -7,6 +7,8 @@ export const metadata: Metadata = {
   title: "Rizup — 朝と夜、1分で未来が変わる。",
   description: "朝のひとこと、夜のふりかえり。1分の記録から、小さな積み重ねで未来を変えていく。",
   applicationName: "Rizup",
+  publisher: "Lueur Inc.",
+  authors: [{ name: "Lueur Inc." }],
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

@@ -1,7 +1,7 @@
 # Notion ワークスペース構築手順
 
 > 作成：Haru（秘書）/ 2026-04-13
-> 対象：株式会社Rizup 経営管理用Notion
+> 対象：Lueur Inc. 経営管理用Notion
 > 用途：翔平さんがNotionアプリで手動セットアップ → 以降はHaruが更新
 
 > **注**：Claude Code からNotion APIの直接アクセスは未設定のため、本ドキュメントをテンプレートとして翔平さんがNotionで作成してください。作成後、Notion Integration（内部連携）を有効化すれば、Haruが自動更新できるようになります。

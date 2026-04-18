@@ -20,39 +20,12 @@
   <ellipse cx="256" cy="80"  rx="280" ry="70" fill="#10b981" opacity="0.10"/>
   <ellipse cx="256" cy="480" rx="240" ry="50" fill="#06b6d4" opacity="0.08"/>
 
-  <!-- RIZUP wordmark (geometric, font-independent) -->
-  <!-- Letters are 140 tall, centered vertically. Total width 384, centered in 512. -->
-  <g fill="url(#brand)">
-    <!-- R (x=64, width=80) -->
-    <g transform="translate(64 186)">
-      <rect x="0"  y="0"  width="24" height="140"/>
-      <rect x="0"  y="0"  width="60" height="24"/>
-      <rect x="0"  y="58" width="60" height="24"/>
-      <rect x="56" y="0"  width="24" height="82"/>
-      <path d="M 24 82 L 56 82 L 80 140 L 48 140 Z"/>
-    </g>
-
-    <!-- I (x=154, width=24) -->
-    <rect x="154" y="186" width="24" height="140"/>
-
-    <!-- Z (x=188, width=80) -->
-    <g transform="translate(188 186)">
-      <rect x="0" y="0"   width="80" height="24"/>
-      <rect x="0" y="116" width="80" height="24"/>
-      <path d="M 56 24 L 80 24 L 24 116 L 0 116 Z"/>
-    </g>
-
-    <!-- U (x=278, width=80) -->
-    <path d="M 278 186 h 24 v 116 h 32 v -116 h 24 v 140 h -80 z"/>
-
-    <!-- P (x=368, width=80) -->
-    <g transform="translate(368 186)">
-      <rect x="0"  y="0"  width="24" height="140"/>
-      <rect x="0"  y="0"  width="60" height="24"/>
-      <rect x="0"  y="58" width="60" height="24"/>
-      <rect x="56" y="0"  width="24" height="82"/>
-    </g>
-  </g>
+  <!-- RIZUP wordmark -->
+  <text x="256" y="296"
+        text-anchor="middle"
+        font-family="'Inter','SF Pro Display','Helvetica Neue',-apple-system,system-ui,sans-serif"
+        font-size="120" font-weight="900" letter-spacing="-3"
+        fill="url(#brand)">RIZUP</text>
 
   <!-- Accent dot (top-right, like a spark) -->
   <circle cx="430" cy="100" r="5" fill="#ffffff" opacity="0.9"/>

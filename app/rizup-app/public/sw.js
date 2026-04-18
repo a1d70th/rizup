@@ -1,11 +1,11 @@
-// Rizup Service Worker v7.5 (アイコン再生成: RIZUP wordmark)
+// Rizup Service Worker v8.0 (会社 Lueur / プロダクト Rizup の階層確定)
 // Strategies:
 //  - navigation: network-first with offline fallback（主要ページもキャッシュ）
 //  - static assets (fonts/images/css/js): stale-while-revalidate
 //  - API: network-only (no cache to avoid stale user data)
 //  - push notifications: display + focus existing client on click
 
-const CACHE_VERSION = "rizup-v7.5";
+const CACHE_VERSION = "rizup-v8.0";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 const OFFLINE_URL = "/offline.html";

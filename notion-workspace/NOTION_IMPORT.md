@@ -72,7 +72,7 @@ notion-workspace/import-markdown/
 ```markdown
 # 🏢 Rizup HQ
 
-> 株式会社Rizupの経営管理センター
+> Lueur Inc.の経営管理センター
 > 最終更新：2026-04-13
 
 ## 事業部リンク

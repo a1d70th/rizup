@@ -15,7 +15,7 @@
 | 4 | **Marketing URL**（公式サイト・任意） | `https://rizup-app.vercel.app` | ✅ 公開済 |
 | 5 | **特定商取引法に基づく表記** | `https://rizup-app.vercel.app/legal/tokushoho.html` | ✅ 公開済（日本での課金には必須） |
 | 6 | **Contact Email**（開発者連絡先） | `a1d.70th@gmail.com` | ✅ |
-| 7 | **Copyright Holder**（著作権表示） | `株式会社Rizup` | ✅ |
+| 7 | **Copyright Holder**（著作権表示） | `Lueur Inc.` | ✅ |
 
 ---
 

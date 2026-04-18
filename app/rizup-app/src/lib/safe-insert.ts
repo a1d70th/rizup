@@ -27,6 +27,39 @@ function isTableMissing(msg?: string) {
   if (!msg) return false;
   return /relation .* does not exist|table|not found in schema/i.test(msg);
 }
+// 外部キー違反: posts.user_id が profiles に存在しない（profile 行が未作成）
+function isFkViolation(code?: string, msg?: string) {
+  if (code === "23503") return true;
+  if (msg && /foreign key|violates foreign key/i.test(msg)) return true;
+  return false;
+}
+
+/** profiles 行が無いユーザー向けに upsert で自己修復する */
+async function ensureProfileExists(
+  supabase: SupabaseClient,
+  userId: string,
+): Promise<boolean> {
+  // (1) クライアント側 upsert（RLS が通れば最速）
+  try {
+    const { data: u } = await supabase.auth.getUser();
+    const email = u?.user?.email ?? null;
+    const { error } = await supabase
+      .from("profiles")
+      .upsert({ id: userId, email }, { onConflict: "id" });
+    if (!error) return true;
+  } catch { /* fallthrough to server-side */ }
+
+  // (2) サーバー側 service_role で RLS をバイパスして強制作成
+  //     RLS INSERT ポリシーが未作成の環境でも profile 行を確実に作れる最終防衛線
+  try {
+    const res = await fetch("/api/ensure-profile", { method: "POST" });
+    if (res.ok) {
+      const data = await res.json();
+      return !!data.ok;
+    }
+  } catch { /* ignore */ }
+  return false;
+}
 
 export async function safeInsertPost<T = unknown>(
   supabase: SupabaseClient,
@@ -34,15 +67,51 @@ export async function safeInsertPost<T = unknown>(
 ): Promise<InsertResult<T>> {
   const first = await supabase.from("posts").insert(payload).select().single();
   if (!first.error) return { data: first.data as T, error: null, usedFallback: false };
+
+  // (A) FK 違反 = profile 行未作成。upsert してから 1 度だけ再試行
+  if (isFkViolation(first.error.code, first.error.message)) {
+    const userId = payload.user_id as string | undefined;
+    if (userId && (await ensureProfileExists(supabase, userId))) {
+      const retryFk = await supabase.from("posts").insert(payload).select().single();
+      if (!retryFk.error) return { data: retryFk.data as T, error: null, usedFallback: true };
+      // 再試行も失敗 → カラム不足の可能性に進む
+      if (!isColumnMissing(retryFk.error.message)) {
+        return { data: null, error: retryFk.error, usedFallback: true };
+      }
+      // カラム不足の場合は下のフォールバックに合流
+      first.error = retryFk.error;
+    } else {
+      return {
+        data: null,
+        error: {
+          message: "プロフィール初期化に失敗しました。再ログインしてもう一度試してください。",
+          code: "PROFILE_INIT_FAILED",
+        },
+        usedFallback: false,
+      };
+    }
+  }
+
   if (!isColumnMissing(first.error.message)) {
     return { data: null, error: first.error, usedFallback: false };
   }
-  // フォールバック: コアカラムのみ
+  // (B) カラム不足フォールバック: コアカラムのみで再試行
   const fallback: Record<string, unknown> = {};
   for (const k of Object.keys(payload)) {
     if (KNOWN_POST_CORE_FIELDS.has(k)) fallback[k] = payload[k];
   }
   const retry = await supabase.from("posts").insert(fallback).select().single();
+
+  // フォールバックでも FK 違反 → profile を upsert して 1 度だけ再々試行
+  if (retry.error && isFkViolation(retry.error.code, retry.error.message)) {
+    const userId = payload.user_id as string | undefined;
+    if (userId && (await ensureProfileExists(supabase, userId))) {
+      const retry2 = await supabase.from("posts").insert(fallback).select().single();
+      if (retry2.error) return { data: null, error: retry2.error, usedFallback: true };
+      return { data: retry2.data as T, error: null, usedFallback: true };
+    }
+  }
+
   if (retry.error) return { data: null, error: retry.error, usedFallback: true };
   return { data: retry.data as T, error: null, usedFallback: true };
 }

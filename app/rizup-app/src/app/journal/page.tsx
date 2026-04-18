@@ -101,12 +101,27 @@ export default function JournalPage() {
         setUserId(user.id);
 
         // プロフィール取得（テーブル/カラム不在でも落ちない）
+        // 行が存在しない場合は client upsert → ダメなら server-side /api/ensure-profile で強制作成
+        // → posts insert の FK 違反を撲滅
         try {
           const { data: prof } = await supabase.from("profiles").select("is_suspended, character_animal, streak").eq("id", user.id).maybeSingle();
-          if (prof?.is_suspended) setSuspended(true);
-          if (prof?.character_animal) setCharAnimal(prof.character_animal as AnimalKind);
-          if (prof?.streak) setCurrentStreak(prof.streak);
-        } catch { /* ignore */ }
+          if (!prof) {
+            const clientUpsert = await supabase
+              .from("profiles")
+              .upsert({ id: user.id, email: user.email ?? null }, { onConflict: "id" });
+            if (clientUpsert.error) {
+              // RLS 等で失敗 → サーバー側 service_role で強制作成
+              await fetch("/api/ensure-profile", { method: "POST" }).catch(() => {});
+            }
+          } else {
+            if (prof.is_suspended) setSuspended(true);
+            if (prof.character_animal) setCharAnimal(prof.character_animal as AnimalKind);
+            if (prof.streak) setCurrentStreak(prof.streak);
+          }
+        } catch {
+          // 最終防衛：例外でもサーバー側で試す
+          fetch("/api/ensure-profile", { method: "POST" }).catch(() => {});
+        }
 
         // 今日ToDo（夜の振り返り用）
         let todos: Todo[] | null = null;
@@ -528,7 +543,7 @@ export default function JournalPage() {
             <div className="flex flex-col gap-2">
               {/* 入眠時刻 */}
               <div className="flex items-center gap-3 py-1">
-                <span className="text-[13px] font-bold text-text-mid w-16 shrink-0">🌙 入眠</span>
+                <span className="text-[13px] font-bold text-text-mid w-16 shrink-0">🌙 昨夜入眠</span>
                 <input
                   type="time"
                   value={bedtime}

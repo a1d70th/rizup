@@ -27,6 +27,9 @@ export default function OnboardingPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { window.location.href = "/login"; return; }
 
+      // まず確実に profile 行が存在することを保証（RLS / 列不足環境でも通る）
+      await fetch("/api/ensure-profile", { method: "POST" }).catch(() => {});
+
       const profileData = {
         id: user.id,
         email: user.email,
@@ -39,7 +42,16 @@ export default function OnboardingPage() {
         character_animal: selectedAnimal || null,
         character_name: characterName.trim() || null,
       };
-      await supabase.from("profiles").upsert(profileData, { onConflict: "id" });
+      const up = await supabase.from("profiles").upsert(profileData, { onConflict: "id" });
+      if (up.error) {
+        // 新カラム (onboarding_completed / trial_* / character_* / avatar_url) 不足環境
+        // → コアカラムのみで upsert する（マイグレ未実行でも最低限動く）
+        console.warn("[Onboarding] full upsert failed, retrying minimal:", up.error.message);
+        await supabase.from("profiles").upsert(
+          { id: user.id, email: user.email, name: profileData.name },
+          { onConflict: "id" }
+        );
+      }
 
       if (typeof window !== "undefined") {
         try {
